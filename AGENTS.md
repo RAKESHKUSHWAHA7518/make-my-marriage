@@ -1,0 +1,19 @@
+# Make My Marriage
+
+Work in this existing repository root. Read README.md, docs/Wedding-Decision-Record.md and docs/Wedding-Implementation-Status.md before implementing a feature. Follow the documented Architecture/Database/API boundaries and keep completion evidence and remaining work current. Add feature directories only with implementation. Homepage/login designs require the supplied Stitch exports.
+
+Follow the Clean implementation requirement in docs/Wedding-Development-Plan.md for every phase. Avoid unused files/dependencies, duplicate code, speculative abstractions, endpoint stubs and fake feature completion. Remove temporary task artifacts, review the diff, run appropriate checks and update existing progress records before delivery. Preserve required security and reliability controls.
+
+<!-- postman-cli:installation:start -->
+Postman CLI is installed on this device, and can be used for API Engineering work.
+<!-- postman-cli:installation:end -->
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

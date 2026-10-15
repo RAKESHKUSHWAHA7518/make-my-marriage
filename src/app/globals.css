@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* Provisional tokens. Final branding follows the supplied Stitch exports. */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-border: var(--border);
+  --font-sans: Arial, Helvetica, sans-serif;
+}
+
+:root {
+  --background: #faf7f2;
+  --surface: #ffffff;
+  --foreground: #252329;
+  --muted: #625c65;
+  --primary: #74354b;
+  --primary-hover: #592638;
+  --border: #ddd5db;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}

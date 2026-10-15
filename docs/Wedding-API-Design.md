@@ -1,8 +1,8 @@
 # Wedding Management — Detailed API Design
 
-**Version:** 1.0 (detailed design baseline)  
-**Date:** October 14, 2026  
-**Related documents:** [Architecture v2.0](Wedding-System-Design-Architecture.md), [Database Design v2.1](Wedding-Database-Design.md)  
+**Version:** 1.1 (aligned design baseline)
+**Date:** October 15, 2026
+**Related documents:** [Architecture v2.1](Wedding-System-Design-Architecture.md), [Database Design v2.2](Wedding-Database-Design.md)
 **Status:** Design only. No endpoints have been implemented or deployed by creating this document.
 
 ## 1. Total API count
@@ -700,7 +700,7 @@ Archived privacy actions use narrow handlers, not an arbitrary bypass of active-
 
 ## 24. Persistence clarifications before implementation
 
-The API maps to the existing 26-collection design. These small additions/clarifications are proposed by this contract and have **not** been applied to Database Design v2.1 in this task:
+The API maps to the existing 26-collection design. The following contract clarifications were approved and incorporated into Database Design v2.2 on October 15, 2026. This is document alignment only: no database migration or API implementation has run.
 
 | Area | Required clarification |
 |---|---|
@@ -710,7 +710,7 @@ The API maps to the existing 26-collection design. These small additions/clarifi
 | Public-page edits | Explicit expectedDraftVersion versus expectedPublishedRevision rules, using the existing fields |
 | Gallery defaults | Initial disabled gallery/uploads as proposed privacy defaults, deliberately enabled by organizers |
 
-These are not new product modules or new collections. Match implementation validators and migrations to the final approved contracts. Earlier architecture route patterns were illustrative; this document proposes the normalized /api/v1 routes. The older PRD also still needs its separately identified product updates.
+These are not new product modules or collections. Match future validators/migrations to these approved contracts. Earlier architecture patterns are illustrative; this document defines normalized /api/v1 browser routes. PRD v3.0, UI Guidelines and Development Plan now reflect the approved product rules.
 
 ## 25. Acceptance checks and implementation status
 
@@ -735,3 +735,9 @@ These are not new product modules or new collections. Match implementation valid
 | Duplicate/out-of-order webhook | No duplicate effect; facts preserved |
 
 The endpoint inventory and counts were checked for unique HTTP method/path pairs. This is a design document, not a generated OpenAPI specification or a report of running API tests. Request validators, repositories, service implementations, provider configuration and integration/security tests remain to be built. Provider SDK wire payloads and exact operating limits must be validated during implementation.
+
+## 26. Scaffold status and remaining contract gates — October 15, 2026
+
+Zero of the 105 operations is implemented by Phase 0A. Only page routing/configuration/build infrastructure exists. Do not create dummy successful API responses or auth bypasses. Add Route Handlers incrementally with their services, scoped repositories, DTO validation and meaningful tests.
+
+Approved interpretation: event drafts require the core CreateEvent fields; contact is optional. Private website settings save directly; no separate private-site publication endpoint/state is introduced. Public publication remains explicit. Cancelled/removed events are omitted from active guest/public displays. Before event-cancellation messaging is implemented, define message-type-specific eligibility so a safe cancellation notice is not blocked by ordinary upcoming-event eligibility rules. Provider wire payloads, configured limits and protected original delivery remain validation gates.

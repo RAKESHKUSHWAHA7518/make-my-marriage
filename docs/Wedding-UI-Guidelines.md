@@ -1,129 +1,71 @@
-# Wedding Platform — UI Guidelines
+# Make My Marriage — UI Guidelines
 
-**Status:** Proposed design direction for PRD v2.2. Colors and typography are recommendations, not a final approved brand.
+**Updated:** October 15, 2026. Aligned with approved Architecture, Database Design and API Design. Product requirements: [PRD](Wedding-Management-PRD.md). Implementation evidence: [Status](Wedding-Implementation-Status.md).
 
-## 1. Design direction
+## 1. Design authority
 
-Create a warm, elegant wedding experience that stays easy to read and use. The family workspace should emphasize clear information and actions. The private guest website can be more celebratory, with couple photos and invitation styling.
+Homepage and login designs exist in Google Stitch but have not been supplied in this workspace. Follow their exports when provided. The Phase 0 page is a technical placeholder, not an approved homepage. Do not recreate or redesign unseen screens.
 
-Avoid decorative fonts for forms, dense dashboards, excessive animation, and background images behind important text.
+Direction: light burgundy, warm, elegant, modern, premium and trustworthy. Responsive desktop/mobile. Avoid excessive flowers, traditional invitation styling in the application shell, script fonts in forms, dense dashboards, distracting motion and images behind critical text. Invitation artwork may have its own optional style.
 
-## 2. Suggested visual system
+## 2. Provisional tokens
 
-| Token | Suggested value | Use |
+| Token | Value | Purpose |
 |---|---|---|
-| Page background | `#FAF7F2` | Warm ivory background. |
-| Surface | `#FFFFFF` | Cards, dialogs, forms. |
-| Primary | `#74354B` | Main buttons, active navigation, links. |
-| Primary hover | `#592638` | Hover/pressed treatment. |
-| Main text | `#252329` | Headings and body. |
-| Secondary text | `#625C65` | Supporting information. |
-| Decorative gold | `#B08D57` | Small accents; not default text or button background. |
-| Border | `#DDD5DB` | Decorative separation; interactive controls need a stronger visible boundary. |
-| Control border | `#817581` | Inputs and controls; verify contrast in final combinations. |
-| Success | `#246343` | Completed, confirmed. |
-| Warning | `#815400` | Pending or due soon. |
-| Error | `#A52B3A` | Validation and failures. |
+| Background | #FAF7F2 | Warm ivory |
+| Surface | #FFFFFF | Cards/forms |
+| Primary | #74354B | Actions and links |
+| Primary hover | #592638 | Interaction |
+| Text | #252329 | Main content |
+| Muted text | #625C65 | Supporting content |
+| Border | #DDD5DB | Decorative separation |
+| Control border | #817581 | Future input boundaries |
+| Success | #246343 | Confirmed |
+| Warning | #815400 | Attention |
+| Error | #A52B3A | Validation/failures |
 
-Use status text/icons as well as color. Verify final text contrast and control visibility; suggested colors alone do not constitute an accessibility audit.
+Final tokens follow Stitch and contrast review. Only currently used tokens are implemented. System sans-serif initially; optional approved heading typography later. Body/mobile inputs start at 16px. Use a 4px spacing scale, restrained shadows, roughly 12px card radii and at least 44px primary touch targets.
 
-**Typography:** Use a readable sans-serif such as a system font stack for the workspace. An optional serif heading font can be used on the guest website. Body text and mobile form inputs start at 16px; supporting labels should remain legible. Avoid script fonts except in optional invitation artwork.
+## 3. Navigation and surfaces
 
-**Spacing:** Use a consistent 4px scale: 4, 8, 12, 16, 24, 32, 48. Prefer 16–24px card padding, 12px card radius, and restrained shadows. Use approximately 44px minimum touch targets for primary mobile controls.
+Family desktop: sidebar, wedding identity, title/action, content. Mobile: compact header/drawer; optional bottom navigation only if useful. No wedding switcher. Stack dense information into labeled mobile cards. Keep Dashboard, Events, Guests, Tasks, Vendors, Expenses, Invitations, Announcements, Website, Photos, Members and Settings reachable.
 
-## 3. Layout and navigation
+Public /w/:slug: explicitly published couple introduction/photos, date/countdown, selected event/venue/dress guidance and approved contact. No RSVP, gallery, livestream, uploads or private data. Website editor separates Public page and Private invitation with clearly labeled previews. Public content requires preview/publish; private settings save directly under current contracts. Unpublished pages reveal no private details.
 
-### Family workspace
+Private invitation: welcome → invited eligible events → one household RSVP → enabled gallery/uploads → private livestream → approved contact. Hide absent optional sections and uninvited events entirely; no locked event placeholders.
 
-- Desktop: left navigation, page title and primary action, then page content.
-- Mobile: compact header and navigation drawer; optional bottom navigation for Dashboard, Events, Guests, Tasks, and More.
-- Keep Vendors, Expenses, Invitations, Gallery, Announcements, and Settings accessible from navigation.
-- Display wedding identity so users understand their current workspace. Do not add a multi-wedding switcher.
-- Stack cards on narrow screens. Convert dense tables into labeled cards or prioritized columns instead of forcing page-wide horizontal scrolling.
+Shared gallery link/QR: gallery viewing plus uploads when enabled; same scope for photographers. No household RSVP, private events, livestream or receipts. Show view-only/disabled/archived states clearly. Rotation warns that old printed QR links stop working.
 
-### Public wedding information page
+## 4. Feature presentation
 
-Provide a separate `/w/:slug` page with a couple-photo hero, introduction, countdown, explicitly public event cards, venue maps, dress codes, and approved contact details. Use the same visual theme as the invitation site, but no RSVP, Upload Photos, gallery, livestream, or planning actions. Do not show hidden-event placeholders.
-
-The Website editor has separate **Public page** and **Private invitation** tabs, clearly labeled preview modes, event/field/photo selection, Publish, Copy public link, and Unpublish. Public status must be obvious. No household invitation secret is included in the public URL, HTML, metadata, or share preview.
-
-Show an unavailable page for an unpublished URL without disclosing the wedding's private information. Explicitly selected couple images may be shown publicly; shared gallery images are not public by default.
-
-### Private guest website
-
-Use this order: couple/welcome → invited events → RSVP → gallery/upload → livestream → contact details. Hide optional sections with no content instead of showing broken placeholders.
-
-Only render invited events. Never show locked cards or names of uninvited events. Internal planning information must not be present in the guest data response.
-
-### Venue QR upload page
-
-Show wedding identity, a short upload instruction, Choose photos, selected files, and results. Do not provide navigation to household invitations, RSVP, or gallery. Include a clear unavailable state when the link is disabled or the wedding is archived.
-
-## 4. Screen-specific patterns
-
-| Screen | Recommended presentation |
+| Screen | Presentation |
 |---|---|
-| Dashboard | Four to six summary cards, then upcoming events, urgent tasks, due payments, and pending vendor confirmations. Link every count to its detailed list. |
-| Events | Event cards with date, location, status, household invitation count, and confirmed people count. Event detail tabs: Overview, Guests, Tasks, Vendors. |
-| Guests | Search, event/tag filters, Add household, Import CSV. Clearly label household invitations separately from people attending. |
-| Household detail | Representative/contact details, invited-event checkboxes, RSVP per event, private link, email history, manual WhatsApp actions. |
-| RSVP | One event card at a time with Attending / Not attending / Maybe. Show total count only for Attending. Clearly confirm saved values. |
-| Tasks | List view first, optional board. Display title, assignee, due date, event, and status. Open task details without losing list filters. |
-| Vendors | Provider list with category and contact, plus bookings grouped by event. Show coordinator, arrival time, and booking status. |
-| Expenses | Separate Agreed cost, Paid, and Outstanding. Show shared event packages once; distinguish estimates from agreed costs. |
-| Invitation designer | Canvas with element toolbar; on mobile use a bottom panel and explicit move/resize controls. Include draft state, save, preview, and publish. |
-| Gallery | Responsive thumbnails, Upload photos, and family-only management actions. Individual progress and retry for each file. |
-| Archive | Persistent read-only banner; preserve navigation and viewing while disabling edits with an explanation. |
+| Dashboard | Useful linked summaries, upcoming events/tasks, actual spending, response counts |
+| Events | Date/venue/status, invited households and projected people; overview/guests/tasks/vendors |
+| Household | Representative, invited event checkboxes, visible maxGuests, one shared response, private link/history |
+| RSVP | One answer for all invited events; attendance input 1..maxGuests, representative included |
+| Tasks | List first, filters, checklist/comments, optional board later |
+| Vendors | Manual contacts or attributed Google discovery, event associations and organizer notes |
+| Expenses | Actual expense entries, receipts, total spent and optional budget; no agreed/paid/outstanding columns |
+| Designer | Draft/published distinction, preview, keyboard/touch move/resize alternatives |
+| Gallery | Paginated thumbnails, individual upload progress/retry and family management |
+| Members | ADMIN/MANAGER only; ADMIN membership controls; protect last ADMIN |
+| Archive | Persistent read-only explanation; narrow ADMIN privacy controls remain available |
 
-## 5. Forms and interaction
+## 5. Interaction and sharing
 
-- Place visible labels above inputs; do not use placeholder text as the only label.
-- Mark optional fields; keep required fields limited to what the action needs.
-- Show errors beside the affected field and preserve valid input after failures.
-- Prevent duplicate submissions while saving. Confirm success only after the save succeeds.
-- Keep RSVP, booking status, payment status, and email delivery status visually distinct.
-- Use explicit actions: Add household, Record payment, Publish event, Share on WhatsApp.
-- Use confirmation for archive, cancellation, link revocation, and removal actions that affect others. Do not add confirmation to every ordinary save.
-- On conflicting edits, explain what changed and offer reload/review rather than silently overwriting newer information.
-- Show a currency label and the wedding timezone where relevant.
+Visible field labels, optional markers, nearby errors, preserved valid input, explicit save feedback and duplicate-submit prevention. Warn/review on stale versions; never replace a dirty form on realtime refresh. Use currency labels and wedding timezone. Explain that changing invited events retains the existing shared RSVP after acknowledgement; lowering capacity below attendance needs correction.
 
-## 6. WhatsApp and email presentation
+Separate Share on WhatsApp from Send email. WhatsApp prepares one message/link and organizer sends externally; display only Share opened or Marked shared by organizer. Copy message/link and downloaded-image fallback. Email distinguishes queued, accepted, delivered, failed and uncertain outcomes where supported.
 
-Use separate buttons: **Share on WhatsApp** and **Send email**.
+Confirm consequential archive, cancellation, removal and revocation actions, not every ordinary save. Text/icons accompany status colors. Do not expose provider secrets or implementation setup details in guest-facing flows.
 
-WhatsApp flow: choose household → preview text/private link → open WhatsApp → organizer sends there. Do not show Sent, Delivered, or Read based on opening WhatsApp. Use **Share opened** or **Marked shared by organizer** if recording activity. Provide Copy message and Copy link fallbacks.
+## 6. Required states and verification
 
-Email supports actual send status and provider-reported delivery where available. Label provider acceptance separately from confirmed delivery. WhatsApp reminders are manual actions; email reminders can be scheduled.
+Relevant screens need loading, empty, populated, validation failure, request failure, permission denial and archived states. Pending RSVP is not Not attending. Invalid links disclose no private records. Retry failed files without repeating successes. Session expiry guides safe reauthentication. Provider failures do not claim successful sends/saves.
 
-## 7. Required interface states
+Review 360/390/768/1280px, keyboard/focus/dialog behavior, contrast, long names/addresses, missing images, large text and slow/failed networks. Respect reduced motion; no autoplay audio. Reserve thumbnail space and avoid loading originals in gallery lists. Private content must not appear in unauthorized metadata/previews.
 
-Every relevant screen needs loading, empty, populated, validation-error, request-failure, permission-denied, and archived/read-only states.
+## 7. Remaining design work
 
-Examples:
-
-- Empty events: “Add your first event” with template choices.
-- No RSVP: “No response yet,” not “Not attending.”
-- Invalid invitation: explain the link is unavailable without revealing private details.
-- Failed upload: identify the file and provide Retry; preserve successful uploads.
-- Email unavailable: show setup/contact problem and manual sharing alternatives.
-- Expired session: sign in again without losing safe draft input where practical.
-
-## 8. Responsive and accessibility checks
-
-- Review layouts at 360px, 390px, 768px, and 1280px widths; choose breakpoints based on content.
-- Test keyboard navigation, visible focus, field labels, error announcements, and dialog focus behavior.
-- Do not encode meaning only with color, hover, dragging, or animation.
-- Respect reduced-motion preferences; avoid autoplay audio.
-- Test long names, large attendance counts, missing photos, long venue addresses, and large text settings.
-- Keep private content out of previews shown to unauthorized visitors.
-- Compress thumbnails and reserve image space to reduce layout jumps.
-
-## 9. Design deliverables before full implementation
-
-1. Navigation map and low-fidelity wireframes for the key organizer and guest flows.
-2. Reusable tokens and components: buttons, fields, cards, dialogs, tabs, tables, status badges, file upload, and empty states.
-3. Mobile and desktop designs for Dashboard, Event detail, Household detail, RSVP, Vendors, Expenses, invitation editor, gallery, and venue upload.
-4. Clickable walkthrough of create wedding → add event → invite household → RSVP, plus both photo-upload routes.
-5. A review against the access rules and acceptance scenarios in the PRD.
-
-Keep the first design review focused on these journeys before refining decorative details.
+Receive Stitch homepage/login exports; review remaining organizer/guest/gallery flows; build only used reusable controls; verify accessibility and permission/read-only states. No full UI or business journey is completed by the scaffold.

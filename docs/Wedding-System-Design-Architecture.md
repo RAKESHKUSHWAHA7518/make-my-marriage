@@ -1,8 +1,8 @@
 # Wedding Management Platform — System Design Architecture
 
-**Version:** 2.0  
-**Date:** October 12, 2026  
-**Status:** Architecture baseline for implementation; provider plans and numeric operating limits require deployment validation.  
+**Version:** 2.1
+**Date:** October 15, 2026
+**Status:** Architecture baseline for implementation; provider plans and numeric operating limits require deployment validation.
 **Related documents:** [Database Design v2](Wedding-Database-Design.md), [PRD](Wedding-Management-PRD.md), [UI Guidelines](Wedding-UI-Guidelines.md), [Development Plan](Wedding-Development-Plan.md)
 
 ## Diagram and flow index
@@ -31,7 +31,7 @@ Each flow includes a diagram plus a plain-English explanation. Mermaid-capable M
 
 Design the approved wedding platform as a modular monolith with one source repository and one Vercel application deployment. Couples and families share planning tools; households access only their invited events through private links. Initial planning scale is approximately five weddings with 500 people per wedding, not 500 simultaneous users or necessarily 500 household records.
 
-This version incorporates the six latest user decisions and aligns with Database Design v2. It supersedes conflicting requirements in the earlier PRD, which still needs a separate update. The following decisions take precedence:
+This version incorporates the six latest user decisions and aligns with Database Design v2. PRD v3.0 now records the approved resolutions. See [Decision Record](Wedding-Decision-Record.md) and [Implementation Status](Wedding-Implementation-Status.md); design specification is not implementation evidence. The following decisions take precedence:
 
 | Area | Agreed decision |
 |---|---|
@@ -98,30 +98,33 @@ MongoDB owns business state. Ably transports notifications and temporary presenc
 ```text
 src/
   app/
-    (public)/                  product landing, login, registration, /w/:slug information pages
+    (marketing)/               product homepage
+    (auth)/                    login, registration, verification, recovery
+    (onboarding)/              wedding creation and family invitation acceptance
+    (public-wedding)/          /w/:slug selected public information
     (family)/                  dashboard and planning screens
     (guest)/                   private household website
     (gallery)/                 shared-token gallery and photo uploads
     api/
-      auth/                    application-owned email/password routes
-      weddings/                organizer operations
-      guest/                   household-scoped operations
-      media/                   intents, completion, protected delivery
-      realtime/                Ably token issuance
+      v1/                      API Design browser contracts; add routes per feature
+        auth/ weddings/ membership-invitations/ access/
+        guest/ gallery/ media/ public/ realtime/
       webhooks/                Cloudinary and Resend callbacks
       internal/jobs/           protected scheduled job execution
   modules/
     identity/ weddings/ events/ guests/ invitations/
     tasks/ vendors/ finance/ media/ realtime/ notifications/
   infrastructure/
-    mongodb/ cloudinary/ ably/ resend/ google-places/ jobs/ observability/
-  components/                  shared UI and invitation editor
-  validation/                  input schemas and DTOs
+    config/ mongodb/ security/ cloudinary/ ably/ resend/ google-places/ jobs/ observability/
+  components/                  shared UI, layout and feedback
+  shared/                      common API errors, response envelopes and formatting
 tests/
-  unit/ integration/ e2e/
+  integration/ e2e/             unit tests colocated with services
 scripts/
-  migrations/ indexes/ reconciliation/
+  migrations/ seed/ reconciliation/
 ```
+
+This tree is a growth plan, not a set of empty folders to create during scaffolding. Feature schemas/types/UI/services/repositories live together under modules; server modules import server-only. See [Project Structure](Wedding-Project-Structure.md) for actual versus planned paths.
 
 Route Handlers authenticate, validate input, and call module services. Services enforce permissions and invariants; repositories require explicit wedding scope. Server-rendered pages may call services directly without HTTP calls back into the same deployment. Interactive editors and uploads use client components.
 
@@ -234,7 +237,7 @@ Use ObjectId references, UTC dates plus IANA wedding timezone, explicit versions
 
 ## 8. API and request contracts
 
-Routes below describe the interface, not a mandatory route count. Every mutation validates its body, authorization, lifecycle state, and relevant record version.
+Routes below are historical illustrative patterns, not implementation paths or a mandatory route count. API Design v1.1 is authoritative: browser operations use /api/v1; internal/webhook paths remain absolute. No route in this table is implemented by the scaffold. Every mutation validates its body, authorization, lifecycle state, and relevant record version.
 
 | Route pattern | Purpose |
 |---|---|
@@ -501,7 +504,7 @@ Use unit tests for domain calculations and permission rules; integration tests a
 
 Original provider references were consulted October 11, 2026; Google Places integration policy was reviewed October 12, 2026. Existing provider references remain subject to deployment-time validation. Links are placed beside the claims they support. Provider plans, limits, SDK behavior, and pricing can change; verify them when provisioning. Diagrams use Mermaid and have accompanying prose for viewers without rendering support.
 
-Update this document when a deployment boundary, permission model, provider, consistency rule, or retention policy changes. Use section 1 and Database Design v2 for the six latest product decisions. The earlier PRD must be aligned separately; it does not override these approved amendments.
+Update this document when a deployment boundary, permission model, provider, consistency rule, or retention policy changes. Use section 1 and Database Design v2 for the six latest product decisions. PRD v3.0, UI Guidelines and Development Plan were aligned on October 15, 2026; none overrides the deployment, data or API boundaries here.
 
 ## 21. Public information website — approved extension
 
@@ -893,3 +896,11 @@ Already dispatched email cannot reliably be recalled. Existing realtime credenti
 | Archive | Wedding state, audit | Mutations stop; authorized reads continue. |
 
 Diagrams show intended behavior, not evidence of tested implementation. Provider plans, protected-media delivery, recovery drills, and operating limits still require validation before production sign-off.
+
+## 35. Scaffold implementation boundary — October 15, 2026
+
+Phase 0A implements only the root Next.js/TypeScript application shell, explicit Node.js runtime, npm, Tailwind tokens, server-only APP_ORIGIN validation, unavailable page, environment exclusions and setup/status documentation. Installed versions and verification evidence are recorded in package.json/package-lock.json and Implementation Status. No provider SDKs, database driver/collections, business APIs, jobs, authentication, migrations or deployment are implemented.
+
+The architecture section 18 Phase 0 technical gates remain Phase 0B work before dependent feature releases; a local scaffold build does not validate Vercel/provider behavior. Use bounded functions rather than persistent workers; one deployment may have many execution instances. Use no provider credentials or network font downloads for the shell. Stitch exports remain pending.
+
+API section 24 persistence clarifications are incorporated into Database Design v2.2 as design only. No database migration ran. Initial gallery/uploads are disabled. Event drafts require core API fields; private website content saves directly without a separate publication action. Preserve strict public snapshot publication. See Decision Record for approved product resolutions and open implementation gates.
