@@ -6,7 +6,7 @@ A wedding planning application for couples and families. One Next.js/TypeScript 
 
 Phase 0A is the application scaffold: a technical placeholder, unavailable page, Tailwind tokens, strict TypeScript, server-only configuration and development tooling. It implements no accounts, database access, business APIs or provider integrations. The final homepage/login await Google Stitch exports.
 
-See [Implementation Status](docs/Wedding-Implementation-Status.md) for verification results, completed work, and everything still pending. See [Decision Record](docs/Wedding-Decision-Record.md) for approved conflict resolutions.
+See [Project Status](docs/Wedding-Project-Status.md) for the ongoing major-feature progress log and next steps. See [Implementation Status](docs/Wedding-Implementation-Status.md) for detailed verification evidence and remaining technical work. See [Decision Record](docs/Wedding-Decision-Record.md) for approved conflict resolutions.
 
 The [Document Compliance Audit](docs/Wedding-Compliance-Audit.md) maps every product area to the actual implementation and records open findings; a working scaffold does not mean the full application is implemented.
 

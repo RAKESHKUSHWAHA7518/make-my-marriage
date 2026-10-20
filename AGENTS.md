@@ -1,6 +1,8 @@
 # Make My Marriage
 
-Work in this existing repository root. Read README.md, docs/Wedding-Decision-Record.md and docs/Wedding-Implementation-Status.md before implementing a feature. Follow the documented Architecture/Database/API boundaries and keep completion evidence and remaining work current. Add feature directories only with implementation. Homepage/login designs require the supplied Stitch exports.
+Work in this existing repository root. Read README.md, docs/Wedding-Decision-Record.md, docs/Wedding-Project-Status.md and docs/Wedding-Implementation-Status.md before implementing a feature. Follow the documented Architecture/Database/API boundaries and keep completion evidence and remaining work current. Add feature directories only with implementation. Homepage/login designs require the supplied Stitch exports.
+
+Maintain docs/Wedding-Project-Status.md as the ongoing major-feature progress log. Whenever a major feature is built or materially changed, add or update its entry in the same delivery with the date, status, completed scope, verification summary and remaining work. Preserve milestone history and distinguish implemented, verified and user-approved work. Keep this concise overview consistent with detailed evidence in docs/Wedding-Implementation-Status.md; link to that evidence instead of duplicating it. Never mark planned functionality or static previews as completed business features.
 
 Follow the Clean implementation requirement in docs/Wedding-Development-Plan.md for every phase. Avoid unused files/dependencies, duplicate code, speculative abstractions, endpoint stubs and fake feature completion. Remove temporary task artifacts, review the diff, run appropriate checks and update existing progress records before delivery. Preserve required security and reliability controls.
 

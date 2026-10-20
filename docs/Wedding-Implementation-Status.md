@@ -85,6 +85,8 @@ Stitch homepage/login exports are still needed for those designs. The placeholde
 
 ## Update discipline
 
+The [Project Status](Wedding-Project-Status.md) log, established October 20, 2026, provides the concise major-feature history. Update it whenever a major feature is built or materially changed, alongside the detailed implementation evidence in this file. AGENTS.md requires this ongoing maintenance. The initial log records the scaffold and homepage milestones using their historical verification dates; no application checks were rerun for this documentation-only addition.
+
 ### Repository checkpoint — October 15, 2026
 
 At the user's explicit request, created the local dev branch from main for the scaffold/documentation checkpoint. The checkpoint includes Phase 0A source/configuration, aligned planning documents, preserved historical references and audit records. Earlier statements about no commits describe the preceding scaffold/audit tasks; this subsequent request authorizes the local commit. No push or deployment is included. Resolve the checkpoint commit identity from git log on dev rather than embedding a self-referencing hash here.
