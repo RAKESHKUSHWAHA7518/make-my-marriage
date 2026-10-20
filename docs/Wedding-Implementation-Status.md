@@ -1,13 +1,13 @@
 # Make My Marriage — Implementation Status
 
-**Updated:** October 15, 2026 (Asia/Kolkata).
-**Scope:** Approved Phase 0A scaffold and planning-document alignment.
+**Updated:** October 16, 2026 (Asia/Kolkata).
+**Scope:** Phase 0A scaffold, document alignment, and the first homepage/logo UI feature.
 **Repository:** RAKESHKUSHWAHA7518/make-my-marriage, existing root checkout.
-**State:** Phase 0A delivered and locally verified, with the tooling follow-ups below. Phase 0B and all business features remain pending.
+**State:** Scaffold delivered; homepage/logo implemented and production build verified. Phase 0B, login and all business features remain pending. See the homepage entry below for current verification evidence; earlier scaffold evidence is historical.
 
 **Latest document audit:** [Compliance Audit](Wedding-Compliance-Audit.md) checks the current shell against every product area, records fresh verification and distinguishes unimplemented requirements from passed checks. The audit confirmed 105 unique designed API operations, zero implemented Route Handlers and 26 designed collection sections. It also records the media sequencing dependency and existing cancellation-message gate.
 
-## Completed implementation
+## Scaffold implementation (historical Phase 0A)
 
 - Root Next.js App Router/React/strict TypeScript scaffold, @/* alias and explicit Node.js backend runtime.
 - Technical placeholder, unavailable-page state and provisional warm ivory/burgundy Tailwind tokens; system fonts, no external assets or provider requests.
@@ -33,7 +33,7 @@ No live database, migration, validators or provider configuration was created by
 
 Original detailed PRD/UI/development-plan snapshots are preserved under docs/history with a superseded notice. Current documents govern implementation. Architecture/Database/API retain their detailed specifications with targeted alignment changes.
 
-## Verification evidence
+## Scaffold verification evidence (October 15)
 
 Executed October 15, 2026 on Windows with Node 22.19.0 / npm 10.9.3:
 
@@ -81,11 +81,46 @@ These local checks are not a full accessibility audit, business/security test su
 | 5 celebration/archive | Not started: protected Cloudinary uploads/gallery/QR, livestream and archive exceptions |
 | 6 launch | Not started: integrated security/load/accessibility/provider tests, recovery drills, limits/alerts and real-family validation |
 
-Stitch homepage/login exports are still needed for those designs. The placeholder is not a completed product screen. No auth bypass, demo user, in-memory database, business API, provider SDK, persistent worker or deployment was introduced. Zero of 105 API operations implemented. No commits/pushes/deployment are included.
+Stitch homepage/login exports were retrieved through MCP. The homepage now replaces the technical placeholder; the login design is available but not implemented. No auth bypass, demo user, in-memory database, business API, provider SDK, persistent worker or deployment was introduced. Zero of 105 API operations implemented. No commits/pushes/deployment are included.
+
+## Homepage and logo — October 16, 2026
+
+**Completed:** First homepage UI based on the supplied Stitch desktop/mobile references, normalized to the user-confirmed burgundy palette. Custom SVG M monogram with interlocking rings, shared header/footer wordmark and favicon. Sections: hero/workspace illustration, family collaboration, feature cards, private household invitation illustration, three wedding-website style illustrations, vendors/expenses, photo gallery, three-step introduction, eight FAQs, closing CTA and footer.
+
+**Interactions:** Responsive menu with expanded state, link dismissal and Escape handling; working in-page navigation; native keyboard-operable FAQ disclosure; account CTAs display an honest availability dialog with native focus containment, Escape dismissal and return focus. Preview controls are static illustrations, not fake forms. No account data is collected.
+
+**Files:** src/app/page.tsx, globals.css and layout.tsx; components/brand.tsx and marketing/site-header.tsx/account-button.tsx; public/brand/logo-mark.svg; three public/images marketing photographs; two app/fonts files with their OFL licenses. No package or lockfile changes. A pinned temporary Prettier invocation formatted only the six changed source files and added no project dependency. The existing .mcp.json edit predates this feature and was preserved.
+
+**Design corrections:** Removed unsupported booking/payment-ledger language, email-client dispatch claims, prototype state controls, nonfunctional legal links and ZIP download claims. Public wedding previews contain no private capabilities. Sample names/counts/expenses are labelled. Public homepage imagery is marketing material from the supplied Stitch export, not private wedding media. The three website styles are illustrations, not an implemented theme editor. Logo/design acceptance remains subject to user visual review.
+
+**Verification (October 16):**
+
+| Check | Evidence |
+|---|---|
+| npm run lint | PASS, zero warnings after replacing the brand home anchor with Next Link |
+| npm run typecheck | PASS, Next route generation and strict TypeScript |
+| npm run build | PASS, Next 16.4.1 production compilation and static root/404 output; rerun after final link correction |
+| Responsive layout | PASS: 360/390/768/1280px checks, no horizontal overflow; desktop hero and mobile hero/FAQ visually inspected |
+| Navigation | All fragment destinations exist; mobile menu opens and closes after selecting FAQs |
+| FAQ keyboard behavior | Enter opens the household RSVP answer |
+| Account dialog | Login opens availability message and focuses dismissal button; Escape closes it and returns focus to Login |
+| Assets | All three gallery images loaded with nonzero natural widths; local logo/fonts render |
+| Browser logs | No warning/error entries observed in the final browser check |
+| Diff | git diff --check passes; no dependency additions, API stubs or empty feature folders |
+
+Development preview is running at http://localhost:3000 and left open. Screenshots are saved outside the repository in the task visualization directory. Temporary Stitch reference HTML was removed after use. The production build and browser checks are local evidence, not deployment or a full accessibility certification. Existing dependency audit findings remain open; no new dependency audit was claimed.
+
+**Still pending:** User visual review; real registration/login and recovery; all database/API/provider-backed wedding journeys; production legal/contact content before launch; deployment and provider/security/operational gates. Database and API contracts are unchanged. Next feature: application-owned authentication with the supplied login design after homepage review. No commit, push or deployment was performed for this feature.
 
 ## Update discipline
 
 The [Project Status](Wedding-Project-Status.md) log, established October 20, 2026, provides the concise major-feature history. Update it whenever a major feature is built or materially changed, alongside the detailed implementation evidence in this file. AGENTS.md requires this ongoing maintenance. The initial log records the scaffold and homepage milestones using their historical verification dates; no application checks were rerun for this documentation-only addition.
+
+### Repository checkpoint — October 20, 2026
+
+After the separate project-status documentation commit, the user requested a local commit of all remaining changes on `dev`: homepage components/styles, logo, marketing images, licensed local fonts, aligned documentation and the existing local MCP port change. No push or deployment is included. Earlier no-commit statements describe the original feature delivery.
+
+Pre-commit verification: type checking passed; the diff whitespace check passed; a common credential-pattern scan of pending text files found no matches. A fresh lint run produced no result and was interrupted, so it is not recorded as passing. The successful lint, build and browser evidence from October 16 remains historical; no new build or browser test was run for this checkpoint.
 
 ### Repository checkpoint — October 15, 2026
 

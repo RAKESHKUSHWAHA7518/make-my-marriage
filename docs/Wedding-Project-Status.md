@@ -52,3 +52,5 @@ Application-owned authentication using the supplied Stitch login design is the d
 - Do not mark mock data, static previews, planned endpoints or untested integrations as completed functionality.
 
 **Log established October 20, 2026:** Seeded from the existing scaffold and homepage records. This documentation update does not represent new application testing or implementation.
+
+**Repository checkpoint October 20, 2026:** The user subsequently requested committing all remaining homepage, asset, documentation and local MCP configuration changes on `dev`. The earlier status-log commit is `2d84ca1`. This checkpoint does not change feature completion or visual approval status; no push or deployment is included.

@@ -127,4 +127,4 @@ Follow [Development Plan](Wedding-Development-Plan.md): scaffold, identity/works
 
 Excluded: professional planner/multiple-wedding accounts, hotel/transport/seating management, check-in QR, vendor self-service, payments processing, SMS, automated WhatsApp, chat, task dependencies, guest accounts/OTP, public RSVP/gallery/uploads and native streaming. No microservices, separate Express app or persistent background server.
 
-Stitch homepage/login exports are pending. Use their supplied designs when available; do not infer or redesign them. Visual direction is light burgundy, warm, modern, premium and restrained.
+Stitch homepage/login exports are available through the connected MCP. Follow the supplied layouts; homepage UI is implemented, while login and business behavior remain pending. Visual direction is light burgundy, warm, modern, premium and restrained.

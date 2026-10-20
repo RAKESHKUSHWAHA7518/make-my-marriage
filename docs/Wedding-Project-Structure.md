@@ -2,7 +2,7 @@
 
 **Updated:** October 15, 2026. Application root is the existing make-my-marriage repository at C:/Users/rk751/Downloads/WeddingManagement. No nested app, git init or separate backend.
 
-## Phase 0A paths
+## Current implemented paths
 
 ```text
 WeddingManagement/
@@ -10,11 +10,18 @@ WeddingManagement/
   src/
     app/
       layout.tsx                     root layout, Node runtime, shell metadata
-      page.tsx                       technical placeholder awaiting Stitch
+      page.tsx                       Stitch-based marketing homepage
       not-found.tsx                  unavailable-page state
-      globals.css                    Tailwind and provisional semantic tokens
+      globals.css                    Tailwind, brand tokens and homepage styles
+    components/
+      brand.tsx                      shared logo/wordmark
+      marketing/site-header.tsx       responsive navigation
+      marketing/account-button.tsx    honest account availability dialog
     infrastructure/
       config/env.ts                  server-only validated APP_ORIGIN
+  public/brand/logo-mark.svg          custom SVG logo and favicon
+  public/images/                     three supplied Stitch marketing images
+  src/app/fonts/                     two local fonts and their licenses
   .env.example                       safe configuration names/placeholders
   .gitignore                         dependencies/builds/env/log exclusions
   .mcp.json                          existing project configuration, preserved
@@ -37,7 +44,7 @@ docs/history preserves the original PRD/UI/development-plan snapshots as explici
 public/                              approved public brand/marketing assets only
 src/
   app/
-    (marketing)/page.tsx             move placeholder here when real marketing starts
+    (marketing)/page.tsx             optional group when marketing layouts grow
     (auth)/                          login/register/verify-email/forgot/reset-password
     (onboarding)/                    create-wedding/accept-invitation
     (family)/                        shared authenticated layout

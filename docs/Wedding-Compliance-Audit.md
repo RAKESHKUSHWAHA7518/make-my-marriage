@@ -4,6 +4,10 @@
 
 **Result:** The existing Phase 0A scaffold matches the approved scaffold scope. No new functional defect was found in the five current source files. The full product is not implemented or verified. Open tooling and planning findings are listed below.
 
+## Homepage addendum — October 16, 2026
+
+The audit below records the earlier scaffold snapshot. Since then the user authorized a logo and homepage. The root now contains a Stitch-based marketing UI with local fonts/images, labelled examples, working navigation/FAQ and account-availability dialogs. The previous placeholder, system-font and missing-export findings no longer describe the homepage. Login, all 105 API operations and all database/provider features remain pending. Current file/check evidence is maintained in Implementation Status. No API or database contract was changed for this UI work.
+
 ## 1. Scope and evidence
 
 Reviewed the current PRD v3.0, Architecture v2.1, Database Design v2.2, API Design v1.1, UI Guidelines, Development Plan, Decision Record, Project Structure, README and Implementation Status against every current source/configuration file. Historical documents are explicitly superseded references, not competing requirements.

@@ -4,27 +4,27 @@
 
 ## 1. Design authority
 
-Homepage and login designs exist in Google Stitch but have not been supplied in this workspace. Follow their exports when provided. The Phase 0 page is a technical placeholder, not an approved homepage. Do not recreate or redesign unseen screens.
+Homepage and login exports were retrieved from Stitch project 1860855833908619349. Desktop homepage screen 53576c83cc9d442488e8e3fa29e0ba03 and mobile screen dd40e1ef8a154c0aaebb5b919e17eed2 are the references. The first homepage follows their section order and editorial typography, with the user-confirmed burgundy direction taking precedence over the mixed green project theme. Login remains unimplemented. The new SVG M/rings mark is a first implementation for user review.
 
 Direction: light burgundy, warm, elegant, modern, premium and trustworthy. Responsive desktop/mobile. Avoid excessive flowers, traditional invitation styling in the application shell, script fonts in forms, dense dashboards, distracting motion and images behind critical text. Invitation artwork may have its own optional style.
 
-## 2. Provisional tokens
+## 2. Homepage tokens
 
 | Token | Value | Purpose |
 |---|---|---|
-| Background | #FAF7F2 | Warm ivory |
+| Background | #FFFDF9 | Warm ivory |
 | Surface | #FFFFFF | Cards/forms |
-| Primary | #74354B | Actions and links |
-| Primary hover | #592638 | Interaction |
-| Text | #252329 | Main content |
-| Muted text | #625C65 | Supporting content |
-| Border | #DDD5DB | Decorative separation |
+| Primary | #802B3A | Actions and links |
+| Primary hover | #69212E | Interaction |
+| Text | #2B2123 | Main content |
+| Muted text | #706466 | Supporting content |
+| Border | #E9DFE0 | Decorative separation |
 | Control border | #817581 | Future input boundaries |
 | Success | #246343 | Confirmed |
 | Warning | #815400 | Attention |
 | Error | #A52B3A | Validation/failures |
 
-Final tokens follow Stitch and contrast review. Only currently used tokens are implemented. System sans-serif initially; optional approved heading typography later. Body/mobile inputs start at 16px. Use a 4px spacing scale, restrained shadows, roughly 12px card radii and at least 44px primary touch targets.
+Homepage headings use locally bundled Playfair Display; body text uses locally bundled Plus Jakarta Sans. Both include their SIL Open Font License files. Only used visual assets and tokens are implemented. Dense illustrative previews use a smaller scale than ordinary body copy. Body/mobile inputs start at 16px. Use a 4px spacing scale, restrained shadows, roughly 12px card radii and at least 44px primary touch targets.
 
 ## 3. Navigation and surfaces
 
@@ -68,4 +68,4 @@ Review 360/390/768/1280px, keyboard/focus/dialog behavior, contrast, long names/
 
 ## 7. Remaining design work
 
-Receive Stitch homepage/login exports; review remaining organizer/guest/gallery flows; build only used reusable controls; verify accessibility and permission/read-only states. No full UI or business journey is completed by the scaffold.
+Review the implemented homepage and logo; implement the supplied login design with authentication; review remaining organizer/guest/gallery flows; build only used reusable controls; verify accessibility and permission/read-only states. No full UI or business journey is completed by the scaffold.

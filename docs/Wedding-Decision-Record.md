@@ -42,8 +42,17 @@ These clarify the existing 26 collections. No database or API was created by doc
 
 ## Outstanding decisions/validation
 
-Stitch exports; final brand tokens; onboarding timezone/currency defaults (recommend Asia/Kolkata and INR, not yet implemented); reminder timings; exact media/storage limits; HEIC and protected original delivery; provider plans/cron cadence/cost; Atlas/Vercel region/network boundary; sender domain; crypto work factors/token lifetimes/rotation; recovery/export drills and measured performance/concurrency.
+Homepage/logo visual sign-off; onboarding timezone/currency defaults (recommend Asia/Kolkata and INR, not yet implemented); reminder timings; exact media/storage limits; HEIC and protected original delivery; provider plans/cron cadence/cost; Atlas/Vercel region/network boundary; sender domain; crypto work factors/token lifetimes/rotation; recovery/export drills and measured performance/concurrency.
 
 Cancellation messaging needs type-specific eligibility: a safe cancellation notice must not be rejected solely because normal upcoming-event eligibility excludes cancelled events. Resolve the precise contract before that feature, without restoring cancelled events to active guest views.
 
 Incomplete event drafts, moving users between weddings, refund/negative accounting, archive reopening, custom domains and additional publication states require explicit future decisions. They are not silently added by the scaffold.
+
+## Homepage implementation decisions — October 16, 2026
+
+- User authorized a custom logo and homepage first, before account development.
+- Preserve Stitch section order, Playfair Display/Plus Jakarta Sans typography and website-style previews; normalize the application palette to the explicitly confirmed burgundy.
+- Correct export references to booked/paid vendors, ledgers and email-client dispatch to the approved simple-expense/manual-vendor/provider boundaries. Omit unsupported ZIP download, real QR codes, fake success and prototype review controls.
+- Keep examples separate from functionality: account CTAs open an availability dialog. No signup collection, API, DB schema, integration or authentication behavior is introduced.
+- Fonts and three supplied Stitch marketing images are served locally. Font licenses are bundled. Logo is original SVG geometry; no icon/image library dependency.
+- Retain the existing root page for this one marketing route; introduce route groups only when additional layouts warrant them.

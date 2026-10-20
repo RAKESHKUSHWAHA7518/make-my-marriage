@@ -4,7 +4,7 @@ A wedding planning application for couples and families. One Next.js/TypeScript 
 
 ## Current state
 
-Phase 0A is the application scaffold: a technical placeholder, unavailable page, Tailwind tokens, strict TypeScript, server-only configuration and development tooling. It implements no accounts, database access, business APIs or provider integrations. The final homepage/login await Google Stitch exports.
+The scaffold and first homepage UI are implemented. The Stitch-based responsive homepage includes a custom SVG logo, product previews, navigation, FAQs and honest account-availability dialogs. Login and all business functionality remain unimplemented. No database or provider credentials are needed to preview the homepage.
 
 See [Project Status](docs/Wedding-Project-Status.md) for the ongoing major-feature progress log and next steps. See [Implementation Status](docs/Wedding-Implementation-Status.md) for detailed verification evidence and remaining technical work. See [Decision Record](docs/Wedding-Decision-Record.md) for approved conflict resolutions.
 
@@ -38,7 +38,7 @@ npm run start
 
 Typecheck generates Next route types before running tsc, so it works before a build. Lint runs explicitly; do not assume build runs it. Stop a running server with Ctrl+C before reusing the port. To use another local port: `npm run dev -- --port 3001` or `npm run start -- --port 3001`.
 
-Builds use system fonts and do not fetch provider data. They require installed dependencies, not live provider credentials. npm installation needs registry access. Node dependencies/native build tooling must match the platform used to install them; use npm ci in each environment.
+Builds use bundled Playfair Display and Plus Jakarta Sans fonts and local Stitch marketing images; they do not fetch fonts or provider data. They require installed dependencies, not live provider credentials. npm installation needs registry access. Node dependencies/native build tooling must match the platform used to install them; use npm ci in each environment.
 
 ## Structure and boundaries
 

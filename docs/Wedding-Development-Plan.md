@@ -11,7 +11,11 @@
 - Reconcile legacy requirements and API section 24 persistence clarifications in the design documents.
 - Verify clean installation, lint, types, production build/start and development/root/404 smoke checks.
 
-Done when the recorded local checks pass. No account, database, API or provider feature is claimed. Homepage/login designs await Stitch exports. Do not create empty feature folders or all 105 API operations.
+Done when the recorded local checks pass. No account, database, API or provider feature is claimed. Homepage/login Stitch exports are now available; see the incremental homepage feature below. Do not create empty feature folders or all 105 API operations.
+
+## Incremental feature — Homepage and logo (October 16, 2026)
+
+User authorized the homepage before authentication, plus a matching logo. Implement the supplied Stitch sections with responsive layouts, a scalable SVG brand mark, local fonts/images, working navigation and FAQs. All wedding data is clearly illustrative. Account actions explain coming-soon availability; no fake signup, backend, QR destination or dead legal links. Verify the UI and record evidence in Implementation Status. Login/authentication is the next feature after visual review.
 
 ## Phase 0B — Technical gates, scheduled before dependent features
 
