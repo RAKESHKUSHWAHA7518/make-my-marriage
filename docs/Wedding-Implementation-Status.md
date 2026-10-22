@@ -1,11 +1,33 @@
 # Make My Marriage — Implementation Status
 
-**Updated:** October 16, 2026 (Asia/Kolkata).
-**Scope:** Phase 0A scaffold, document alignment, and the first homepage/logo UI feature.
+**Updated:** October 22, 2026 (Asia/Kolkata).
+**Scope:** Scaffold, homepage/logo and account feature. Earlier dated entries are historical snapshots.
 **Repository:** RAKESHKUSHWAHA7518/make-my-marriage, existing root checkout.
-**State:** Scaffold delivered; homepage/logo implemented and production build verified. Phase 0B, login and all business features remain pending. See the homepage entry below for current verification evidence; earlier scaffold evidence is historical.
+**State:** Account code implemented and locally tested. Live email and production gates remain; wedding onboarding and remaining Phase 1 work are not implemented.
 
-**Latest document audit:** [Compliance Audit](Wedding-Compliance-Audit.md) checks the current shell against every product area, records fresh verification and distinguishes unimplemented requirements from passed checks. The audit confirmed 105 unique designed API operations, zero implemented Route Handlers and 26 designed collection sections. It also records the media sequencing dependency and existing cancellation-message gate.
+**User acceptance — October 22, 2026:** The user approved the delivered account feature after testing and code review and requested the status update, commit and GitHub push on dev. Project Status now summarizes the final 16-test account result, separate environment test, browser QA corrections and remaining live-provider gates. Prior no-commit statements describe their original implementation checkpoints. Resolve the new checkpoint identity from Git history; approval does not imply deployment or live-email validation.
+
+**Document audit:** The historical scaffold [Compliance Audit](Wedding-Compliance-Audit.md) counted 105 designed operations and 26 designed collections. The account checkpoint now implements eight auth operations plus account-scoped job tick and Resend webhook, and seven collections. The remaining 95 operations and broader worker/provider use cases are future work.
+
+## Accounts — October 21, 2026
+
+**Implemented:** Login from supplied Stitch desktop/mobile exports; registration, verification/resend, forgot/reset password, protected `/account` welcome and logout. Homepage links now reach the real account routes. No wedding dashboard or simulated login was added.
+
+**Boundaries:** Thin Node Route Handlers in `src/app/api/v1/auth`, business rules in `src/modules/identity`, server-only MongoDB and Resend adapters in `src/infrastructure`, reusable client form in `src/components/auth`. Eight auth contracts use strict DTOs, request IDs, no-store responses, neutral email responses, trusted-origin/custom-header CSRF checks and MongoDB rate limits. The internal tick and webhook support account mail only.
+
+**Security:** Argon2id (64 MiB, three passes, one lane), 12–128-character new passwords, 32-byte random tokens stored as hashes, seven-day opaque sessions, 24-hour verification and 30-minute reset links. HTTPS uses a Secure/HttpOnly/SameSite=Lax `__Host-` cookie. Atomic reset consumes tokens and increments credentialVersion, invalidating every earlier session. Verification does not sign users in. Email links carry tokens in URL fragments; auth pages set no-referrer. Missing configuration fails without false success or account creation.
+
+**Persistence:** Applied explicit repeatable `001-accounts` migration to the configured initially empty development database: users, sessions, authTokens, rateLimits, deliveries, jobs and webhookReceipts. Unique/TTL/dispatch indexes and validators are installed. Writes refuse to proceed without required unique indexes. Membership is read only for account DTOs; wedding/membership migrations remain future work. Secret values were never printed. Local security keys were generated in ignored `.env.local`.
+
+**Email:** Account/token/delivery/job intent commits atomically. Recipient and immutable payload are encrypted; worker claims MongoDB leases, processes at most two jobs per invocation, retries with the same Resend idempotency key within 23 hours, and removes terminal/expired payload secrets. Signed callbacks persist/reconcile delivery facts and suppress bounced/complained recipients. `after()` attempts sends; authenticated tick/manual processing handles durable retries. No scheduler deployment has been configured.
+
+**Verification:** Auth integration suite passes 13 subtests plus parent (14/14), including concurrent registration/reset, expired/reused links, session rotation/logout/revocation, strict fields/CSRF, concurrent persistent rate limits, missing configuration, immutable provider retry and signed duplicate bounce suppression. Tests use a uniquely named temporary MongoDB database and remove it afterward; provider fetches are mocked only within tests. No real email was sent. Local Argon2id benchmark on the final test run: 321 ms; this is not Vercel performance evidence. A sandbox-only rerun lacked MongoDB network access; rerun with network permission passed. Type checking passed. Final build/lint evidence is recorded below.
+
+**Browser evidence:** Invalid login shows the generic credential error; empty form focuses email and displays field errors. Recovery without Resend configuration shows service unavailable. Reset without a token is disabled with a new-link action. Unauthenticated `/account` redirects to login. Mobile login at 390px renders the form without the desktop illustration.
+
+**Still required:** Verify live email journeys, configure signed webhooks and frequent scheduler before release, verify native Argon2 on Vercel, environment isolation/network boundaries, monitoring/recovery and secret rotation. Homepage/account visual approval and production legal/contact content remain separate checks. Next incremental implementation: verified-user wedding onboarding. No commit, push or deployment is included.
+
+**Final checks, October 22:** Lint (zero warnings), type checking and the full production build passed. Build inventory confirms five account screens, the protected dynamic welcome page and ten dynamic API routes. The 14/14 integration test result above includes the final migration-readiness and receipt-concurrency changes. Production startup and browser rendering of the login screen passed. Production-only npm audit reports zero vulnerabilities. Local HTTP account testing uses development mode; production authentication deliberately requires an HTTPS origin. The development server is left running at http://localhost:3001. Secrets remain in ignored environment files; no live Resend send was claimed.
 
 ## Scaffold implementation (historical Phase 0A)
 
@@ -133,3 +155,25 @@ The user explicitly requires a clean, maintainable project without unnecessary c
 Started npm run dev at http://localhost:3000 and left it running for the user. Browser inspection confirms the styled placeholder and unavailable page render; the return link works with Enter. Homepage and stylesheet return 200; an unknown route returns 404. Captured browser warning/error logs are empty. This confirms the scaffold's current behavior only; authentication and wedding features remain unimplemented. The browser tab is left open. This later run supersedes the earlier verification-server shutdown for the current running state.
 
 For every next change, record implemented files/behavior, checks actually run and outcomes, document/schema/API implications, outstanding gates and the next useful journey. Keep planned, implemented and verified distinct; never mark a provider feature complete from mocks or a build alone.
+
+## Resend configuration check — October 22, 2026
+
+Loaded the effective local environment without displaying secrets. API key and sender email are present; Resend authenticated the read-only domains request and reported the matching sender domain as verified. Encryption/rate-limit keys and cron secret pass format checks. RESEND_WEBHOOK_SECRET is missing. No email was sent and delivery is not yet proven. Environment files remain ignored. Started the development server on port 3001 with the new configuration.
+
+## Review corrections — October 22, 2026
+
+- Fixed callback starvation: process only due receipts, defer unmatched receipts for one minute, and fail unmatched receipts after 48 hours while purging encrypted payloads and retaining minimal facts for 90 days. Added the retry index through the existing repeatable account migration and applied it to the configured development database.
+- Maintenance commands now select environment files using NODE_ENV (development by default), preserve process-variable precedence, and skip .env.local in test mode. Database checks use the same loader as migrations/email processing.
+- Verification: account integration suite passed 15 reported tests (14 subtests plus parent), including 20 unmatched receipts ahead of a valid callback, late correlation and terminal cleanup. Environment regression test passed for development/production/test selection and shell precedence. Type checking and lint passed. The first restricted lint process stalled; an unrestricted rerun completed successfully. No live email was sent; live provider verification remains pending. No commit or deployment performed.
+
+## Authentication QA corrections — October 22, 2026
+
+Reviewed the supplied authentication-qa-report.md and its linked multi-tab-authentication-qa.md. The main report's 17 cases passed; MT02/MT03/MT04/MT07 identified real UI failures.
+
+- Login and registration now check the server session and redirect signed-in users to /account. Added cross-tab invalidation on login/logout/password reset, with BroadcastChannel, storage fallback and focus/pageshow/visibility revalidation. Signals contain no identity or credentials. Full navigation clears stale account markup; server authorization remains authoritative.
+- Added Next.js data-scroll-behavior="smooth" to resolve the route-transition warning. Did not suppress React hydration warnings globally. The reported Grammarly body attributes were absent in the clean in-app browser; no hydration error or scroll warning was captured during the retest. This does not prove how the user's Chrome extensions behave.
+- Fixed uncertain email submission: a lost provider response remains submitting during retries, and becomes unknown rather than suppressed when its token expires/is consumed. Regression tests cover both cases without another provider call. Unknown submissions require reconciliation; no automatic blind resend is claimed.
+- Verification: 16/16 reported account tests passed (15 subtests plus parent), type checking passed and lint passed. Browser retest confirmed shared sessions, signed-in redirects from login and register, automatic logout in both directions, and an open login tab following sign-in in another tab. Browser-test account was created directly without email delivery; only its own account/session records are removed after verification. The original report's account remains unchanged.
+- External QA files remain historical evidence; results are recorded here inside the repository. Live inbox verification/reset delivery, signed provider callbacks and production environment gates remain pending. No commit/push/deployment included.
+
+Final QA delivery check: production build passed with login/register correctly rendered dynamically for server-session checks. The disposable QA account and its sessions were removed successfully; no mail was sent. Targeted diff whitespace check passed (the user's unrelated .env.example trailing blank line was left unchanged).

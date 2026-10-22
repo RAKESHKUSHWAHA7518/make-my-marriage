@@ -4,7 +4,7 @@ A wedding planning application for couples and families. One Next.js/TypeScript 
 
 ## Current state
 
-The scaffold and first homepage UI are implemented. The Stitch-based responsive homepage includes a custom SVG logo, product previews, navigation, FAQs and honest account-availability dialogs. Login and all business functionality remain unimplemented. No database or provider credentials are needed to preview the homepage.
+The scaffold, homepage/logo and application-owned account flows are implemented. Homepage account links now open registration/login. Accounts include verification, recovery, secure sessions and a protected welcome page. Live Resend delivery and deployment checks remain pending; wedding management is not implemented. No credentials are needed to preview the homepage or account screens.
 
 See [Project Status](docs/Wedding-Project-Status.md) for the ongoing major-feature progress log and next steps. See [Implementation Status](docs/Wedding-Implementation-Status.md) for detailed verification evidence and remaining technical work. See [Decision Record](docs/Wedding-Decision-Record.md) for approved conflict resolutions.
 
@@ -50,7 +50,29 @@ Node.js runtime is explicit in the root layout. One Vercel deployment may execut
 
 Actual secrets belong in ignored .env.local locally and environment-specific secret settings on Vercel later. .env.example contains only placeholders. No provider key is NEXT_PUBLIC. Do not commit credentials, guest/gallery secrets, sensitive fixtures or logs. Keep preview/production data and credentials isolated; previews must not send production invitations. The scaffold does not configure Vercel, Atlas, provider accounts, cron or network access.
 
-Add MongoDB/Argon2id with Phase 1, provider SDKs as their integrations start, and meaningful unit/integration/browser tests with the first business journey. There is no fake authentication, in-memory persistence substitute or successful mock API.
+MongoDB, Argon2id and signed Resend callbacks are implemented for accounts. There is no fake authentication, in-memory persistence substitute or successful mock API.
+
+### Enable account services
+
+Keep your existing ignored environment files; do not overwrite them with the example. Set `MONGODB_URI`, `MONGODB_DB_NAME` and an explicit `APP_ORIGIN` matching the browser origin (for example `http://localhost:3001` when using port 3001). Production requires HTTPS. The homepage's fallback origin does not enable account mutations.
+
+Set independent random 32-byte hex values for `RATE_LIMIT_HMAC_KEY` and `ACCOUNT_EMAIL_ENCRYPTION_KEY`, plus a random `CRON_SECRET` of at least 32 characters. See `.env.example` for a generation command. Preserve the encryption key while encrypted deliveries are pending; plan key rotation before production. Local keys were generated in ignored `.env.local` for this development checkpoint.
+
+Add `RESEND_API_KEY` and `RESEND_FROM_EMAIL` from your verified sender domain to ignored `.env` or `.env.local`, then restart the server. `.env.local` takes precedence over `.env`. Registration/resend/recovery return an unavailable-service error until email configuration exists; they never pretend an email was sent. Do not put credentials in chat or source control.
+
+```powershell
+npm run db:check
+npm run db:migrate
+npm run dev -- --port 3001
+```
+
+The check is read-only. Migration explicitly installs seven account collections with validators/indexes; it is repeatable and must run before account writes. It requires a transaction-capable MongoDB deployment and migration permissions. Runtime does not create schema automatically.
+
+Maintenance commands default to development. For production maintenance, explicitly set `$env:NODE_ENV = "production"` in a dedicated PowerShell session. They load `.env.production.local`, `.env.local`, `.env.production`, then `.env`; existing process variables take precedence. Test mode skips `.env.local`. Keep each environment's database and provider credentials separate. `npm run test:env` verifies this selection without real credentials.
+
+Account emails are durably queued in the same transaction as tokens and attempted after the response. `npm run email:process` retries up to two due jobs. Before release, configure a frequent authenticated scheduler calling `GET /api/internal/jobs/tick` with `Authorization: Bearer <CRON_SECRET>`; no permanent worker is required. Daily scheduling is insufficient for 30-minute password-reset links. Set `RESEND_WEBHOOK_SECRET` and configure Resend to send delivered/bounced/complained events to `POST /api/webhooks/resend` on your deployed HTTPS origin. Provider acceptance is tracked separately from delivery; bounced/complained recipients are suppressed.
+
+`npm run test:auth` runs integration/security tests against a uniquely named temporary database on the configured MongoDB cluster, then drops that exact database. Use a development cluster with test-database permissions. Email calls are mocked only inside tests; no real mail is sent. Vercel native Argon2 execution, live provider delivery, scheduling and production environment isolation still require validation.
 
 Current tooling follow-up: TypeScript 6.0.2 is pinned because the lint parser rejects TypeScript 7. ESLint 9.39.5 matches the bundled Next.js plugins' declared peer ranges but is deprecated; ESLint 10 is outside several of those ranges. Full npm audit reports five high-severity entries in one development lint-tool chain rooted in braces; production-only audit reports zero. See the status document for the advisory and required follow-up. Do not run audit fix --force or downgrade framework tooling blindly.
 
@@ -63,4 +85,4 @@ Current tooling follow-up: TypeScript 6.0.2 is pinned because the lint parser re
 5. [PRD](docs/Wedding-Management-PRD.md): compatible product behavior.
 6. [UI Guidelines](docs/Wedding-UI-Guidelines.md) and [Development Plan](docs/Wedding-Development-Plan.md).
 
-The 105 designed API operations are future scope, not implemented endpoints. See the status document before choosing the next task. Update it with each implementation's files, checks, limitations and outstanding work. Commit, push and deploy are separate actions; none is part of the scaffold task.
+Of 105 designed API operations, eight auth operations plus the account-scoped job tick and Resend webhook now exist; the remaining 95 and broader worker/provider use cases are future scope. See the status document before choosing the next task. Update it with each implementation's files, checks, limitations and outstanding work. Commit, push and deploy are separate actions.

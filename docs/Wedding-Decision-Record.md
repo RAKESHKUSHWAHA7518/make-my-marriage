@@ -56,3 +56,17 @@ Incomplete event drafts, moving users between weddings, refund/negative accounti
 - Keep examples separate from functionality: account CTAs open an availability dialog. No signup collection, API, DB schema, integration or authentication behavior is introduced.
 - Fonts and three supplied Stitch marketing images are served locally. Font licenses are bundled. Logo is original SVG geometry; no icon/image library dependency.
 - Retain the existing root page for this one marketing route; introduce route groups only when additional layouts warrant them.
+
+## Account implementation decisions — October 22, 2026
+
+- User approved completion of account code and will configure Resend credentials later. Missing configuration returns an error; it never creates a fake successful account/email flow.
+- Homepage account dialogs are superseded by real login/registration links. Stitch login layout uses the confirmed burgundy palette; other account forms share that layout.
+- Use the official MongoDB driver, Argon2id (64 MiB, three passes, one lane), 12–128-character new passwords and opaque hashed sessions/tokens. Initial lifetimes follow Architecture: seven-day sessions, 24-hour verification and 30-minute reset. Vercel work-factor validation remains pending.
+- Browser mutations require trusted Origin and a custom CSRF header, with no permissive CORS. Email capability tokens are placed in fragments and submitted as JSON; account pages use no-referrer.
+- Account email intent is committed transactionally and encrypted using a dedicated server key. Bounded post-response processing plus authenticated scheduled/manual retries uses durable MongoDB leases and stable provider idempotency keys. No permanent server is introduced.
+- Seven collections are explicitly migrated for accounts; the remaining schema and wedding membership rules belong to subsequent features. Current shared worker/webhook implementation handles account mail only. No wedding/API stubs are added.
+- Account code/local verification and live provider/production verification are separate milestones. Full Phase 1 remains incomplete until wedding setup, memberships, invitations and events are built.
+
+### Authentication QA behavior — October 22, 2026
+
+Signed-in users visiting login/register return to /account. Same-browser tabs share only credential-free session-change signals and revalidate the server session on focus/visibility/pageshow. Logout clears stale private UI through full navigation; no browser-stored token replaces the HttpOnly cookie. Uncertain email acceptance remains submitting on retry and unknown if eligibility expires, preserving operator-reconciliation semantics.

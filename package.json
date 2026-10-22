@@ -12,13 +12,21 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "db:check": "node --conditions=react-server --import tsx scripts/check-database.mjs",
+    "db:migrate": "node --conditions=react-server --import tsx scripts/migrate-accounts.ts",
+    "email:process": "node --conditions=react-server --import tsx scripts/send-account-mail.ts",
+    "test:auth": "node --conditions=react-server --import tsx --test tests/auth.test.ts",
+    "test:env": "node --import tsx --test tests/load-env.test.ts"
   },
   "dependencies": {
+    "argon2": "0.45.1",
+    "mongodb": "7.7.0",
     "next": "16.4.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "server-only": "0.0.1",
+    "svix": "2.8.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
@@ -30,6 +38,7 @@
     "eslint-config-next": "16.4.1",
     "postcss": "8.5.30",
     "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
     "typescript": "6.0.2"
   }
 }

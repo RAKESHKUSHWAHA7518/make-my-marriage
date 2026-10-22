@@ -1050,28 +1050,6 @@ svg {
   color: var(--muted);
   font-size: 9px;
 }
-.account-dialog {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 40px;
-  width: min(520px, calc(100% - 32px));
-  max-height: calc(100dvh - 32px);
-  margin: auto;
-  background: var(--background);
-  color: var(--foreground);
-  box-shadow: 0 25px 80px #2b212340;
-}
-.account-dialog::backdrop {
-  background: #2b212370;
-  backdrop-filter: blur(3px);
-}
-.account-dialog h2 {
-  font-size: 34px;
-}
-.account-dialog > p:not(.eyebrow) {
-  margin-block: 22px;
-  font-size: 14px;
-}
 @media (max-width: 1050px) {
   .navigation {
     gap: 14px;
@@ -1297,9 +1275,6 @@ svg {
   .footer-bottom {
     flex-direction: column;
     gap: 7px;
-  }
-  .account-dialog {
-    padding: 28px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

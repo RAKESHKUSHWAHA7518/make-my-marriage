@@ -1,5 +1,9 @@
 # Wedding Management — MongoDB Database Design
 
+**Account callback correction, October 22, 2026:** Unmatched Resend receipts retain `state: received` with `nextAttemptAt` delayed one minute. After 48 hours unmatched, they become `failed` with `lastErrorCode: UNMATCHED_DELIVERY`; encrypted payload is removed and `purgeAt` schedules removal after 90 days. The explicit repeatable account migration adds the provider/state/nextAttemptAt/receivedAt index. No collection or API is added.
+
+> Account implementation checkpoint — October 21, 2026: Explicit migration 001-accounts installs users, sessions, authTokens, rateLimits, deliveries, jobs and webhookReceipts with validators and indexes. Validation currently permits implemented account mail kinds only; future features must expand it through migrations. Token/session hashes, credentialVersion revocation, transactional token consumption and durable email intent are implemented. Encrypted recipient/payload fields exist while pending and are unset on terminal/expired deliveries; minimal delivery facts remain for suppression. Membership and remaining collections are not migrated. The 26-collection design remains the target. See Wedding-Implementation-Status.md for measured evidence; earlier scaffold-only statements are historical.
+
 **Version:** 2.2
 **Date:** October 15, 2026
 **Status:** Implementation specification; no live database has been created or changed.

@@ -1,5 +1,7 @@
 # Make My Marriage — UI Guidelines
 
+> Account UI checkpoint — October 21, 2026: The supplied Stitch desktop/mobile login exports are implemented using the approved burgundy palette, with matching registration, verification and recovery forms. Homepage account actions now link to these forms. Wedding previews remain illustrative. Actual validation, loading, invalid-link and unavailable-service feedback is present; account visual approval and live email verification remain separate checks.
+
 **Updated:** October 15, 2026. Aligned with approved Architecture, Database Design and API Design. Product requirements: [PRD](Wedding-Management-PRD.md). Implementation evidence: [Status](Wedding-Implementation-Status.md).
 
 ## 1. Design authority

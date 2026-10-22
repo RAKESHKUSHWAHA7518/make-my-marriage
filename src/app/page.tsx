@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { Brand } from "@/components/brand";
-import { AccountButton } from "@/components/marketing/account-button";
+import Link from "next/link";
 import { SiteHeader } from "@/components/marketing/site-header";
 
 function SectionHeading({
@@ -115,9 +115,9 @@ export default function HomePage() {
                 celebration in between.
               </p>
               <div className="button-row">
-                <AccountButton>
+                <Link href="/register" className="button button-primary">
                   Create your wedding <span aria-hidden="true">↗</span>
-                </AccountButton>
+                </Link>
                 <a className="button button-secondary" href="#how-it-works">
                   See how it works <span aria-hidden="true">↓</span>
                 </a>
@@ -671,9 +671,9 @@ export default function HomePage() {
               Give your wedding plans a shared home—and your family a clearer
               way to help.
             </p>
-            <AccountButton>
+            <Link href="/register" className="button button-primary">
               Create your wedding <span aria-hidden="true">↗</span>
-            </AccountButton>
+            </Link>
             <span className="availability-note">
               Account access is coming soon.
             </span>

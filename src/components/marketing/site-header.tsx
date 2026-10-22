@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Brand } from "@/components/brand";
-import { AccountButton } from "./account-button";
+import Link from "next/link";
 
 const links = [
   ["Features", "features"],
@@ -45,10 +45,12 @@ export function SiteHeader() {
               {label}
             </a>
           ))}
-          <AccountButton className="login-button">Log in</AccountButton>
-          <AccountButton>
+          <Link href="/login" className="login-button">
+            Log in
+          </Link>
+          <Link href="/register" className="button button-primary">
             Create your wedding <span aria-hidden="true">↗</span>
-          </AccountButton>
+          </Link>
         </nav>
       </div>
     </header>

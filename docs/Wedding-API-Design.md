@@ -1,5 +1,7 @@
 # Wedding Management — Detailed API Design
 
+> Account implementation checkpoint — October 21, 2026: All eight /api/v1/auth operations are implemented, plus GET /api/internal/jobs/tick and POST /api/webhooks/resend for account email only (10 routes; 95 remaining). Browser POST requests require exact trusted Origin, application/json and X-MMM-CSRF: 1. Verification/reset tokens come from email-link fragments and are submitted in JSON. Register/resend/forgot acknowledge durable intent with neutral 202 responses; missing provider configuration fails 503. Live provider verification and broader worker contracts remain pending. Earlier scaffold-zero counts below are historical. See Wedding-Implementation-Status.md.
+
 **Version:** 1.1 (aligned design baseline)
 **Date:** October 15, 2026
 **Related documents:** [Architecture v2.1](Wedding-System-Design-Architecture.md), [Database Design v2.2](Wedding-Database-Design.md)

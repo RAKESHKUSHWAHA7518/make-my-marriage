@@ -1,5 +1,7 @@
 # Make My Marriage — Document Compliance Audit
 
+> Account addendum — October 21, 2026: The historical audit below predates accounts. Current code adds eight account APIs, account-scoped job tick and signed Resend webhook, plus seven explicitly migrated MongoDB collections. Security/integration tests use a temporary database and mock provider delivery only inside tests. Live Resend and production deployment gates remain unverified. This is a scoped update, not a new full-product audit. See Wedding-Implementation-Status.md for current evidence.
+
 **Date:** October 15, 2026 (Asia/Kolkata).
 
 **Result:** The existing Phase 0A scaffold matches the approved scaffold scope. No new functional defect was found in the five current source files. The full product is not implemented or verified. Open tooling and planning findings are listed below.
