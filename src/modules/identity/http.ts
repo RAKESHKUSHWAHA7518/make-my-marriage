@@ -48,7 +48,7 @@ export function authorizedScheduler(request: Request) {
     b = Buffer.from(received);
   return a.length === b.length && timingSafeEqual(a, b);
 }
-async function body(request: Request) {
+export async function body(request: Request) {
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     throw new AccountError(400, "INVALID_CONTENT_TYPE", "Expected JSON.");
   const reader = request.body?.getReader();

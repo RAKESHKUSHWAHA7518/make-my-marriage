@@ -8,10 +8,11 @@ export function LogoutButton() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   return (
-    <div>
+    <div className="logout-control">
       <button
         className="button button-primary"
         disabled={pending}
+        aria-busy={pending}
         onClick={async () => {
           setPending(true);
           setError("");
@@ -36,9 +37,26 @@ export function LogoutButton() {
           }
         }}
       >
-        {pending ? "Signing out…" : "Sign out"}
+        <span className="logout-label">
+          <span
+            aria-hidden={pending}
+            style={{ visibility: pending ? "hidden" : "visible" }}
+          >
+            Sign out
+          </span>
+          <span
+            aria-hidden={!pending}
+            style={{ visibility: pending ? "visible" : "hidden" }}
+          >
+            Signing out…
+          </span>
+        </span>
       </button>
-      <p role="status">{error}</p>
+      {error && (
+        <p className="logout-error" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

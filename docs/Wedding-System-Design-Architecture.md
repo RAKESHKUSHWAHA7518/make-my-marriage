@@ -1,5 +1,7 @@
 # Wedding Management Platform — System Design Architecture
 
+> October 23, 2026 onboarding checkpoint: protected creation/overview pages, three thin Node wedding Route Handlers, server-only wedding business services and explicit MongoDB migration now exist within this deployment. No separate server/provider/background process was added. Invitations, events/dashboard, publication and media remain planned; see Wedding-Implementation-Status.md.
+
 > Account implementation checkpoint — October 21, 2026: Node Route Handlers, application-owned identity services, MongoDB persistence and bounded Resend account jobs are implemented in this single Next.js deployment. Eight auth routes, the account-scoped job tick and signed Resend webhook exist. No permanent worker or Express service was added. Live provider delivery, production scheduling and Vercel runtime validation remain gates. Earlier Phase 0A statements below are historical; see Wedding-Implementation-Status.md.
 
 **Version:** 2.1

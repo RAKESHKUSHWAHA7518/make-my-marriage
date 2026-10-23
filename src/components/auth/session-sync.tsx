@@ -13,17 +13,24 @@ export function announceSessionChange(kind: SessionChange["kind"]) {
     const channel = new BroadcastChannel(channelName);
     channel.postMessage(message);
     channel.close();
-  } catch { /* Storage events and focus revalidation cover unsupported browsers. */ }
+  } catch {
+    /* Storage events and focus revalidation cover unsupported browsers. */
+  }
   try {
     localStorage.setItem(channelName, JSON.stringify(message));
-  } catch { /* Private browsing may block storage. */ }
+  } catch {
+    /* Private browsing may block storage. */
+  }
 }
 
 export function SessionSync() {
   const pathname = usePathname();
   useEffect(() => {
     const entry = pathname === "/login" || pathname === "/register";
-    const protectedPage = pathname === "/account";
+    const protectedPage =
+      pathname === "/account" ||
+      pathname === "/wedding" ||
+      pathname.startsWith("/wedding/");
     if (!entry && !protectedPage) return;
     let disposed = false;
     let pending = false;
@@ -34,32 +41,54 @@ export function SessionSync() {
       pending = true;
       try {
         const response = await fetch("/api/v1/auth/me", {
-          cache: "no-store", credentials: "same-origin", signal: controller.signal,
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: controller.signal,
         });
         if (disposed) return;
-        if (response.status === 401 && protectedPage) window.location.replace("/login");
+        if (response.status === 401 && protectedPage)
+          window.location.replace("/login");
         else if (response.ok && entry) window.location.replace("/account");
-      } catch { /* A network error is not proof of logout. */ }
-      finally { pending = false; }
+      } catch {
+        /* A network error is not proof of logout. */
+      } finally {
+        pending = false;
+      }
     };
     const changed = (message: SessionChange) => {
-      if (!message || typeof message.id !== "string" || message.id === lastMessage) return;
+      if (
+        !message ||
+        typeof message.id !== "string" ||
+        message.id === lastMessage
+      )
+        return;
       if (message.kind !== "signed-in" && message.kind !== "signed-out") return;
       lastMessage = message.id;
       // A full navigation clears cached private markup and rechecks the server cookie.
-      if (protectedPage) window.location.replace(message.kind === "signed-out" ? "/login" : "/account");
+      if (protectedPage)
+        window.location.replace(
+          message.kind === "signed-out" ? "/login" : "/account",
+        );
       else void check();
     };
     const storage = (event: StorageEvent) => {
       if (event.key !== channelName || !event.newValue) return;
-      try { changed(JSON.parse(event.newValue)); } catch { /* Ignore unrelated invalid data. */ }
+      try {
+        changed(JSON.parse(event.newValue));
+      } catch {
+        /* Ignore unrelated invalid data. */
+      }
     };
-    const visible = () => { if (document.visibilityState === "visible") void check(); };
+    const visible = () => {
+      if (document.visibilityState === "visible") void check();
+    };
     let channel: BroadcastChannel | undefined;
     try {
       channel = new BroadcastChannel(channelName);
-      channel.onmessage = event => changed(event.data);
-    } catch { /* Storage events remain available. */ }
+      channel.onmessage = (event) => changed(event.data);
+    } catch {
+      /* Storage events remain available. */
+    }
     window.addEventListener("storage", storage);
     window.addEventListener("focus", check);
     window.addEventListener("pageshow", check);

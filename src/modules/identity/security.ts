@@ -46,13 +46,12 @@ export type Encrypted = {
   tag: string;
   keyVersion: number;
 };
-export function encrypt(value: string): Encrypted {
+export function encrypt(
+  value: string,
+  keyName = "ACCOUNT_EMAIL_ENCRYPTION_KEY",
+): Encrypted {
   const iv = randomBytes(12);
-  const cipher = createCipheriv(
-    "aes-256-gcm",
-    key("ACCOUNT_EMAIL_ENCRYPTION_KEY"),
-    iv,
-  );
+  const cipher = createCipheriv("aes-256-gcm", key(keyName), iv);
   const ciphertext = Buffer.concat([
     cipher.update(value, "utf8"),
     cipher.final(),

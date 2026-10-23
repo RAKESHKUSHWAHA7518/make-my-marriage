@@ -1,5 +1,11 @@
 # Make My Marriage — Approved Decision Record
 
+### Onboarding implementation — October 23, 2026
+
+**Countdown follow-up:** User explicitly requested days remaining on the saved-wedding overview. Derive calendar days from the saved date in the wedding's timezone; do not invent a ceremony time, countdown when the date is undecided, or negative remaining days. Show a wedding-day message and factual elapsed-days text for a past saved date. This adds private overview presentation, not public publication or the full dashboard.
+
+The user authorized building the named Wedding Onboarding V1 Stitch screens. Latest explicit product rules override export inventions: no concierge services, automatic partner access, Add Guest heading, fabricated progress/domain or end-to-end encryption claims. Existing brand and confirmed burgundy/ivory tokens remain authoritative. Names only suggest an editable title; they grant no access. Initial currencies are INR/USD/GBP/EUR/AUD/CAD/SGD/AED (two decimal units); money is bounded to nonnegative signed BSON Long. Gallery remains disabled with zero initial storage allowance until a later explicit media configuration. No expense-based currency edit lock is claimed implemented before expense/settings functionality. See Implementation Status for actual verification and remaining scope.
+
 **Date:** October 15, 2026. User approved the recommended conflict resolutions and root scaffold in this conversation. This records design decisions, not proof of implemented business behavior.
 
 ## Authority

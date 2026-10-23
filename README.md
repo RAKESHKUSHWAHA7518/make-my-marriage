@@ -4,7 +4,7 @@ A wedding planning application for couples and families. One Next.js/TypeScript 
 
 ## Current state
 
-The scaffold, homepage/logo and application-owned account flows are implemented. Homepage account links now open registration/login. Accounts include verification, recovery, secure sessions and a protected welcome page. Live Resend delivery and deployment checks remain pending; wedding management is not implemented. No credentials are needed to preview the homepage or account screens.
+The scaffold, homepage/logo, application-owned accounts and wedding onboarding are implemented. Verified users can create one private wedding and view its saved overview. Events, family invitations and remaining wedding planning features are pending. Live Resend delivery and deployment checks remain pending. Public/account screen previews need no credentials; saving a wedding requires MongoDB and server keys.
 
 See [Project Status](docs/Wedding-Project-Status.md) for the ongoing major-feature progress log and next steps. See [Implementation Status](docs/Wedding-Implementation-Status.md) for detailed verification evidence and remaining technical work. See [Decision Record](docs/Wedding-Decision-Record.md) for approved conflict resolutions.
 
@@ -66,7 +66,9 @@ npm run db:migrate
 npm run dev -- --port 3001
 ```
 
-The check is read-only. Migration explicitly installs seven account collections with validators/indexes; it is repeatable and must run before account writes. It requires a transaction-capable MongoDB deployment and migration permissions. Runtime does not create schema automatically.
+The check is read-only. Migration explicitly installs seven account and four onboarding collections with validators/indexes; it is repeatable and must run before writes. It requires a transaction-capable MongoDB deployment and migration permissions. Runtime does not create schema automatically.
+
+Wedding creation also requires an independent random 32-byte hex `CAPABILITY_ENCRYPTION_KEY` for the initial disabled gallery secret. Preserve this key; never use an account-email key for it. The existing ignored local key is configured. Run `npm run test:weddings` for isolated onboarding integration tests (a uniquely named disposable database is created and dropped). Initial currencies are INR/USD/GBP/EUR/AUD/CAD/SGD/AED. Gallery/media stays disabled with zero storage allowance until a later explicit media configuration. On this machine the default Turbopack build currently fails to connect its CSS subprocess; `npm run build -- --webpack` passed and `npm run dev -- --webpack --port 3001` is the supported local fallback. Compiler defaults have not been changed.
 
 Maintenance commands default to development. For production maintenance, explicitly set `$env:NODE_ENV = "production"` in a dedicated PowerShell session. They load `.env.production.local`, `.env.local`, `.env.production`, then `.env`; existing process variables take precedence. Test mode skips `.env.local`. Keep each environment's database and provider credentials separate. `npm run test:env` verifies this selection without real credentials.
 

@@ -1,5 +1,7 @@
 # Wedding Management — Detailed API Design
 
+> October 23, 2026 onboarding checkpoint: POST /weddings, GET /weddings/current and GET /weddings/{id} are implemented under /api/v1. Creation requires verified authentication and Idempotency-Key; settings responses omit secrets. Initial supported currencies: INR/USD/GBP/EUR/AUD/CAD/SGD/AED. Budget is a nonnegative integer string capped at 9223372036854775807 minor units. PATCH/dashboard/archive and membership invitation contracts remain planned. See Wedding-Implementation-Status.md for evidence.
+
 > Account implementation checkpoint — October 21, 2026: All eight /api/v1/auth operations are implemented, plus GET /api/internal/jobs/tick and POST /api/webhooks/resend for account email only (10 routes; 95 remaining). Browser POST requests require exact trusted Origin, application/json and X-MMM-CSRF: 1. Verification/reset tokens come from email-link fragments and are submitted in JSON. Register/resend/forgot acknowledge durable intent with neutral 202 responses; missing provider configuration fails 503. Live provider verification and broader worker contracts remain pending. Earlier scaffold-zero counts below are historical. See Wedding-Implementation-Status.md.
 
 **Version:** 1.1 (aligned design baseline)

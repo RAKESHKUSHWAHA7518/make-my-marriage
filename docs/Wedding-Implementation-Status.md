@@ -1,15 +1,78 @@
 # Make My Marriage — Implementation Status
 
-**Updated:** October 22, 2026 (Asia/Kolkata).
-**Scope:** Scaffold, homepage/logo and account feature. Earlier dated entries are historical snapshots.
+**Updated:** October 23, 2026 (Asia/Kolkata).
+**Scope:** Scaffold, homepage/logo, accounts and wedding onboarding. Earlier dated entries are historical snapshots.
 **Repository:** RAKESHKUSHWAHA7518/make-my-marriage, existing root checkout.
-**State:** Account code implemented and locally tested. Live email and production gates remain; wedding onboarding and remaining Phase 1 work are not implemented.
+**State:** Accounts and onboarding implemented, locally tested and user-approved. Live email, production gates and remaining Phase 1 journeys are pending.
+
+**User acceptance — October 23, 2026:** The user approved wedding onboarding, saved overview and the logout/countdown/date-validation follow-ups, and authorized this checkpoint's commit and push to GitHub on dev. Historical pending-approval and no-commit statements below retain their original context. Live email, forced lost-save-response browser testing and production gates remain open. The repository commit records the checkpoint identity.
 
 **User acceptance — October 22, 2026:** The user approved the delivered account feature after testing and code review and requested the status update, commit and GitHub push on dev. Project Status now summarizes the final 16-test account result, separate environment test, browser QA corrections and remaining live-provider gates. Prior no-commit statements describe their original implementation checkpoints. Resolve the new checkpoint identity from Git history; approval does not imply deployment or live-email validation.
 
-**Document audit:** The historical scaffold [Compliance Audit](Wedding-Compliance-Audit.md) counted 105 designed operations and 26 designed collections. The account checkpoint now implements eight auth operations plus account-scoped job tick and Resend webhook, and seven collections. The remaining 95 operations and broader worker/provider use cases are future work.
+**Document audit:** The historical scaffold [Compliance Audit](Wedding-Compliance-Audit.md) counted 105 designed operations and 26 designed collections. The current checkpoint implements 13 operations (eight auth, account job tick, Resend webhook, three wedding operations) and 11 migrated collections. The remaining 92 operations and broader provider use cases are future work.
+
+## Wedding onboarding — October 23, 2026
+
+**Implemented:** Protected `/wedding/create` and `/wedding`, linked from `/account`. Stitch project `1860855833908619349`, named `MMM — Wedding Onboarding V1`: desktop create `ddc91a136e24456ba44554e13bdfe637`, mobile create `376316d989af4b18a512b6624654f222`, desktop overview `9870e98c44e84ffcb69d67f321891a62`, mobile overview `3f76a5cf443343c5ae6ad6a91365181d`. All three named state boards reviewed. Existing logo/local fonts preserved; no dependency added.
+
+**Design reconciliation:** Exports invented an Add Guest heading, concierge/consultation services, partner access, IDs, scheduled progress and encryption/diagnostic claims. Omitted under the user's explicit brief. Single-page editable form, optional date/budget; no fake stats, draft autosave or unsupported controls.
+
+**Contracts/persistence:** Thin Node handlers: POST `/api/v1/weddings`, GET `/api/v1/weddings/current`, GET `/api/v1/weddings/{id}`. Server-only service enforces verified account, retained single-wedding membership, actor/operation-scoped request-hashed idempotency and tenant isolation. Transaction commits wedding, first ADMIN membership, activity and completed idempotency record. Unique slug retries collisions. Initial gallery secret is encrypted using independent `CAPABILITY_ENCRYPTION_KEY`; safe DTOs omit secrets/hashes. Public page unpublished, gallery/uploads disabled. Explicit repeatable migration 002 adds four collections with validators, unique indexes and TTL; applied to development. Writes refuse missing required unique indexes.
+
+**Input defaults:** 200-character names/title, valid date-only calendar value and IANA timezone. Initial supported currencies INR/USD/GBP/EUR/AUD/CAD/SGD/AED, all with two decimal units. UI ordinary amounts convert exactly to API integer strings and BSON Long; maximum 9223372036854775807 minor units. No arbitrary future-date requirement. Storage allowance starts at zero while media is disabled; configure an explicit allowance before enabling media. No currency editing endpoint in this increment; future expense-based lock remains required.
+
+**Reliability:** Duplicate submission disabled. Errors preserve values. Unknown outcomes retain the immutable payload/idempotency key for Retry, locking edits until resolved. No private form copy in localStorage. Removed membership cannot create another wedding. New routes participate in cross-tab session invalidation. Overview loading/errors show no synthetic data.
+
+**Verification:** `test:weddings` passed eight reported tests (seven cases plus parent): strict schema/money/date, unverified/key rollback, identical/different-key races, changed-payload conflict, membership uniqueness, cross-wedding isolation, safe DTOs, archived reads, removed access/replay and HTTP session/origin checks. Disposable database dropped. `test:auth` passed 16 reported tests; types and lint passed. Production `npm run build -- --webpack` passed. Default Turbopack build failed because its CSS Node subprocess exited before connecting, including outside the sandbox; default build is not recorded as passing and project compiler defaults remain unchanged. Supported fallback: `npm run dev -- --webpack --port 3001`.
+
+**Browser:** Disposable verified account, no email sent: sign-in → account → create, required-field errors, suggested/editable title, disabled saving and persisted overview with ADMIN, Date not decided, exact INR 5,00,000.01, Unpublished and Not enabled. A second test with optional fields blank persisted a custom title and showed Budget not set after reload. Existing-wedding, removed-access and unverified-email gates verified. Desktop and 390px mobile form/overview inspected; mobile document width equals viewport width. Screenshots saved outside the repository. No application error logged; an expected Fast Refresh full-reload development warning appeared while editing. Forced network-failure/Retry and overview error states are implemented but were not browser fault-injected. Signed out; disposable UI account, sessions and wedding records removed. Real accounts preserved.
+
+**Remaining:** User visual approval, Vercel/security/provider/scheduler gates. Invitations, settings mutations, archive actions, events/dashboard, public publication and media remain unimplemented. No commit, push or deployment included.
+
+## Onboarding date validation correction — October 23, 2026
+
+Fixed the code-review finding in `create-wedding-form.tsx`: before preparing a new submission, check the native date input's `validity.badInput` when a date is enabled. Incomplete native entries can expose an empty value; they now produce an accessible inline wedding-date error and focus the field instead of silently saving without the date. Valid blank optional dates remain allowed. The check does not run for an existing immutable retry payload, preserving unknown-outcome retry behavior. Server schema validation remains unchanged.
+
+Verification: type checking, lint and diff whitespace checks passed in the correction delivery. Reviewed the blank-date, disabled-date and retry branches. Independent browser follow-up on October 23 used a disposable synthetic verified account: native keyboard ArrowUp in an otherwise empty enabled date control produced `value=""`, `validity.badInput=true`. With all other required fields valid, submitting showed the complete-valid-date inline error and focused the date field. A complete date cleared that error; a genuinely blank date (`badInput=false`) and an explicitly undecided disabled date remained accepted by date validation. The latter cases used an intentionally invalid timezone to prevent saving. Cleanup confirmed zero test memberships, then removed only the disposable account/sessions. Screenshot: task visualization `partial-date-validation-20261023.png`. No live email, application-code change or new dependency in this verification follow-up. Immutable lost-response retry remains code-reviewed, not browser fault-injected. No API/database contract change, commit, push or deployment.
+
+## Wedding countdown — October 23, 2026
+
+**Independent browser QA:** See [Onboarding QA — October 23](Onboarding-QA-2026-10-23.md) for twenty executed manual onboarding cases, expected/actual results, 8/8 onboarding and 3/3 countdown suite results, test-data cleanup and diagnostics. No application code changed in this QA delivery. Chrome captured a hydration mismatch involving Grammarly body attributes; the scoped isolated-browser log was empty. Forced lost-save-response and live email remain unverified.
+
+At the user's explicit request, the saved overview now displays calendar days remaining when `weddingDate` exists, calculated in the saved wedding timezone. Date-only storage has no ceremony time, so no hours/minutes/seconds are fabricated. Wedding-day and factual past-date messages replace negative remaining counts. Undecided/invalid dates show no counter; the existing Date not decided state remains. A small client component refreshes the derived display every minute and on tab focus/visibility, with server-derived initial text to avoid timezone hydration differences. No database/API/publication changes or dependency added; no full dashboard claimed. Signed out and removed the disposable QA account, sessions and wedding records after verification; viewport restored.
+
+Verification: `npm run test:countdown` passed three tests covering different timezone dates at one instant, today/past dates, DST spring/fall transitions, leap days and missing/invalid inputs. Lint, type checks and `npm run build -- --webpack` passed. Browser QA with a disposable dated wedding showed 114 days until 14 February 2027 on desktop/mobile, Today for the local wedding date, and no counter after clearing that test date. Mobile has no horizontal overflow. Screenshots saved outside the repository; real wedding dates were never changed. User visual approval and production gates remain pending. No commit, push or deployment.
+
+## Logout layout correction — October 23, 2026
+
+
+
+The header logout control now reserves the same label width for Sign out and Signing out…, with one accessible label at a time. Header errors appear in a bounded, wrapping alert below the control instead of widening the account row. Header brand can shrink/wrap at narrow widths; hover/pending styling keeps readable burgundy-on-blush contrast. Shared account/gate logout controls retain normal inline error feedback. No authentication API/session behavior was changed.
+
+Verification: type checking and lint passed; diff whitespace check passed. A temporary localhost-only QA proxy delayed and failed logout without revoking the test session. At 360px, idle and pending button widths were both 74.225px; the failure alert stayed inside the viewport at 320/360/390/768/1280px, with no horizontal overflow. Real application logout returned to login. Temporary QA proxy stopped; disposable account/sessions removed and viewport restored. Screenshots are outside the repository. No email sent, new dependency, commit, push or deployment.
+
+## Onboarding visual follow-up — October 23, 2026
+
+The user correctly identified that the first delivery implemented behavior with simplified visuals. The seven named Stitch V1 references now drive the following presentation work. This supersedes the initial delivery's visual-completion implication; its historical functional evidence remains valid.
+
+| Reference | Implemented presentation |
+|---|---|
+| Create Wedding — Desktop | Centered heading/card, suggested-title badge/edit icon, timezone icon, full currency names, privacy callout, aligned actions and account header |
+| Create Wedding — Mobile | Three icon-led sections, single-column white form card, separate blush privacy panel and full-width primary action |
+| Saved Overview — Desktop | Three aligned detail cards, consistent SVG icons, ADMIN/account identity and saved-details notice |
+| Saved Overview — Mobile | Role/lifecycle heading, responsive card titles, labelled rows with separators and privacy status pills |
+| Validation and Save States | Inline error icons/borders, first-invalid-field focus, disabled/spinning save presentation, preserved-values failure alert and Retry |
+| Verification and Access States | Three individually selected cards with accent bars, icons, actual account/wedding text and three supplied locally stored Stitch images; real resend action reuses existing account API |
+| Overview Loading and Error States | Ivory/blush three-card skeleton with accessible loading status and reduced-motion support; illustrated error card with Retry and Back to account |
+
+Design-board tabs, variant numbers, diagnostics, concierge claims, auto partner access, fabricated IDs/progress and encryption promises remain excluded. These references represent states in the real flow, not seven new production routes or a public component playground. No API/database contract change, new dependency or provider delivery is included. Account names/roles come from the current session/membership; no ADMIN role is invented before creation.
+
+Checks: strict types, lint and `npm run build -- --webpack` passed; onboarding integration suite passed eight reported tests. Browser QA exercised desktop/mobile creation, validation/saving, saved overview and all three access cards. A missing target on the disposable membership deliberately triggered the overview error: Retry remained usable on repeated failure and recovered the saved overview after restoration. Loading fallback was observed during navigation/retry. Form has no horizontal overflow at 360/390/768/1280px; first-invalid-field focus verified. Screenshots live outside the repository. A development LCP image warning was corrected by eager loading/sizing above-fold local images; deliberate missing-record tests create expected development error logs. No live verification email was sent. Signed out and removed the disposable account, sessions, wedding/membership, activity and idempotency records; real data preserved.
+
+User visual approval, forced lost-save-response browser testing, live email and production gates remain pending. The default Turbopack limitation from the original checkpoint remains; the supported alternative compiler build passes. No commit, push or deployment performed.
 
 ## Accounts — October 21, 2026
+
 
 **Implemented:** Login from supplied Stitch desktop/mobile exports; registration, verification/resend, forgot/reset password, protected `/account` welcome and logout. Homepage links now reach the real account routes. No wedding dashboard or simulated login was added.
 

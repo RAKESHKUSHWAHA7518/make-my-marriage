@@ -17,7 +17,9 @@
     "db:migrate": "node --conditions=react-server --import tsx scripts/migrate-accounts.ts",
     "email:process": "node --conditions=react-server --import tsx scripts/send-account-mail.ts",
     "test:auth": "node --conditions=react-server --import tsx --test tests/auth.test.ts",
-    "test:env": "node --import tsx --test tests/load-env.test.ts"
+    "test:env": "node --import tsx --test tests/load-env.test.ts",
+    "test:countdown": "node --import tsx --test tests/countdown.test.ts",
+    "test:weddings": "node --conditions=react-server --import tsx --test tests/weddings.test.ts"
   },
   "dependencies": {
     "argon2": "0.45.1",

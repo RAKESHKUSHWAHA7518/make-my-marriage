@@ -1,5 +1,7 @@
 # Make My Marriage — Development Plan
 
+> October 23, 2026: wedding onboarding and saved overview implemented from named Stitch V1 screens, with local integration/browser checks. User visual acceptance and production gates remain pending. Next incremental journey to plan: explicit family membership invitations and acceptance; events/dashboard follow separately. Full Phase 1 is not complete. See Wedding-Implementation-Status.md.
+
 > Incremental account checkpoint — October 21, 2026: Account code and local security/integration tests are implemented; live Resend configuration/verification remains pending. Local MongoDB transactions and Argon2id have been exercised; Vercel/provider/cron gates remain open. Phase 1 is not complete: wedding creation, unique membership/last-ADMIN enforcement, partner invitations, events and shared dashboard are next incremental work. Homepage coming-soon account actions described in the historical entry below are now real registration/login links.
 
 **Updated:** October 15, 2026. Approved scope follows Architecture, Database Design, API Design and the latest user decisions. Track actual completion in [Implementation Status](Wedding-Implementation-Status.md). No dates, paid plans or launch readiness are implied.

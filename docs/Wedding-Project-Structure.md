@@ -1,6 +1,6 @@
 # Make My Marriage — Project Structure
 
-**Updated:** October 22, 2026. Application root is the existing make-my-marriage repository at C:/Users/rk751/Downloads/WeddingManagement. No nested app, git init or separate backend.
+**Updated:** October 23, 2026. Application root is the existing make-my-marriage repository at C:/Users/rk751/Downloads/WeddingManagement. No nested app, git init or separate backend.
 
 ## Current implemented paths
 
@@ -15,6 +15,8 @@ WeddingManagement/
       globals.css                    Tailwind, brand tokens and homepage styles
       (auth)/                        shared layout and five account screens
       account/                       protected welcome page and error boundary
+      wedding/                       protected create/saved overview, loading and failure states
+      api/v1/weddings/               create, current summary and scoped settings reads
       api/v1/auth/                   eight account Route Handlers
       api/internal/jobs/tick/        authenticated bounded account-mail processing
       api/webhooks/resend/           verified delivery/bounce/complaint callbacks
@@ -22,13 +24,16 @@ WeddingManagement/
       brand.tsx                      shared logo/wordmark
       marketing/site-header.tsx       responsive navigation
       auth/                          account form and logout button
+      weddings/                      workspace shell, access gates and creation form
     modules/identity/                contracts, account services, security and HTTP adapter
+    modules/weddings/                strict contracts, exact money, services and HTTP/page adapters
     infrastructure/
       config/env.ts                  server-only validated APP_ORIGIN
       mongodb/                       shared client, migration readiness and explicit migration
       resend/                        bounded email sending and callback reconciliation
   scripts/                           database check/migration and manual email processing
   tests/auth.test.ts                 isolated MongoDB account/security integration tests
+  tests/weddings.test.ts             isolated onboarding/race/access/privacy tests
   public/brand/logo-mark.svg          custom SVG logo and favicon
   public/images/                     three supplied Stitch marketing images
   src/app/fonts/                     two local fonts and their licenses

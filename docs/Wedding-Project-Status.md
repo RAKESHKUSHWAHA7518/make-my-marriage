@@ -1,18 +1,39 @@
 # Make My Marriage — Project Status
 
-**Last updated:** October 22, 2026 (Asia/Kolkata).
+**Last updated:** October 23, 2026 (Asia/Kolkata).
 
 This is our ongoing progress log for major features. Update it whenever a major feature is built or materially changed. Detailed checks, implementation files and technical gates belong in [Implementation Status](Wedding-Implementation-Status.md). Requirements and approved decisions remain governed by the existing product, architecture, database and API documents and the [Decision Record](Wedding-Decision-Record.md).
 
 ## Current progress
 
-The scaffold, homepage/logo and account feature are implemented. The user approved the account feature on October 22 after testing and code review. Account integration/security tests and the final browser QA retest pass. Live Resend delivery and deployment gates remain pending. Homepage wedding previews are illustrative; wedding management is still future work.
+The scaffold, homepage/logo, accounts and wedding onboarding are implemented. Accounts were user-approved October 22; wedding onboarding and its follow-ups were user-approved October 23. Creation persists a private wedding and creator ADMIN membership; the overview reads saved data. Live email/deployment gates remain pending. Events, family invitations and remaining planning features are future work.
 
 | Major feature | Status | Milestone date |
 |---|---|---|
 | Project scaffold — Phase 0A | Completed and locally verified; technical gates remain | October 15, 2026 |
 | Homepage and logo | Implemented and locally verified; visual approval pending | October 16, 2026 |
 | Accounts: registration, login, verification and recovery | Implemented, locally verified and user-approved October 22; live delivery pending | October 21, 2026 |
+| Wedding onboarding and saved overview | Implemented, locally tested and user-approved; production gates remain | October 23, 2026 |
+
+## 4. Wedding onboarding and saved overview
+
+**Implemented October 23, 2026:** Exact named Stitch Wedding Onboarding V1 creation/overview references, existing logo and burgundy palette. Editable suggested title, searchable timezone, currency, optional date/budget; validation/saving/retry; verification/existing/removed access gates; overview loading/error states. Atomic wedding and creator ADMIN membership. Public publication and gallery access stay disabled.
+
+**Verification:** Eight reported onboarding tests (seven cases plus parent), 16 account regression tests, types, lint and the alternative-compiler production build passed. Browser creation and desktop/mobile overview were exercised with disposable synthetic data. See [detailed onboarding evidence](Wedding-Implementation-Status.md#wedding-onboarding--october-23-2026), including the default build limitation.
+
+**Visual follow-up — October 23:** The initial delivery used simplified styling and did not finish all seven reference designs. That audit is preserved here. The follow-up implements the desktop/mobile form and overview refinements, inline error/saving/failure presentation, three individual access cards with supplied local imagery, and the overview skeleton/error design. Design-board tabs and technical annotations are not customer screens. Verification evidence and remaining review are recorded in the [visual follow-up](Wedding-Implementation-Status.md#onboarding-visual-follow-up--october-23-2026). User visual approval is still pending.
+
+**User acceptance — October 23:** The user confirmed the delivered features look good and authorized this documentation update, commit and GitHub push. This accepts wedding onboarding, saved overview and the logout/countdown/date-validation follow-ups. Earlier pending-approval statements describe their original checkpoints. Approval does not establish live email or production readiness.
+
+**Remaining:** Production gates, live email and forced lost-save-response browser testing. Next increment: plan explicit family invitations and acceptance. Events, dashboard statistics, publishing and uploads are not complete.
+
+**Independent onboarding QA — October 23:** Twenty manual browser cases passed, including validation, exact saved money, persistence, optional blanks and existing/unverified/removed access gates. Existing onboarding and countdown suites passed 8/8 and 3/3 reported tests. Synthetic data was removed; personal wedding records preserved. See [QA evidence and limits](Onboarding-QA-2026-10-23.md). Chrome captured a Grammarly-attribute hydration mismatch; forced lost-save-response and live-email checks remain pending. This is verification, not user visual approval.
+
+**Logout layout correction — October 23:** Reserved space for the pending label, contained header error feedback and corrected the hover contrast. Browser checks covered pending/failure states and 320–1280px widths; type checking and lint passed. See [logout evidence](Wedding-Implementation-Status.md#logout-layout-correction--october-23-2026).
+
+**Wedding countdown — October 23:** Added days remaining to the saved overview when a date exists, using the wedding timezone. Includes today/past-date states, browser clock refresh and no countdown for an undecided date. Date-boundary tests pass; see [countdown evidence](Wedding-Implementation-Status.md#wedding-countdown--october-23-2026) for verification and remaining review.
+
+**Onboarding date validation correction — October 23:** Incomplete native date entries now show an inline error instead of being silently omitted. Independent browser verification reproduced an empty-value/badInput native entry and confirmed error/focus behavior, complete-date correction, and blank/undecided date handling. No test wedding was created; synthetic account removed. Intentionally blank optional dates and immutable save retries remain supported; lost-response retry was not browser fault-injected. See [validation evidence](Wedding-Implementation-Status.md#onboarding-date-validation-correction--october-23-2026).
 
 ## 1. Project scaffold
 
@@ -56,7 +77,7 @@ The scaffold, homepage/logo and account feature are implemented. The user approv
 
 ## Next useful feature
 
-Next, plan verified-user wedding onboarding: create one wedding, establish its ADMIN membership and show a persisted workspace summary. Confirm the scope before implementation; validate live account emails before releasing the dependent journey. Then add partner invitations and events incrementally. Enforce unique user membership and last-ADMIN rules before collaboration. Households/RSVP, planning, invitations, gallery/archive and launch validation follow later.
+After onboarding visual review, plan explicit family membership invitations and acceptance. Define ADMIN/MANAGER authorization, matching verified email, retained single-wedding membership, last-ADMIN protection and revoke/remove behavior before collaboration. Validate live email before releasing invitations. Events follow as a separate increment; households/RSVP, planning, public websites, gallery/archive and launch validation follow later.
 
 ## How to maintain this log
 
