@@ -14,8 +14,13 @@ The scaffold, homepage/logo, accounts and wedding onboarding are implemented. Ac
 | Homepage and logo | Implemented and locally verified; visual approval pending | October 16, 2026 |
 | Accounts: registration, login, verification and recovery | Implemented, locally verified and user-approved October 22; live delivery pending | October 21, 2026 |
 | Wedding onboarding and saved overview | Implemented, locally tested and user-approved; production gates remain | October 23, 2026 |
+| Edit wedding details | Implemented; core browser flows and automated checks passed; confirmation/retry coverage and user approval pending | October 23, 2026 |
 
 ## 4. Wedding onboarding and saved overview
+
+**Edit wedding details — October 23:** Implemented the next increment at `/wedding/details`, linked from the overview. ADMIN/MANAGER can edit saved names, title, date, timezone, currency and budget; optional date/budget can be cleared. Includes validation, currency lock after recorded expenses, optimistic edit conflicts, Retry, discard confirmation and archived read-only details. Onboarding integration suite now passes 11 reported tests. User acceptance and browser visual QA for this increment remain pending; see [edit evidence](Wedding-Implementation-Status.md#edit-wedding-details--october-23-2026). Family invitations remain planned.
+
+**Independent edit-details QA — October 23:** Core browser save/clear/countdown, conflicting-save protection, expense currency lock and archived read-only/stale-save restrictions passed; 11/11 reported integration tests passed. Cancel preserved saved data. Native confirmation handling left conflict reload inconclusive; lost-response retry and user approval remain pending. Synthetic fixtures removed and personal wedding preserved. See [detailed QA evidence](Edit-Wedding-Details-QA-2026-10-23.md).
 
 **Implemented October 23, 2026:** Exact named Stitch Wedding Onboarding V1 creation/overview references, existing logo and burgundy palette. Editable suggested title, searchable timezone, currency, optional date/budget; validation/saving/retry; verification/existing/removed access gates; overview loading/error states. Atomic wedding and creator ADMIN membership. Public publication and gallery access stay disabled.
 

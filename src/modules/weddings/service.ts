@@ -8,7 +8,7 @@ import {
   randomToken,
 } from "@/modules/identity/security";
 import type { User } from "@/modules/identity/service";
-import { createWeddingSchema } from "./schema";
+import { createWeddingSchema, patchWeddingSchema } from "./schema";
 
 const fail = (code: string, message: string) =>
   new AccountError(409, code, message);
@@ -51,6 +51,9 @@ export async function weddingFor(user: User, id?: string) {
     budgetMinor: row.budgetMinor?.toString() as string | undefined,
     role: membership.role as "ADMIN" | "MANAGER",
     gallery: { isEnabled: row.gallery.isEnabled as boolean },
+    currencyLocked: !!(await db
+      .collection("expenses")
+      .findOne({ weddingId: row._id }, { projection: { _id: 1 } })),
   };
 }
 export async function currentWedding(user: User) {
@@ -64,6 +67,148 @@ export async function currentWedding(user: User) {
         version: row.version,
       }
     : null;
+}
+
+export async function updateWedding(user: User, id: string, payload: unknown) {
+  const input = patchWeddingSchema.parse(payload);
+  const db = await getDatabase();
+  const membership = await membershipFor(user);
+  if (
+    !membership ||
+    membership.status !== "active" ||
+    membership.weddingId.toString() !== id
+  )
+    throw new AccountError(404, "NOT_FOUND", "Wedding unavailable.");
+  const session = db.client.startSession();
+  try {
+    return await session.withTransaction(
+      async () => {
+        const now = new Date();
+        // All future expense writes and archive actions must take this same fence.
+        const wedding = await db
+          .collection("weddings")
+          .findOneAndUpdate(
+            { _id: membership.weddingId, state: "active" },
+            { $inc: { writeFence: Long.ONE } },
+            { session, returnDocument: "after" },
+          );
+        if (!wedding)
+          throw fail(
+            "WEDDING_ARCHIVED",
+            "This wedding is archived. Wedding details cannot be edited.",
+          );
+        const actor = await db
+          .collection<User>("users")
+          .findOneAndUpdate(
+            {
+              _id: user._id,
+              status: "active",
+              credentialVersion: user.credentialVersion,
+            },
+            { $set: { updatedAt: now } },
+            { session, returnDocument: "after" },
+          );
+        if (!actor)
+          throw new AccountError(
+            401,
+            "UNAUTHENTICATED",
+            "Please sign in again.",
+          );
+        const access = await db
+          .collection("memberships")
+          .findOneAndUpdate(
+            {
+              _id: membership._id,
+              userId: user._id,
+              weddingId: wedding._id,
+              status: "active",
+              role: { $in: ["ADMIN", "MANAGER"] },
+            },
+            { $set: { updatedAt: now } },
+            { session, returnDocument: "after" },
+          );
+        if (!access)
+          throw new AccountError(404, "NOT_FOUND", "Wedding unavailable.");
+        if (wedding.version !== input.expectedVersion)
+          throw Object.assign(
+            fail(
+              "VERSION_CONFLICT",
+              "These details were updated by someone else. Reload the latest details before saving again.",
+            ),
+            { currentVersion: wedding.version },
+          );
+        if (
+          input.currency &&
+          input.currency !== wedding.currency &&
+          (await db
+            .collection("expenses")
+            .findOne(
+              { weddingId: wedding._id },
+              { session, projection: { _id: 1 } },
+            ))
+        )
+          throw fail(
+            "CURRENCY_LOCKED",
+            "Currency is locked because an expense has been recorded.",
+          );
+        const changes: Document = { updatedAt: now };
+        const unset: Document = {};
+        for (const key of [
+          "couple",
+          "title",
+          "timezone",
+          "currency",
+          "weddingDate",
+          "budgetMinor",
+        ] as const) {
+          const value = input[key];
+          if (value === null) unset[key] = "";
+          else if (value !== undefined)
+            changes[key] =
+              key === "budgetMinor" ? Long.fromString(value as string) : value;
+        }
+        if (input.couple || input.weddingDate !== undefined)
+          changes["publicPage.sourceChanged"] = true;
+        const updated = await db
+          .collection("weddings")
+          .findOneAndUpdate(
+            { _id: wedding._id, version: input.expectedVersion },
+            {
+              $set: changes,
+              $inc: { version: 1 },
+              ...(Object.keys(unset).length ? { $unset: unset } : {}),
+            },
+            { session, returnDocument: "after" },
+          );
+        if (!updated)
+          throw fail(
+            "VERSION_CONFLICT",
+            "Reload the latest details before saving again.",
+          );
+        await db.collection("activity").insertOne(
+          {
+            schemaVersion: 1,
+            createdAt: now,
+            updatedAt: now,
+            weddingId: wedding._id,
+            actor: { type: "user", userId: user._id },
+            action: "wedding.updated",
+            entityType: "wedding",
+            entityId: wedding._id,
+            summary: "Wedding details updated",
+            beforeVersion: wedding.version,
+            afterVersion: updated.version,
+            occurredAt: now,
+          },
+          { session },
+        );
+        return summary(updated);
+      },
+      { writeConcern: { w: "majority" } },
+    );
+  } finally {
+    await session.endSession();
+  }
 }
 
 async function ensureIndexes() {

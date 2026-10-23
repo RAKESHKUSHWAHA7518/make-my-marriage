@@ -15,8 +15,8 @@ WeddingManagement/
       globals.css                    Tailwind, brand tokens and homepage styles
       (auth)/                        shared layout and five account screens
       account/                       protected welcome page and error boundary
-      wedding/                       protected create/saved overview, loading and failure states
-      api/v1/weddings/               create, current summary and scoped settings reads
+      wedding/                       protected create, saved overview and details editing; loading/failure states
+      api/v1/weddings/               create, current summary, scoped settings reads and ordinary detail updates
       api/v1/auth/                   eight account Route Handlers
       api/internal/jobs/tick/        authenticated bounded account-mail processing
       api/webhooks/resend/           verified delivery/bounce/complaint callbacks
@@ -24,7 +24,7 @@ WeddingManagement/
       brand.tsx                      shared logo/wordmark
       marketing/site-header.tsx       responsive navigation
       auth/                          account form and logout button
-      weddings/                      workspace shell, access gates and creation form
+      weddings/                      workspace shell, access gates and shared create/edit form
     modules/identity/                contracts, account services, security and HTTP adapter
     modules/weddings/                strict contracts, exact money, services and HTTP/page adapters
     infrastructure/

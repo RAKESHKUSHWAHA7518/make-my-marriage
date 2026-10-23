@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { WeddingIcon } from "./wedding-icon";
 import {
   budgetToMinor,
@@ -9,7 +9,25 @@ import {
   currencies,
 } from "@/modules/weddings/schema";
 
-export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
+export type EditableWedding = {
+  id: string;
+  version: number;
+  title: string;
+  couple: { brideName: string; groomName: string };
+  timezone: string;
+  currency: string;
+  weddingDate?: string;
+  budgetMinor?: string;
+  currencyLocked: boolean;
+};
+
+export function CreateWeddingForm({
+  timezones,
+  wedding,
+}: {
+  timezones: string[];
+  wedding?: EditableWedding;
+}) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const focusFirstError = () =>
@@ -19,24 +37,40 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
         ?.focus(),
     );
   const [uncertain, setUncertain] = useState(false);
-  const [bride, setBride] = useState("");
-  const [groom, setGroom] = useState("");
-  const [title, setTitle] = useState("");
-  const [titleEdited, setTitleEdited] = useState(false);
-  const [undecided, setUndecided] = useState(true);
-  const [currency, setCurrency] = useState("INR");
+  const [bride, setBride] = useState(wedding?.couple.brideName ?? "");
+  const [groom, setGroom] = useState(wedding?.couple.groomName ?? "");
+  const [title, setTitle] = useState(wedding?.title ?? "");
+  const [titleEdited, setTitleEdited] = useState(!!wedding);
+  const [undecided, setUndecided] = useState(!wedding?.weddingDate);
+  const [currency, setCurrency] = useState(wedding?.currency ?? "INR");
+  const [dirty, setDirty] = useState(false);
+  const [conflict, setConflict] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [fields, setFields] = useState<Record<string, string>>({});
   const locked = useRef(false);
   const submission = useRef<{ key: string; input: unknown } | null>(null);
+  useEffect(() => {
+    if (!wedding || !dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [wedding, dirty]);
+  function discard() {
+    return (
+      !dirty ||
+      window.confirm("Discard your changes? Your unsaved changes will be lost.")
+    );
+  }
   const suggested =
     bride.trim() && groom.trim()
       ? `${bride.trim()} & ${groom.trim()}’s Wedding`
       : "";
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (locked.current) return;
+    if (locked.current || conflict) return;
     const form = new FormData(event.currentTarget);
     setError("");
     setFields({});
@@ -87,24 +121,38 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
         return;
       }
       if (!submission.current)
-        submission.current = { key: crypto.randomUUID(), input: result.data };
+        submission.current = {
+          key: crypto.randomUUID(),
+          input: wedding
+            ? {
+                ...result.data,
+                weddingDate: result.data.weddingDate ?? null,
+                budgetMinor: result.data.budgetMinor ?? null,
+                expectedVersion: wedding.version,
+              }
+            : result.data,
+        };
     }
     locked.current = true;
     setPending(true);
     try {
-      const response = await fetch("/api/v1/weddings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-MMM-CSRF": "1",
-          "Idempotency-Key": submission.current.key,
+      const response = await fetch(
+        wedding ? `/api/v1/weddings/${wedding.id}` : "/api/v1/weddings",
+        {
+          method: wedding ? "PATCH" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-MMM-CSRF": "1",
+            "Idempotency-Key": submission.current.key,
+          },
+          body: JSON.stringify(submission.current.input),
+          signal: AbortSignal.timeout(20000),
         },
-        body: JSON.stringify(submission.current.input),
-        signal: AbortSignal.timeout(20000),
-      });
+      );
       const data = await response.json();
       if (response.ok) {
-        router.replace("/wedding");
+        setDirty(false);
+        router.replace(wedding ? "/wedding?updated=1" : "/wedding");
         router.refresh();
         return;
       }
@@ -113,6 +161,17 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
         router.refresh();
         return;
       }
+      if (wedding && response.status === 404) {
+        router.replace("/account");
+        router.refresh();
+        return;
+      }
+      if (
+        ["VERSION_CONFLICT", "WEDDING_ARCHIVED", "CURRENCY_LOCKED"].includes(
+          data.error?.code,
+        )
+      )
+        setConflict(true);
       if (
         [
           "ACCESS_REMOVED",
@@ -162,7 +221,7 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
         {fields[path]}
       </span>
     );
-  const frozen = pending || uncertain;
+  const frozen = pending || uncertain || conflict;
   return (
     <form
       className="wedding-card wedding-form"
@@ -170,6 +229,7 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
       onSubmit={submit}
       noValidate
       aria-busy={pending}
+      onChange={() => setDirty(true)}
     >
       <fieldset disabled={frozen} className="wedding-fields">
         <legend className="sr-only">Wedding details</legend>
@@ -190,7 +250,11 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
               {...invalid("couple.brideName")}
             />
             {message("couple.brideName")}
-            <small>The name you want to use in your wedding workspace.</small>
+            <small>
+              {wedding
+                ? "Changing a name does not invite someone to your wedding."
+                : "The name you want to use in your wedding workspace."}
+            </small>
           </label>
           <label>
             Groom’s name <span>*</span>
@@ -232,7 +296,11 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
               <WeddingIcon name="edit" />
             </span>
             {message("title")}
-            <small>Suggested from your names. You can edit it.</small>
+            <small>
+              {wedding
+                ? "Changing your names will not replace this saved workspace name."
+                : "Suggested from your names. You can edit it."}
+            </small>
           </label>
           <h2 className="wedding-form-section">
             <WeddingIcon name="globe" />
@@ -244,7 +312,7 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
               <input
                 name="timezone"
                 list="wedding-timezones"
-                defaultValue="Asia/Kolkata"
+                defaultValue={wedding?.timezone ?? "Asia/Kolkata"}
                 required
                 autoComplete="off"
                 {...invalid("timezone")}
@@ -257,13 +325,18 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
               ))}
             </datalist>
             {message("timezone")}
-            <small>Type to search time zones.</small>
+            <small>
+              {wedding
+                ? "Type to search. Changing the time zone does not change existing event times."
+                : "Type to search time zones."}
+            </small>
           </label>
           <label>
             Currency <span>*</span>
             <select
               name="currency"
               value={currency}
+              disabled={wedding?.currencyLocked}
               onChange={(e) => setCurrency(e.target.value)}
             >
               {currencies.map((code) => (
@@ -275,7 +348,9 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
             </select>
             {message("currency")}
             <small>
-              Currency cannot be changed after an expense is recorded.
+              {wedding?.currencyLocked
+                ? "Currency is locked because an expense has been recorded."
+                : "Currency cannot be changed after an expense is recorded."}
             </small>
           </label>
           <h2 className="wedding-form-section">
@@ -288,6 +363,7 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
               <input
                 name="date"
                 type="date"
+                defaultValue={wedding?.weddingDate ?? ""}
                 disabled={undecided || frozen}
                 {...invalid("weddingDate")}
               />
@@ -306,6 +382,11 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
             Overall wedding budget <small>(Optional)</small>
             <input
               name="budget"
+              defaultValue={
+                wedding?.budgetMinor === undefined
+                  ? ""
+                  : `${BigInt(wedding.budgetMinor) / 100n}.${(BigInt(wedding.budgetMinor) % 100n).toString().padStart(2, "0")}`
+              }
               inputMode="decimal"
               placeholder="e.g. 500000"
               maxLength={24}
@@ -324,8 +405,9 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
         <div>
           <strong>Private by design</strong>
           <p>
-            Only you have access for now. You can invite your partner later.
-            Your public wedding page stays unpublished.
+            {wedding
+              ? "Saving these details does not publish your wedding page or change anyone’s access."
+              : "Only you have access for now. You can invite your partner later. Your public wedding page stays unpublished."}
           </p>
         </div>
       </aside>
@@ -349,22 +431,51 @@ export function CreateWeddingForm({ timezones }: { timezones: string[] }) {
         </div>
       )}
       <div className="wedding-actions">
-        <Link href="/account">
-          <WeddingIcon name="back" /> Back to account
-        </Link>
-        <button
-          type="submit"
-          className="button button-primary"
-          disabled={pending}
-        >
-          {pending && <span className="wedding-spinner" />}
-          {pending
-            ? "Creating your wedding…"
-            : error
-              ? "Retry"
-              : "Create wedding"}
-          {!pending && <WeddingIcon name={error ? "retry" : "arrow"} />}
-        </button>
+        {wedding ? (
+          <button
+            type="button"
+            className="button button-secondary"
+            disabled={pending}
+            onClick={() => {
+              if (discard()) router.push("/wedding");
+            }}
+          >
+            Cancel
+          </button>
+        ) : (
+          <Link href="/account">
+            <WeddingIcon name="back" /> Back to account
+          </Link>
+        )}
+        {conflict ? (
+          <button
+            type="button"
+            className="button button-primary"
+            onClick={() => {
+              if (discard()) window.location.reload();
+            }}
+          >
+            Reload latest details
+          </button>
+        ) : (
+          <button
+            type="submit"
+            className="button button-primary"
+            disabled={pending}
+          >
+            {pending && <span className="wedding-spinner" />}
+            {pending
+              ? wedding
+                ? "Saving changes…"
+                : "Creating your wedding…"
+              : error
+                ? "Retry"
+                : wedding
+                  ? "Save changes"
+                  : "Create wedding"}
+            {!pending && <WeddingIcon name={error ? "retry" : "arrow"} />}
+          </button>
+        )}
       </div>
     </form>
   );

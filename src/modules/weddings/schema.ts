@@ -65,6 +65,21 @@ export const createWeddingSchema = z.strictObject({
 });
 export type CreateWedding = z.infer<typeof createWeddingSchema>;
 
+// Omitted fields are unchanged; null explicitly clears optional details.
+export const patchWeddingSchema = createWeddingSchema
+  .partial()
+  .extend({
+    weddingDate: createWeddingSchema.shape.weddingDate.nullable(),
+    budgetMinor: createWeddingSchema.shape.budgetMinor.nullable(),
+    expectedVersion: z.number().int().positive(),
+  })
+  .refine(
+    (input) => Object.keys(input).some((key) => key !== "expectedVersion"),
+    {
+      message: "Supply at least one wedding detail to update.",
+    },
+  );
+
 export function budgetToMinor(value: string) {
   if (!value.trim()) return undefined;
   const clean = value.trim();

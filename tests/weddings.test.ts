@@ -14,9 +14,11 @@ import {
   createWedding,
   currentWedding,
   weddingFor,
+  updateWedding,
 } from "../src/modules/weddings/service";
 import {
   createWeddingSchema,
+  patchWeddingSchema,
   budgetToMinor,
 } from "../src/modules/weddings/schema";
 import { handleWedding } from "../src/modules/weddings/http";
@@ -88,6 +90,165 @@ test("wedding onboarding invariants in an isolated database", async (t) => {
       assert.equal(await db.collection("weddings").countDocuments(), 0);
     });
     const actor = await user();
+    await t.test(
+      "wedding edits validate, clear optional values and preserve privacy",
+      async () => {
+        const editor = await user();
+        const wedding = await createWedding(
+          editor,
+          { ...input, weddingDate: "2027-02-14" },
+          "edit-details-key-12345",
+        );
+        for (const payload of [
+          { expectedVersion: 1 },
+          { expectedVersion: 0, title: "Test" },
+          { expectedVersion: 1, state: "archived" },
+          { expectedVersion: 1, weddingDate: "2027-02-30" },
+        ])
+          assert.equal(patchWeddingSchema.safeParse(payload).success, false);
+        const changed = await updateWedding(editor, wedding.id, {
+          expectedVersion: 1,
+          title: "Our new title",
+          weddingDate: null,
+          budgetMinor: null,
+          timezone: "Europe/London",
+        });
+        assert.equal(changed!.version, 2);
+        const saved = (await weddingFor(editor))!;
+        assert.equal(saved.title, "Our new title");
+        assert.equal(saved.weddingDate, undefined);
+        assert.equal(saved.budgetMinor, undefined);
+        assert.equal(saved.timezone, "Europe/London");
+        assert.deepEqual(saved.couple, input.couple);
+        assert.equal(saved.publicPage.state, "unpublished");
+        assert.equal(saved.gallery.isEnabled, false);
+        assert.equal(saved.currencyLocked, false);
+        assert.equal(
+          await db
+            .collection("activity")
+            .countDocuments({
+              weddingId: new ObjectId(wedding.id),
+              action: "wedding.updated",
+            }),
+          1,
+        );
+        await assert.rejects(
+          updateWedding(editor, wedding.id, {
+            expectedVersion: 1,
+            title: "Stale",
+          }),
+          { code: "VERSION_CONFLICT", currentVersion: 2 },
+        );
+        await updateWedding(editor, wedding.id, {
+          expectedVersion: 2,
+          budgetMinor: "0",
+          weddingDate: "2028-02-29",
+        });
+        assert.equal((await weddingFor(editor))!.budgetMinor, "0");
+      },
+    );
+    await t.test(
+      "MANAGER edits, currency lock and archive/removal guards",
+      async () => {
+        const editor = await user();
+        const outsider = await user();
+        const wedding = await createWedding(
+          editor,
+          input,
+          "edit-guards-key-123456",
+        );
+        await db
+          .collection("memberships")
+          .updateOne({ userId: editor._id }, { $set: { role: "MANAGER" } });
+        await updateWedding(editor, wedding.id, {
+          expectedVersion: 1,
+          currency: "USD",
+        });
+        await db
+          .collection("expenses")
+          .insertOne({
+            weddingId: new ObjectId(wedding.id),
+            deletedAt: new Date(),
+          });
+        assert.equal((await weddingFor(editor))!.currencyLocked, true);
+        await assert.rejects(
+          updateWedding(editor, wedding.id, {
+            expectedVersion: 2,
+            currency: "EUR",
+          }),
+          { code: "CURRENCY_LOCKED" },
+        );
+        await updateWedding(editor, wedding.id, {
+          expectedVersion: 2,
+          title: "Still editable",
+          currency: "USD",
+        });
+        await assert.rejects(
+          updateWedding(outsider, wedding.id, {
+            expectedVersion: 3,
+            title: "Unauthorized",
+          }),
+          { status: 404 },
+        );
+        await db
+          .collection("weddings")
+          .updateOne(
+            { _id: new ObjectId(wedding.id) },
+            { $set: { state: "archived" } },
+          );
+        await assert.rejects(
+          updateWedding(editor, wedding.id, {
+            expectedVersion: 3,
+            title: "Archived",
+          }),
+          { code: "WEDDING_ARCHIVED" },
+        );
+        await db
+          .collection("memberships")
+          .updateOne({ userId: editor._id }, { $set: { status: "removed" } });
+        await assert.rejects(
+          updateWedding(editor, wedding.id, {
+            expectedVersion: 3,
+            title: "Removed",
+          }),
+          { status: 404 },
+        );
+      },
+    );
+    await t.test(
+      "concurrent wedding edits have exactly one winner",
+      async () => {
+        const editor = await user();
+        const wedding = await createWedding(
+          editor,
+          input,
+          "edit-racing-key-12345",
+        );
+        const results = await Promise.allSettled(
+          ["First", "Second"].map((title) =>
+            updateWedding(editor, wedding.id, { expectedVersion: 1, title }),
+          ),
+        );
+        assert.equal(
+          results.filter((result) => result.status === "fulfilled").length,
+          1,
+        );
+        const failure = results.find(
+          (result) => result.status === "rejected",
+        ) as PromiseRejectedResult;
+        assert.equal(failure.reason.code, "VERSION_CONFLICT");
+        assert.equal((await weddingFor(editor))!.version, 2);
+        assert.equal(
+          await db
+            .collection("activity")
+            .countDocuments({
+              weddingId: new ObjectId(wedding.id),
+              action: "wedding.updated",
+            }),
+          1,
+        );
+      },
+    );
     let id: string;
     await t.test(
       "concurrent identical submissions create one atomic workspace",
@@ -99,8 +260,18 @@ test("wedding onboarding invariants in an isolated database", async (t) => {
         );
         id = results[0]!.id;
         assert.ok(results.every((row) => row?.id === id));
-        assert.equal(await db.collection("weddings").countDocuments(), 1);
-        assert.equal(await db.collection("activity").countDocuments(), 1);
+        assert.equal(
+          await db
+            .collection("weddings")
+            .countDocuments({ createdBy: actor._id }),
+          1,
+        );
+        assert.equal(
+          await db
+            .collection("activity")
+            .countDocuments({ weddingId: new ObjectId(id) }),
+          1,
+        );
         const row = await db
           .collection("weddings")
           .findOne({ _id: new ObjectId(id) });

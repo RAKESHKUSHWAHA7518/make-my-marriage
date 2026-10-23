@@ -5,11 +5,16 @@ import { z } from "zod";
 import { body, cookieName, trustedMutation } from "@/modules/identity/http";
 import { AccountError } from "@/modules/identity/security";
 import { currentUser, rateLimit } from "@/modules/identity/service";
-import { createWedding, currentWedding, weddingFor } from "./service";
+import {
+  createWedding,
+  currentWedding,
+  weddingFor,
+  updateWedding,
+} from "./service";
 
 export async function handleWedding(
   request: NextRequest,
-  action: "create" | "current" | "settings",
+  action: "create" | "current" | "settings" | "update",
   id?: string,
 ) {
   const requestId = randomUUID();
@@ -18,7 +23,7 @@ export async function handleWedding(
     "X-Request-Id": requestId,
   };
   try {
-    if (action === "create") trustedMutation(request);
+    if (action === "create" || action === "update") trustedMutation(request);
     const user = await currentUser(request.cookies.get(cookieName())?.value);
     if (!user)
       throw new AccountError(
@@ -26,8 +31,12 @@ export async function handleWedding(
         "UNAUTHENTICATED",
         "Please sign in to continue.",
       );
-    if (action === "create")
-      await rateLimit("wedding-create", user._id.toString(), 20);
+    if (action === "create" || action === "update")
+      await rateLimit(
+        `wedding-${action}`,
+        user._id.toString(),
+        action === "create" ? 20 : 60,
+      );
     const data =
       action === "create"
         ? await createWedding(
@@ -35,9 +44,11 @@ export async function handleWedding(
             await body(request),
             request.headers.get("idempotency-key"),
           )
-        : action === "current"
-          ? await currentWedding(user)
-          : await weddingFor(user, id);
+        : action === "update"
+          ? await updateWedding(user, id!, await body(request))
+          : action === "current"
+            ? await currentWedding(user)
+            : await weddingFor(user, id);
     return NextResponse.json(
       { data, requestId },
       { status: action === "create" ? 201 : 200, headers },
@@ -49,6 +60,9 @@ export async function handleWedding(
     return NextResponse.json(
       {
         error: {
+          ...(known && "currentVersion" in error
+            ? { currentVersion: error.currentVersion }
+            : {}),
           code: validation
             ? "VALIDATION_ERROR"
             : known

@@ -13,7 +13,12 @@ import {
 } from "@/components/weddings/workspace-shell";
 export const metadata: Metadata = { title: "Your wedding | Make My Marriage" };
 export const dynamic = "force-dynamic";
-export default async function WeddingPage() {
+export default async function WeddingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ updated?: string }>;
+}) {
+  const updated = (await searchParams).updated === "1";
   const user = await weddingUser();
   const membership = await membershipFor(user);
   if (!membership) redirect("/wedding/create");
@@ -38,6 +43,17 @@ export default async function WeddingPage() {
           <WeddingIcon name="back" />
           Back to account
         </Link>
+        <Link href="/wedding/details" className="wedding-back">
+          {wedding.state === "archived"
+            ? "Wedding details"
+            : "Edit wedding details"}{" "}
+          <WeddingIcon name="edit" />
+        </Link>
+        {updated && (
+          <p className="wedding-notice wedding-success" role="status">
+            Wedding details updated.
+          </p>
+        )}
         <div className="wedding-overview-intro">
           <div className="wedding-overview-heading">
             <div className="wedding-mobile-meta">

@@ -390,6 +390,8 @@ Archive takes Version and returns archived summary after committing state/fence/
 
 ## 8. Membership contracts
 
+October 23 edit-details increment: PATCH `/api/v1/weddings/{id}` implements only the ordinary create-field subset of PatchWedding plus required `expectedVersion`. Omitted fields are unchanged; `weddingDate:null` and `budgetMinor:null` clear those optional values. Empty patches and unknown fields are rejected. Settings GET adds `currencyLocked`; currency change returns 409 `CURRENCY_LOCKED` after any expense is recorded. Stale versions return 409 `VERSION_CONFLICT` with `error.currentVersion`. PrivateWebsite, livestream and rsvpDeadline updates remain planned; no endpoint stubs are provided for them.
+
 Member filters: status=active|removed, role=ADMIN|MANAGER, pagination. Invitation filters: state=pending|accepted|revoked|expired, pagination. Lists return safe user/recipient details, role, state and version; no tokens.
 
 | Request | Fields |

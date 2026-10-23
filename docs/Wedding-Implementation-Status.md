@@ -1,7 +1,7 @@
 # Make My Marriage — Implementation Status
 
 **Updated:** October 23, 2026 (Asia/Kolkata).
-**Scope:** Scaffold, homepage/logo, accounts and wedding onboarding. Earlier dated entries are historical snapshots.
+**Scope:** Scaffold, homepage/logo, accounts, wedding onboarding and ordinary wedding-detail editing. Earlier dated entries are historical snapshots.
 **Repository:** RAKESHKUSHWAHA7518/make-my-marriage, existing root checkout.
 **State:** Accounts and onboarding implemented, locally tested and user-approved. Live email, production gates and remaining Phase 1 journeys are pending.
 
@@ -9,7 +9,21 @@
 
 **User acceptance — October 22, 2026:** The user approved the delivered account feature after testing and code review and requested the status update, commit and GitHub push on dev. Project Status now summarizes the final 16-test account result, separate environment test, browser QA corrections and remaining live-provider gates. Prior no-commit statements describe their original implementation checkpoints. Resolve the new checkpoint identity from Git history; approval does not imply deployment or live-email validation.
 
-**Document audit:** The historical scaffold [Compliance Audit](Wedding-Compliance-Audit.md) counted 105 designed operations and 26 designed collections. The current checkpoint implements 13 operations (eight auth, account job tick, Resend webhook, three wedding operations) and 11 migrated collections. The remaining 92 operations and broader provider use cases are future work.
+**Document audit:** The historical scaffold [Compliance Audit](Wedding-Compliance-Audit.md) counted 105 designed operations and 26 designed collections. The current checkpoint implements 14 operations (eight auth, account job tick, Resend webhook, four wedding operations) and 11 migrated collections. The remaining 91 operations and broader provider use cases are future work; wedding PATCH supports only its documented initial subset.
+
+## Edit wedding details — October 23, 2026
+
+Implemented `/wedding/details` and PATCH `/api/v1/weddings/{id}` for ordinary wedding details only. Reuses onboarding fields/styles and supplied Stitch Edit Wedding Details desktop `1053a2fbbc534f3db4876f9c7b8ce523` / mobile `03c1fab100a145bbab1ba221151756c7` from project `1860855833908619349`. Existing logo/fonts/burgundy/ivory preserved. No preview switches, concierge, photography, OWNER, auto-sync claims or archive reactivation controls. No new dependency.
+
+Both ADMIN and MANAGER may edit. Partial strict payload requires expectedVersion; omitted fields remain unchanged and explicit null clears optional date/budget. Names/title stay independent. Exact nonnegative money conversion supports zero. Native partial-date validation is retained. Success navigates to refreshed saved overview/countdown. Cancel and conflict reload confirm discarding dirty values; browser unload warns. Network errors preserve the in-memory immutable submission for Retry. A lost successful response can produce VERSION_CONFLICT on Retry; user must reload the saved details rather than overwrite. No automatic retry or browser-storage persistence is claimed.
+
+Server derives wedding scope, checks trusted origin/CSRF/session and applies persistent rate limiting. Transaction takes active-wedding writeFence, rechecks/locks current actor and membership, enforces expectedVersion and records activity. Concurrent changes have one winner. Removed/foreign memberships cannot edit; archived details render read-only and reject writes. Currency changes check any retained expense, including soft-removed rows; safe settings DTO adds currencyLocked. Future expense creation must use the same documented wedding fence. No expense API/collection migration or publication/settings expansion is implemented. Public snapshot/gallery remain unchanged; couple/date edits mark public source stale.
+
+Verification: expanded isolated wedding suite passed 11 reported tests (10 subtests plus parent), including optional clearing/zero budget, partial/strict schema, privacy preservation, MANAGER edits, currency lock, archive/removal/tenant restrictions and racing edits. Temporary test database dropped. Type checking and lint passed before final read-only presentation refinement. Browser QA could not proceed: CUA refused the existing tab under its URL policy; no alternate browser workaround was attempted. Disposable synthetic browser fixture was removed without changing personal records or sending email. Visual approval, browser save/conflict/dirty-navigation checks and lost-response fault injection remain pending. No commit, push or deployment in this delivery.
+
+Final edit-details checks: production `npm run build -- --webpack` passed after the read-only presentation refinement, including TypeScript compilation and `/wedding/details` route generation. Final lint and diff whitespace checks passed. The prior default Turbopack limitation remains unchanged. No new browser screenshot is available for this delivery.
+
+**Independent browser QA follow-up — October 23:** The app was initially stopped; started the documented webpack dev server on port 3001. Isolated-browser tests passed overview-to-editor navigation/prefill, required validation, all seven editable fields, saving state, refreshed overview/countdown, optional clearing, stale-version rejection, expense-based currency locking, other edits/zero budget while locked, archived stale-write rejection and fresh read-only rendering. Existing integration suite passed 11/11 reported tests. Cancel left saved values unchanged, but native confirmation handling made conflict reload inconclusive; do not claim accept/dismiss or unload coverage. Scoped captured console warning/error log was empty. Synthetic fixtures removed; personal records and application code unchanged. See [full QA steps, results and limitations](Edit-Wedding-Details-QA-2026-10-23.md). Screenshots are retained outside the repository. User visual approval and lost-response fault injection remain pending.
 
 ## Wedding onboarding — October 23, 2026
 

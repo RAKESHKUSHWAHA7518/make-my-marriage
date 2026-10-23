@@ -173,6 +173,8 @@ Atomic consume requires unconsumed and unexpired. Reset consumes the token, chan
 
 ### `memberships`
 
+October 23 edit-details implementation: ordinary wedding updates use the documented transaction fence and expected version, retain expense history for currency locking and use `$unset` when optional date/budget are explicitly cleared. No collection/schema migration is required for this increment. Future expense writers must acquire the same active-wedding fence before checking currency and inserting an expense.
+
 | Field | Type | Required? | Meaning |
 |---|---|---|---|
 | `userId` | ObjectId | Required | Registered user connected to this record. |

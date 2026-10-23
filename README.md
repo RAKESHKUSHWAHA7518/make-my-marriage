@@ -4,7 +4,7 @@ A wedding planning application for couples and families. One Next.js/TypeScript 
 
 ## Current state
 
-The scaffold, homepage/logo, application-owned accounts and wedding onboarding are implemented. Verified users can create one private wedding and view its saved overview. Events, family invitations and remaining wedding planning features are pending. Live Resend delivery and deployment checks remain pending. Public/account screen previews need no credentials; saving a wedding requires MongoDB and server keys.
+The scaffold, homepage/logo, application-owned accounts, wedding onboarding and ordinary wedding-detail editing are implemented. Verified users can create one private wedding and view its saved overview. Active ADMIN/MANAGER members can edit ordinary details with version conflicts and expense-based currency locking. Events, family invitations and remaining wedding planning features are pending. Live Resend delivery and deployment checks remain pending. Public/account screen previews need no credentials; saving a wedding requires MongoDB and server keys.
 
 See [Project Status](docs/Wedding-Project-Status.md) for the ongoing major-feature progress log and next steps. See [Implementation Status](docs/Wedding-Implementation-Status.md) for detailed verification evidence and remaining technical work. See [Decision Record](docs/Wedding-Decision-Record.md) for approved conflict resolutions.
 
