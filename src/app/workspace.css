@@ -1,3 +1,124 @@
+.wedding-details-readonly.wedding-create {
+  max-width: 960px;
+}
+.wedding-readonly-notice {
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 24px;
+  margin-bottom: 28px;
+  border: 1px solid #f0dfe3;
+  border-radius: 12px;
+  background: #fcf1f3;
+}
+.wedding-readonly-notice > svg {
+  color: #802b3a;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.wedding-readonly-notice strong {
+  color: #802b3a;
+  font-size: 14px;
+}
+.wedding-readonly-notice p {
+  margin: 6px 0 0;
+  color: #655458;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.wedding-saved-details.wedding-card {
+  padding: 0;
+  overflow: hidden;
+  border-top: 3px solid #802b3a;
+  background: #fff;
+}
+.wedding-saved-heading {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 32px;
+  border-bottom: 1px solid #f0e5e7;
+}
+.wedding-saved-heading > div {
+  flex: 1;
+  min-width: 0;
+}
+.wedding-saved-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
+  height: 48px;
+  border-radius: 12px;
+  color: #802b3a;
+  background: #fcf1f3;
+}
+.wedding-saved-eyebrow {
+  display: block;
+  color: #796468;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
+.wedding-saved-heading h2 {
+  margin: 0;
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.wedding-saved-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px 40px;
+  margin: 0;
+  padding: 32px;
+}
+.wedding-saved-grid dt {
+  color: #796468;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.wedding-saved-grid dd {
+  color: #2b2123;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.6;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.wedding-saved-budget {
+  grid-column: 1 / -1;
+  border-top: 1px solid #f0e5e7;
+  padding-top: 24px;
+}
+.wedding-saved-budget dd {
+  color: #802b3a;
+  font-size: 24px;
+}
+.wedding-readonly-actions {
+  display: flex;
+  margin-top: 24px;
+}
+@media (max-width: 600px) {
+  .wedding-saved-heading {
+    padding: 24px 20px;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .wedding-saved-heading > div {
+    flex-basis: calc(100% - 62px);
+  }
+  .wedding-saved-grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 24px 20px;
+    gap: 24px;
+  }
+  .wedding-readonly-notice {
+    padding: 18px;
+  }
+  .wedding-readonly-actions .button {
+    width: 100%;
+  }
+}
 .wedding-header:has(.wedding-header-nav) {
   gap: 24px;
   flex-wrap: wrap;

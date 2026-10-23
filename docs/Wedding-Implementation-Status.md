@@ -17,6 +17,14 @@ User approved the delivered family-access increment and requested commit/push to
 
 ## ADMIN-only wedding details — October 24, 2026
 
+## Read-only details presentation — October 24, 2026
+
+At the user's screenshot request, refined only the MANAGER/archived details presentation: moved the summary out of the centered intro container, added a compact icon/title/role header, lock notice, semantic grouped definition list, two-column desktop/single-column mobile grid and highlighted budget. Added spacing before the accurately labelled Back to overview action. Dates format in UTC from the saved date-only value, preserving the calendar day. Long values wrap; existing local fonts, burgundy/ivory styling, ADMIN-only API enforcement and saved values remain unchanged.
+
+Type checking and lint passed. Browser request to the protected details route redirected to login in the current automation session, so authenticated screenshots and desktop/mobile visual validation are not claimed. No user data, provider calls, dependency/API/schema changes, commit or push. User visual review remains pending.
+
+## ADMIN-only wedding details — October 24, 2026
+
 User explicitly replaced the earlier shared-edit rule: ADMIN may edit wedding details; MANAGER may only view them. `updateWedding` now rejects active MANAGER edits with 403 `FORBIDDEN` and requires ADMIN again inside the transaction's membership write. This retains concurrent role-change/removal protection, wedding/version fences, currency lock, tenant isolation and archive restrictions. The details route renders the existing saved-details read-only view for MANAGER, with an explanation and no edit form. Family/invitation role descriptions and README/PRD/API/architecture/database/decision documentation reflect the change. No migration, new dependency or changes to other planning permissions.
 
 Verification: `npm run test:weddings` passed all 12 reported tests (11 subtests plus parent) using its isolated temporary database. Updated coverage proves MANAGER receives 403, persisted wedding state is unchanged, read access remains, and promotion to ADMIN permits editing; existing currency/archive/removal and concurrent-edit cases pass. Type checking, lint and diff whitespace checks passed. No live account roles or wedding data changed. Browser verification of the new read-only layout and user review remain pending; no new production-build result is claimed for this change. Earlier dated shared-edit evidence is historical and superseded. Changes remain uncommitted; no push or deployment.

@@ -9,6 +9,7 @@ import {
 } from "@/components/weddings/workspace-shell";
 import { CreateWeddingForm } from "@/components/weddings/create-wedding-form";
 import { displayBudget } from "@/modules/weddings/schema";
+import { WeddingIcon } from "@/components/weddings/wedding-icon";
 
 export const metadata: Metadata = {
   title: "Wedding details | Make My Marriage",
@@ -34,37 +35,78 @@ export default async function WeddingDetailsPage() {
         weddingTitle={wedding.title}
         activePage="details"
       >
-        <main className="wedding-create">
+        <main className="wedding-create wedding-details-page wedding-details-readonly">
           <div className="wedding-intro">
+            <span className="wedding-kicker">Your wedding workspace</span>
             <h1>Wedding details</h1>
-            <p className="wedding-notice">
-              {wedding.state === "archived"
-                ? "This wedding is archived. Wedding details cannot be edited."
-                : "You can view wedding details. Only an administrator can edit them."}
-            </p>
-            <section className="wedding-card">
-              <h2>{wedding.title}</h2>
-              <dl>
+            <p>A little clarity for the celebration ahead.</p>
+          </div>
+          <aside className="wedding-notice wedding-readonly-notice">
+            <WeddingIcon name="lock" />
+            <div>
+              <strong>
+                {wedding.state === "archived" ? "Archived wedding" : "View-only access"}
+              </strong>
+              <p>
+                {wedding.state === "archived"
+                  ? "This wedding is archived. Wedding details cannot be edited."
+                  : "Everything you need to stay in the loop. An administrator can update these details."}
+              </p>
+            </div>
+          </aside>
+          <section
+            className="wedding-card wedding-saved-details"
+            aria-labelledby="saved-wedding-title"
+          >
+            <header className="wedding-saved-heading">
+              <span className="wedding-saved-icon">
+                <WeddingIcon name="heart" />
+              </span>
+              <div>
+                <span className="wedding-saved-eyebrow">The celebration</span>
+                <h2 id="saved-wedding-title">{wedding.title}</h2>
+              </div>
+              <span className="wedding-role">{wedding.role}</span>
+            </header>
+            <dl className="wedding-saved-grid">
+              <div>
                 <dt>Couple’s names</dt>
                 <dd>
                   {wedding.couple.brideName} &amp; {wedding.couple.groomName}
                 </dd>
+              </div>
+              <div>
                 <dt>Wedding date</dt>
-                <dd>{wedding.weddingDate ?? "Date not decided"}</dd>
+                <dd>
+                  {wedding.weddingDate
+                    ? new Intl.DateTimeFormat("en-IN", {
+                        dateStyle: "long",
+                        timeZone: "UTC",
+                      }).format(new Date(`${wedding.weddingDate}T00:00:00Z`))
+                    : "Date not decided"}
+                </dd>
+              </div>
+              <div>
                 <dt>Time zone</dt>
                 <dd>{wedding.timezone}</dd>
+              </div>
+              <div>
                 <dt>Currency</dt>
                 <dd>{wedding.currency}</dd>
+              </div>
+              <div className="wedding-saved-budget">
                 <dt>Overall budget</dt>
                 <dd>
                   {wedding.budgetMinor === undefined
                     ? "Budget not set"
                     : displayBudget(wedding.budgetMinor, wedding.currency)}
                 </dd>
-              </dl>
-            </section>
+              </div>
+            </dl>
+          </section>
+          <div className="wedding-readonly-actions">
             <Link href="/wedding" className="button button-primary">
-              View saved details
+              <WeddingIcon name="back" /> Back to overview
             </Link>
           </div>
         </main>
