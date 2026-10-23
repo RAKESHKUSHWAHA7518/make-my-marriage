@@ -189,6 +189,8 @@ Unique `userId` implements the agreed single-wedding model. Keep the removed row
 
 ### `membershipInvites`
 
+October 23 foundation: explicit migration 003 implements this collection's core validator, unique tokenHash, partial unique pending weddingId/emailNormalized and invitation-list indexes. List reads expose effective expiration without mutating the record; future invitation issuance must explicitly settle expired pending rows before replacement. No TTL removes history. Issuance and acceptance are not implemented by this migration.
+
 | Field | Type | Required? | Meaning |
 |---|---|---|---|
 | `weddingId` | ObjectId | Required | Wedding that owns this record. |

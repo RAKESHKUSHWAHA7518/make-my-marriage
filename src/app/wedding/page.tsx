@@ -49,6 +49,9 @@ export default async function WeddingPage({
             : "Edit wedding details"}{" "}
           <WeddingIcon name="edit" />
         </Link>
+        <Link href="/wedding/family" className="wedding-back">
+          Family &amp; access
+        </Link>
         {updated && (
           <p className="wedding-notice wedding-success" role="status">
             Wedding details updated.

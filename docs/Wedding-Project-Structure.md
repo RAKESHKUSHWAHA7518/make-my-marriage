@@ -15,7 +15,7 @@ WeddingManagement/
       globals.css                    Tailwind, brand tokens and homepage styles
       (auth)/                        shared layout and five account screens
       account/                       protected welcome page and error boundary
-      wedding/                       protected create, saved overview and details editing; loading/failure states
+      wedding/                       protected create, saved overview, details editing and family lists; loading/failure states
       api/v1/weddings/               create, current summary, scoped settings reads and ordinary detail updates
       api/v1/auth/                   eight account Route Handlers
       api/internal/jobs/tick/        authenticated bounded account-mail processing

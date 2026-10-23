@@ -5,6 +5,7 @@ import { z } from "zod";
 import { body, cookieName, trustedMutation } from "@/modules/identity/http";
 import { AccountError } from "@/modules/identity/security";
 import { currentUser, rateLimit } from "@/modules/identity/service";
+import { listWeddingAccess } from "./access";
 import {
   createWedding,
   currentWedding,
@@ -14,7 +15,13 @@ import {
 
 export async function handleWedding(
   request: NextRequest,
-  action: "create" | "current" | "settings" | "update",
+  action:
+    | "create"
+    | "current"
+    | "settings"
+    | "update"
+    | "members"
+    | "invitations",
   id?: string,
 ) {
   const requestId = randomUUID();
@@ -37,6 +44,15 @@ export async function handleWedding(
         user._id.toString(),
         action === "create" ? 20 : 60,
       );
+    if (action === "members" || action === "invitations") {
+      const result = await listWeddingAccess(
+        user,
+        id!,
+        action,
+        Object.fromEntries(request.nextUrl.searchParams),
+      );
+      return NextResponse.json({ ...result, requestId }, { headers });
+    }
     const data =
       action === "create"
         ? await createWedding(

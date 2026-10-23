@@ -10,6 +10,8 @@ import {
 } from "../src/infrastructure/mongodb/client";
 import { migrateAccounts } from "../src/infrastructure/mongodb/migrations/001-accounts";
 import { migrateWeddings } from "../src/infrastructure/mongodb/migrations/002-weddings";
+import { migrateMembershipInvites } from "../src/infrastructure/mongodb/migrations/003-membership-invites";
+import { listWeddingAccess } from "../src/modules/weddings/access";
 import {
   createWedding,
   currentWedding,
@@ -60,6 +62,8 @@ test("wedding onboarding invariants in an isolated database", async (t) => {
     await migrateAccounts(db);
     await migrateWeddings(db);
     await migrateWeddings(db);
+    await migrateMembershipInvites(db);
+    await migrateMembershipInvites(db);
     await t.test("strict validation and exact money", () => {
       assert.equal(budgetToMinor("500000.01"), "50000001");
       assert.equal(budgetToMinor(""), undefined);
@@ -90,6 +94,137 @@ test("wedding onboarding invariants in an isolated database", async (t) => {
       assert.equal(await db.collection("weddings").countDocuments(), 0);
     });
     const actor = await user();
+    await t.test(
+      "family lists scope access, paginate safely and hide invitation secrets",
+      async () => {
+        const owner = await user();
+        const manager = await user();
+        const outsider = await user();
+        const wedding = await createWedding(
+          owner,
+          input,
+          "family-lists-key-12345",
+        );
+        const now = new Date();
+        await db
+          .collection("memberships")
+          .insertOne({
+            userId: manager._id,
+            weddingId: new ObjectId(wedding.id),
+            role: "MANAGER",
+            status: "active",
+            joinedAt: now,
+            version: 1,
+            schemaVersion: 1,
+            createdAt: now,
+            updatedAt: now,
+          });
+        const first = await listWeddingAccess(owner, wedding.id, "members", {
+          limit: 1,
+        });
+        assert.equal(first.data.length, 1);
+        assert.equal(first.pagination.hasMore, true);
+        const second = await listWeddingAccess(owner, wedding.id, "members", {
+          limit: 1,
+          cursor: first.pagination.nextCursor,
+        });
+        assert.notEqual(first.data[0]!.id, second.data[0]!.id);
+        assert.equal(second.pagination.hasMore, false);
+        await assert.rejects(
+          listWeddingAccess(owner, wedding.id, "members", {
+            role: "ADMIN",
+            cursor: first.pagination.nextCursor,
+          }),
+          { code: "INVALID_CURSOR" },
+        );
+        await assert.rejects(
+          listWeddingAccess(owner, wedding.id, "members", { cursor: "broken" }),
+          { code: "INVALID_CURSOR" },
+        );
+        await assert.rejects(
+          listWeddingAccess(owner, wedding.id, "members", { limit: 51 }),
+        );
+        assert.equal(
+          (await listWeddingAccess(manager, wedding.id, "members")).data.length,
+          2,
+        );
+        await assert.rejects(
+          listWeddingAccess(manager, wedding.id, "invitations"),
+          { status: 403 },
+        );
+        await assert.rejects(
+          listWeddingAccess(outsider, wedding.id, "members"),
+          { status: 404 },
+        );
+        const invite = {
+          weddingId: new ObjectId(wedding.id),
+          emailNormalized: "family@example.test",
+          role: "MANAGER",
+          tokenHash: "a".repeat(64),
+          state: "pending",
+          invitedBy: owner._id,
+          expiresAt: new Date(now.getTime() - 1000),
+          version: 1,
+          schemaVersion: 1,
+          createdAt: now,
+          updatedAt: now,
+        };
+        await db.collection("membershipInvites").insertOne(invite);
+        await assert.rejects(
+          db
+            .collection("membershipInvites")
+            .insertOne({ ...invite, tokenHash: "b".repeat(64) }),
+          { code: 11000 },
+        );
+        await assert.rejects(
+          db
+            .collection("membershipInvites")
+            .insertOne({
+              ...invite,
+              emailNormalized: "invalid@example.test",
+              tokenHash: "c".repeat(64),
+              role: "OWNER",
+            }),
+          { code: 121 },
+        );
+        const history = await listWeddingAccess(
+          owner,
+          wedding.id,
+          "invitations",
+          { state: "expired" },
+        );
+        assert.equal(history.data.length, 1);
+        assert.doesNotMatch(
+          JSON.stringify(history),
+          /tokenHash|passwordHash|credentialVersion|encryptedSecret/,
+        );
+        assert.equal(
+          (
+            await listWeddingAccess(owner, wedding.id, "invitations", {
+              state: "pending",
+            })
+          ).data.length,
+          0,
+        );
+        await db
+          .collection("weddings")
+          .updateOne(
+            { _id: new ObjectId(wedding.id) },
+            { $set: { state: "archived" } },
+          );
+        assert.equal(
+          (await listWeddingAccess(owner, wedding.id, "members")).data.length,
+          2,
+        );
+        await db
+          .collection("memberships")
+          .updateOne({ userId: manager._id }, { $set: { status: "removed" } });
+        await assert.rejects(
+          listWeddingAccess(manager, wedding.id, "members"),
+          { status: 404 },
+        );
+      },
+    );
     await t.test(
       "wedding edits validate, clear optional values and preserve privacy",
       async () => {
@@ -124,12 +259,10 @@ test("wedding onboarding invariants in an isolated database", async (t) => {
         assert.equal(saved.gallery.isEnabled, false);
         assert.equal(saved.currencyLocked, false);
         assert.equal(
-          await db
-            .collection("activity")
-            .countDocuments({
-              weddingId: new ObjectId(wedding.id),
-              action: "wedding.updated",
-            }),
+          await db.collection("activity").countDocuments({
+            weddingId: new ObjectId(wedding.id),
+            action: "wedding.updated",
+          }),
           1,
         );
         await assert.rejects(
@@ -164,12 +297,10 @@ test("wedding onboarding invariants in an isolated database", async (t) => {
           expectedVersion: 1,
           currency: "USD",
         });
-        await db
-          .collection("expenses")
-          .insertOne({
-            weddingId: new ObjectId(wedding.id),
-            deletedAt: new Date(),
-          });
+        await db.collection("expenses").insertOne({
+          weddingId: new ObjectId(wedding.id),
+          deletedAt: new Date(),
+        });
         assert.equal((await weddingFor(editor))!.currencyLocked, true);
         await assert.rejects(
           updateWedding(editor, wedding.id, {
@@ -239,12 +370,10 @@ test("wedding onboarding invariants in an isolated database", async (t) => {
         assert.equal(failure.reason.code, "VERSION_CONFLICT");
         assert.equal((await weddingFor(editor))!.version, 2);
         assert.equal(
-          await db
-            .collection("activity")
-            .countDocuments({
-              weddingId: new ObjectId(wedding.id),
-              action: "wedding.updated",
-            }),
+          await db.collection("activity").countDocuments({
+            weddingId: new ObjectId(wedding.id),
+            action: "wedding.updated",
+          }),
           1,
         );
       },

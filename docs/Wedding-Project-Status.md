@@ -15,8 +15,15 @@ The scaffold, homepage/logo, accounts and wedding onboarding are implemented. Ac
 | Accounts: registration, login, verification and recovery | Implemented, locally verified and user-approved October 22; live delivery pending | October 21, 2026 |
 | Wedding onboarding and saved overview | Implemented, locally tested and user-approved; production gates remain | October 23, 2026 |
 | Edit wedding details | Implemented; core browser flows and automated checks passed; confirmation/retry coverage and user approval pending | October 23, 2026 |
+| Family & access foundation | Implemented; browser list/access/pagination checks and 12-test suite passed; user approval and invitation mutations pending | October 23, 2026 |
 
 ## 4. Wedding onboarding and saved overview
+
+**Family access foundation — October 23:** Added `/wedding/family`, real paginated member lists and ADMIN-only invitation history, plus migration 003 for invitation validation/uniqueness. ADMIN/MANAGER role explanations, own-account marker, removed states and archived read-only presentation use the reviewed Stitch layout without invented people or controls. The expanded suite passes 12 reported tests; types/lint passed. Sending, acceptance, revoke, role changes and removal remain planned. See [foundation evidence](Wedding-Implementation-Status.md#family-access-foundation--october-23-2026).
+
+**Independent family QA — October 23:** Overview navigation, member/history lists, 25+2 pagination with no overlap, independent cursors, ADMIN/MANAGER restrictions, invalid list inputs, archived/empty states, removed access and signed-out redirect passed. Integration suite rerun passed 12/12 reported tests. Synthetic fixtures removed; no personal records changed or mail sent. See [QA evidence and limits](Family-Access-QA-2026-10-23.md). User visual approval remains pending; no invitation-sending or access-mutation completion is claimed.
+
+**Edit-details checkpoint — October 23:** User requested commit and progression to the next increment. Saved as `11f98f8` on dev. No push was requested in that turn. Earlier QA limitations remain recorded.
 
 **Edit wedding details — October 23:** Implemented the next increment at `/wedding/details`, linked from the overview. ADMIN/MANAGER can edit saved names, title, date, timezone, currency and budget; optional date/budget can be cleared. Includes validation, currency lock after recorded expenses, optimistic edit conflicts, Retry, discard confirmation and archived read-only details. Onboarding integration suite now passes 11 reported tests. User acceptance and browser visual QA for this increment remain pending; see [edit evidence](Wedding-Implementation-Status.md#edit-wedding-details--october-23-2026). Family invitations remain planned.
 

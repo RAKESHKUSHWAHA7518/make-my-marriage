@@ -394,6 +394,8 @@ October 23 edit-details increment: PATCH `/api/v1/weddings/{id}` implements only
 
 Member filters: status=active|removed, role=ADMIN|MANAGER, pagination. Invitation filters: state=pending|accepted|revoked|expired, pagination. Lists return safe user/recipient details, role, state and version; no tokens.
 
+October 23 foundation: both list GET operations are implemented, with default 25/max 50, descending ObjectId pagination and opaque cursors bound to kind/wedding/filters. Members return id, userId, displayName/email when available, role, status, joinedAt and version; invitations return id, email, role, effective state, expiresAt and version. Pending records past expiresAt are read as expired. Active ADMIN/MANAGER members may read members; invitation history is ADMIN-only, including after archive. All invitation/member mutations below remain planned.
+
 | Request | Fields |
 |---|---|
 | MemberInvite | email and role (ADMIN or MANAGER) |
