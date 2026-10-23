@@ -10,15 +10,47 @@ export function WorkspaceShell({
   name,
   children,
   role,
+  weddingTitle,
+  activePage,
 }: {
   name?: string;
   role?: "ADMIN" | "MANAGER";
+  weddingTitle?: string;
+  activePage?: "overview" | "details" | "family";
   children: ReactNode;
 }) {
   return (
     <div className="wedding-shell">
       <header className="wedding-header">
         <Brand />
+        {weddingTitle && (
+          <>
+            <div className="wedding-header-title">
+              <small>Wedding workspace</small>
+              <strong>{weddingTitle}</strong>
+            </div>
+            <nav className="wedding-header-nav" aria-label="Wedding workspace">
+              <Link
+                href="/wedding"
+                aria-current={activePage === "overview" ? "page" : undefined}
+              >
+                Overview
+              </Link>
+              <Link
+                href="/wedding/details"
+                aria-current={activePage === "details" ? "page" : undefined}
+              >
+                Wedding details
+              </Link>
+              <Link
+                href="/wedding/family"
+                aria-current={activePage === "family" ? "page" : undefined}
+              >
+                Family &amp; access
+              </Link>
+            </nav>
+          </>
+        )}
         <div className="wedding-account">
           {name && (
             <details>

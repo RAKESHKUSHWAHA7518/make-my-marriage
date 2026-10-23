@@ -186,7 +186,7 @@ The browser experience stays simple: email + password. These server-side control
 | Actor | Allowed scope |
 |---|---|
 | ADMIN | All planning operations, member invitations/role changes/removal, archive, gallery-token rotation and privacy controls. |
-| MANAGER | Edit events, households and guest limits, tasks, vendors, expenses, designs, media and website content; cannot manage memberships or archive. |
+| MANAGER | View wedding details; cannot edit them (user decision, October 24, 2026). Edit events, households and guest limits, tasks, vendors, expenses, designs, media and website content; cannot manage memberships or archive. |
 | Household guest | Only its invited event details, one household RSVP, enabled gallery/private livestream, and enabled photo uploads. |
 | Shared gallery visitor | View wedding gallery and upload when enabled; no event details, RSVP, livestream, receipts or family planning access. |
 | Cron/webhook | Narrow authenticated service operation; no general user privileges. |

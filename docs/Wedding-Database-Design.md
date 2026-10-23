@@ -1,5 +1,7 @@
 # Wedding Management — MongoDB Database Design
 
+**Wedding-details authorization update — October 24, 2026:** Only active ADMIN membership authorizes editing wedding details; MANAGER retains read access. The wedding update transaction rechecks ADMIN role on the membership write fence so concurrent demotion/removal cannot authorize an edit. This changes authorization, not document shape, indexes or migration requirements. Other planning permissions remain unchanged.
+
 > October 23, 2026 onboarding checkpoint: explicit migration 002 adds weddings, memberships, activity and idempotencyKeys (11 implemented collections total). Creation transaction and unique indexes enforce the retained single-wedding membership; gallery/uploads and public publication start disabled. Gallery secrets use the independent CAPABILITY_ENCRYPTION_KEY. Initial storage allowance is zero until media is configured; this is not a promised storage entitlement. Remaining collection specifications are plans. See Wedding-Implementation-Status.md for evidence.
 
 **Account callback correction, October 22, 2026:** Unmatched Resend receipts retain `state: received` with `nextAttemptAt` delayed one minute. After 48 hours unmatched, they become `failed` with `lastErrorCode: UNMATCHED_DELIVERY`; encrypted payload is removed and `purgeAt` schedules removal after 90 days. The explicit repeatable account migration adds the provider/state/nextAttemptAt/receivedAt index. No collection or API is added.
@@ -173,6 +175,8 @@ Atomic consume requires unconsumed and unexpired. Reset consumes the token, chan
 
 ### `memberships`
 
+October 23 administration increment uses the wedding writeFence to serialize membership changes, checks active ADMIN count inside the transaction, and updates by weddingId/id/expected version. Removal retains the unique user membership, sets removedAt/status and writes activity; role changes retain before/after role evidence. No cached ADMIN counter or additional collection is needed. Counts use active membership status, independent of pagination. Existing schema/index migration 002 supports this increment unchanged.
+
 October 23 edit-details implementation: ordinary wedding updates use the documented transaction fence and expected version, retain expense history for currency locking and use `$unset` when optional date/budget are explicitly cleared. No collection/schema migration is required for this increment. Future expense writers must acquire the same active-wedding fence before checking currency and inserting an expense.
 
 | Field | Type | Required? | Meaning |
@@ -188,6 +192,8 @@ October 23 edit-details implementation: ordinary wedding updates use the documen
 Unique `userId` implements the agreed single-wedding model. Keep the removed row for audit and permit reactivation only for the same wedding. Moving a user to a different wedding is outside v1; do not silently change their wedding. Both roles can edit planning records. Only ADMIN can manage membership, archive the wedding, or rotate the shared gallery token. Never remove or demote the last active ADMIN. MANAGER cannot appoint an ADMIN.
 
 ### `membershipInvites`
+
+October 23 lifecycle implementation: seven-day hashed invitations and acceptance/revocation are transactionally fenced with activity. Invitation creation queues encrypted delivery/job in the same transaction. Repeatable account migration 001 now accepts `deliveries.kind=membership_invite`, requiring weddingId/membershipInviteId instead of authTokenId for that kind, retaining userId as the issuer reference. Account kinds still require authTokenId. A sparse membershipInviteId index supports safe delivery-state joins. No additional collection is introduced. Expiration is enforced in reads/acceptance before any cleanup.
 
 October 23 foundation: explicit migration 003 implements this collection's core validator, unique tokenHash, partial unique pending weddingId/emailNormalized and invitation-list indexes. List reads expose effective expiration without mutating the record; future invitation issuance must explicitly settle expired pending rows before replacement. No TTL removes history. Issuance and acceptance are not implemented by this migration.
 

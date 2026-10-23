@@ -9,6 +9,25 @@
 .family-list {
   margin-block: 1.5rem;
 }
+.member-access-controls {
+  max-width: 26rem;
+  margin-top: 0.75rem;
+}
+.member-access-controls form,
+.member-access-controls label {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.member-access-controls select {
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
+  border: 1px solid #dac0c2;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  background: white;
+}
 .family-list ul {
   list-style: none;
   margin: 0;
@@ -479,6 +498,16 @@
   min-height: 44px;
   font-weight: 600;
   color: var(--muted);
+}
+.wedding-overview-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.wedding-overview-nav .wedding-back {
+  max-width: 100%;
 }
 .wedding-actions .button {
   min-width: 220px;

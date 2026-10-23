@@ -105,7 +105,39 @@ export async function listWeddingAccess(
           .toArray()
       : [];
   const accounts = new Map(users.map((row) => [row._id.toString(), row]));
+  const deliveryRows =
+    kind === "invitations"
+      ? await db
+          .collection("deliveries")
+          .find(
+            { membershipInviteId: { $in: page.map((row) => row._id) } },
+            {
+              projection: {
+                membershipInviteId: 1,
+                submissionState: 1,
+                deliveredAt: 1,
+                bouncedAt: 1,
+                complainedAt: 1,
+              },
+            },
+          )
+          .toArray()
+      : [];
+  const deliveries = new Map(
+    deliveryRows.map((row) => [row.membershipInviteId.toString(), row]),
+  );
   return {
+    ...(kind === "members"
+      ? {
+          activeAdminCount: await db
+            .collection("memberships")
+            .countDocuments({
+              weddingId: access.weddingId,
+              status: "active",
+              role: "ADMIN",
+            }),
+        }
+      : {}),
     data: page.map((row) =>
       kind === "members"
         ? {
@@ -130,6 +162,23 @@ export async function listWeddingAccess(
               ? "expired"
               : row.state) as "pending" | "accepted" | "revoked" | "expired",
             expiresAt: (row.expiresAt as Date).toISOString(),
+            emailSubmission: (() => {
+              const delivery = deliveries.get(row._id.toString());
+              return !delivery
+                ? "Not recorded"
+                : delivery.bouncedAt || delivery.complainedAt
+                  ? "Delivery failed"
+                  : delivery.deliveredAt
+                    ? "Delivered"
+                    : delivery.submissionState === "accepted"
+                      ? "Submitted to email provider"
+                      : delivery.submissionState === "queued" ||
+                          delivery.submissionState === "submitting"
+                        ? "Queued or sending"
+                        : delivery.submissionState === "suppressed"
+                          ? "Not sent"
+                          : "Delivery not confirmed";
+            })(),
             version: row.version as number,
           },
     ),

@@ -1,11 +1,19 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
+import { sendAccountEmails } from "@/infrastructure/resend/account-mail";
 import { z } from "zod";
 import { body, cookieName, trustedMutation } from "@/modules/identity/http";
 import { AccountError } from "@/modules/identity/security";
 import { currentUser, rateLimit } from "@/modules/identity/service";
 import { listWeddingAccess } from "./access";
+import { manageMember } from "./members";
+import {
+  inviteFamily,
+  revokeFamilyInvitation,
+  inspectInvitation,
+  acceptInvitation,
+} from "./invitations";
 import {
   createWedding,
   currentWedding,
@@ -21,8 +29,15 @@ export async function handleWedding(
     | "settings"
     | "update"
     | "members"
-    | "invitations",
+    | "invitations"
+    | "invite"
+    | "revoke"
+    | "preview-invite"
+    | "accept-invite"
+    | "change-role"
+    | "remove-member",
   id?: string,
+  inviteId?: string,
 ) {
   const requestId = randomUUID();
   const headers = {
@@ -30,7 +45,17 @@ export async function handleWedding(
     "X-Request-Id": requestId,
   };
   try {
-    if (action === "create" || action === "update") trustedMutation(request);
+    const mutation = [
+      "create",
+      "update",
+      "invite",
+      "revoke",
+      "preview-invite",
+      "accept-invite",
+      "change-role",
+      "remove-member",
+    ].includes(action);
+    if (mutation) trustedMutation(request);
     const user = await currentUser(request.cookies.get(cookieName())?.value);
     if (!user)
       throw new AccountError(
@@ -38,11 +63,11 @@ export async function handleWedding(
         "UNAUTHENTICATED",
         "Please sign in to continue.",
       );
-    if (action === "create" || action === "update")
+    if (mutation)
       await rateLimit(
         `wedding-${action}`,
         user._id.toString(),
-        action === "create" ? 20 : 60,
+        ["create", "invite"].includes(action) ? 20 : 60,
       );
     if (action === "members" || action === "invitations") {
       const result = await listWeddingAccess(
@@ -54,20 +79,50 @@ export async function handleWedding(
       return NextResponse.json({ ...result, requestId }, { headers });
     }
     const data =
-      action === "create"
-        ? await createWedding(
+      action === "change-role" || action === "remove-member"
+        ? await manageMember(
             user,
+            id!,
+            inviteId!,
+            action === "change-role" ? "role" : "remove",
             await body(request),
-            request.headers.get("idempotency-key"),
           )
-        : action === "update"
-          ? await updateWedding(user, id!, await body(request))
-          : action === "current"
-            ? await currentWedding(user)
-            : await weddingFor(user, id);
+        : action === "invite"
+          ? await inviteFamily(user, id!, await body(request))
+          : action === "revoke"
+            ? await revokeFamilyInvitation(
+                user,
+                id!,
+                inviteId!,
+                await body(request),
+              )
+            : action === "preview-invite"
+              ? await inspectInvitation(user, await body(request))
+              : action === "accept-invite"
+                ? await acceptInvitation(user, await body(request))
+                : action === "create"
+                  ? await createWedding(
+                      user,
+                      await body(request),
+                      request.headers.get("idempotency-key"),
+                    )
+                  : action === "update"
+                    ? await updateWedding(user, id!, await body(request))
+                    : action === "current"
+                      ? await currentWedding(user)
+                      : await weddingFor(user, id);
+    if (action === "invite")
+      after(async () => {
+        try {
+          await sendAccountEmails();
+        } catch {
+          // The durable job remains available to the scheduled retry worker.
+          console.warn("INVITATION_MAIL_RETRY_PENDING");
+        }
+      });
     return NextResponse.json(
       { data, requestId },
-      { status: action === "create" ? 201 : 200, headers },
+      { status: ["create", "invite"].includes(action) ? 201 : 200, headers },
     );
   } catch (error) {
     const validation = error instanceof z.ZodError;

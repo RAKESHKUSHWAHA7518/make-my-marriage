@@ -4,13 +4,15 @@ A wedding planning application for couples and families. One Next.js/TypeScript 
 
 ## Current state
 
-The scaffold, homepage/logo, application-owned accounts, wedding onboarding and ordinary wedding-detail editing are implemented. Verified users can create one private wedding and view its saved overview. Active ADMIN/MANAGER members can edit ordinary details with version conflicts and expense-based currency locking. Events, family invitations and remaining wedding planning features are pending. Live Resend delivery and deployment checks remain pending. Public/account screen previews need no credentials; saving a wedding requires MongoDB and server keys.
+The scaffold, homepage/logo, application-owned accounts, wedding onboarding/details and family invitations/access management are implemented. Verified users can create one private wedding and view its saved overview. Only active ADMIN members can edit wedding details; MANAGER members can view them. ADMIN also manages invitations, member roles and removal, with last-ADMIN protection. Events and remaining wedding planning features are pending. Live Resend delivery, family browser QA and deployment checks remain pending. Public/account screen previews need no credentials; saving a wedding requires MongoDB and server keys.
 
 See [Project Status](docs/Wedding-Project-Status.md) for the ongoing major-feature progress log and next steps. See [Implementation Status](docs/Wedding-Implementation-Status.md) for detailed verification evidence and remaining technical work. See [Decision Record](docs/Wedding-Decision-Record.md) for approved conflict resolutions.
 
 The [Document Compliance Audit](docs/Wedding-Compliance-Audit.md) maps every product area to the actual implementation and records open findings; a working scaffold does not mean the full application is implemented.
 
 ## Local setup
+
+Family & access supports ADMIN invitations/revocation, matching-verified-email acceptance, role changes and access removal. Creation queues durable email and triggers a bounded delivery attempt after the response. Run `npm run email:process` locally to process an existing backlog; a frequent authenticated scheduler is still required for retries in deployment. Resend delivery was confirmed for two invitations on October 23; signed delivery callbacks and production scheduling remain release gates. Run `npm run db:migrate` after updating to apply the extended delivery validator/index; do not run email processing against production from a preview environment. Use `npm run test:members` and `npm run test:invitations` for isolated permission/concurrency checks without live email.
 
 Use Node.js 22.x (verified local version: 22.19.0) and npm 10.x (package manager: 10.9.3). Install dependencies from this repository root:
 

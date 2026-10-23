@@ -21,7 +21,7 @@ One shared family workspace contains events, household invitations, tasks/commen
 
 - Application-owned email/password registration, verification, login/logout and recovery; no Better Auth. Verified email is required before wedding creation or invitation sending.
 - One wedding per registered user. Preserve removed membership records; v1 permits reactivation only for that same wedding, not reassignment to another wedding.
-- ADMIN and MANAGER are the only roles. Both edit shared planning information, including expenses. No multi-wedding switcher.
+- ADMIN and MANAGER are the only roles. Both edit shared planning information, including expenses, except wedding details: only ADMIN edits wedding details; MANAGER can view them (user decision, October 24, 2026). No multi-wedding switcher.
 - The creator is ADMIN. The partner becomes ADMIN through an invitation accepted by the intended verified email; couple names alone grant no access.
 - Only ADMIN issues/revokes family invitations, changes roles, removes members, archives, or rotates the gallery token. Never remove/demote the last active ADMIN.
 - Household guests have no account or OTP. Gallery visitors and photographers use shared gallery access, not organizer membership.

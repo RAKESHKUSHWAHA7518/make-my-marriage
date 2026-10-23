@@ -224,7 +224,7 @@ export function CreateWeddingForm({
   const frozen = pending || uncertain || conflict;
   return (
     <form
-      className="wedding-card wedding-form"
+      className={`wedding-card wedding-form${wedding ? " wedding-edit-form" : ""}`}
       ref={formRef}
       onSubmit={submit}
       noValidate

@@ -1,5 +1,13 @@
 # Make My Marriage — Approved Decision Record
 
+### Wedding details permission — October 24, 2026
+
+User explicitly changed the rule: only active ADMIN members may edit wedding details; MANAGER members may view them. This supersedes earlier shared-edit permission for the wedding PATCH/create-field subset (couple names, workspace title, date, timezone, currency and overall budget). Enforce on the server, including the transactional membership check, and render a read-only details page for MANAGER. Other planning permissions are unchanged. Archived weddings remain read-only for both roles. No schema migration or new role is needed.
+
+### Invitation implementation detail — October 23, 2026
+
+Sending and revoking invitations includes minimal recipient acceptance so outgoing links are usable. Add POST `/api/v1/membership-invitations/preview` as an explicit supporting contract beyond the original API catalog: it requires the matching verified account and returns only safe wedding title/role before explicit consent. It does not join a wedding. Tokens remain in email-link fragments, not login query URLs or browser storage; sign-in/registration opens a separate tab and the recipient returns to check/accept. Initial expiry is seven days. This records implementation decisions within the authorized invitation scope, not user visual approval or live-email verification. Existing ADMIN/MANAGER and retained single-wedding rules remain authoritative.
+
 ### Onboarding implementation — October 23, 2026
 
 **Countdown follow-up:** User explicitly requested days remaining on the saved-wedding overview. Derive calendar days from the saved date in the wedding's timezone; do not invent a ceremony time, countdown when the date is undecided, or negative remaining days. Show a wedding-day message and factual elapsed-days text for a past saved date. This adds private overview presentation, not public publication or the full dashboard.

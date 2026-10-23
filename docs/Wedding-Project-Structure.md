@@ -16,6 +16,8 @@ WeddingManagement/
       (auth)/                        shared layout and five account screens
       account/                       protected welcome page and error boundary
       wedding/                       protected create, saved overview, details editing and family lists; loading/failure states
+      membership-invitation/         fragment-token invitation preview and explicit acceptance
+      api/v1/membership-invitations/ safe matching-email preview and atomic acceptance
       api/v1/weddings/               create, current summary, scoped settings reads and ordinary detail updates
       api/v1/auth/                   eight account Route Handlers
       api/internal/jobs/tick/        authenticated bounded account-mail processing

@@ -1,12 +1,12 @@
 # Make My Marriage — Project Status
 
-**Last updated:** October 23, 2026 (Asia/Kolkata).
+**Last updated:** October 24, 2026 (Asia/Kolkata).
 
 This is our ongoing progress log for major features. Update it whenever a major feature is built or materially changed. Detailed checks, implementation files and technical gates belong in [Implementation Status](Wedding-Implementation-Status.md). Requirements and approved decisions remain governed by the existing product, architecture, database and API documents and the [Decision Record](Wedding-Decision-Record.md).
 
 ## Current progress
 
-The scaffold, homepage/logo, accounts and wedding onboarding are implemented. Accounts were user-approved October 22; wedding onboarding and its follow-ups were user-approved October 23. Creation persists a private wedding and creator ADMIN membership; the overview reads saved data. Live email/deployment gates remain pending. Events, family invitations and remaining planning features are future work.
+The scaffold, homepage/logo, accounts, wedding onboarding, detail editing and family access code are implemented. Accounts were user-approved October 22; wedding onboarding and its follow-ups were user-approved October 23. Family invitations/acceptance, member role changes/removal, Stitch refinements and ADMIN-only wedding details were user-approved October 24. Recorded lifecycle browser QA and automated tests pass; Resend reports two real invitations delivered. Signed callbacks, retry scheduling, targeted remaining regressions and deployment gates remain pending. Events and remaining planning features are future work.
 
 | Major feature | Status | Milestone date |
 |---|---|---|
@@ -14,10 +14,34 @@ The scaffold, homepage/logo, accounts and wedding onboarding are implemented. Ac
 | Homepage and logo | Implemented and locally verified; visual approval pending | October 16, 2026 |
 | Accounts: registration, login, verification and recovery | Implemented, locally verified and user-approved October 22; live delivery pending | October 21, 2026 |
 | Wedding onboarding and saved overview | Implemented, locally tested and user-approved; production gates remain | October 23, 2026 |
-| Edit wedding details | Implemented; core browser flows and automated checks passed; confirmation/retry coverage and user approval pending | October 23, 2026 |
-| Family & access foundation | Implemented; browser list/access/pagination checks and 12-test suite passed; user approval and invitation mutations pending | October 23, 2026 |
+| Edit wedding details | Implemented and user-approved October 24; ADMIN-only editing tested; targeted browser/retry coverage remains | October 23, 2026 |
+| Family & access foundation | Implemented and user-approved October 24; browser lists/access and invitation mutations verified | October 23, 2026 |
+| Family invitations and acceptance | Implemented and user-approved October 24; lifecycle browser QA passed; two provider-delivered emails confirmed; callback/scheduler gates remain | October 23, 2026 |
+| Member roles and removal | Implemented and user-approved October 24; browser role/removal flows and automated permissions/concurrency checks passed | October 23, 2026 |
 
 ## 4. Wedding onboarding and saved overview
+
+**User approval and GitHub checkpoint — October 24:** User approved the completed increment and requested commit/push on `dev`: family invitations/acceptance, roles/removal and last-ADMIN safeguards, Stitch presentation fixes, automatic invitation email dispatch and ADMIN-only details editing. [Lifecycle QA](Family-Lifecycle-QA-2026-10-23.md) records browser checks plus 9 invitation, 9 member and 12 wedding tests; the October 24 wedding rerun also passed 12 reported tests. Remaining work is signed callbacks/retry scheduling, production gates, targeted hash-response/permission-view regressions and future planning features. Earlier pending-approval/no-commit statements are historical.
+
+**ADMIN-only wedding details — October 24:** Implemented the user's revised permission: ADMIN edits; MANAGER views saved details without an edit form. Server authorization and the transactional membership fence both require ADMIN. Updated product/API/architecture/database guidance and role descriptions. The wedding suite passed all 12 reported tests, including MANAGER denial with unchanged persisted data and retained read access. See [permission evidence](Wedding-Implementation-Status.md#admin-only-wedding-details--october-24-2026) for verification and remaining checks. Earlier shared-edit records describe the superseded rule.
+
+**Invitation email dispatch correction — October 23:** Found two invitation deliveries queued with zero attempts. Added the missing after-response worker trigger to invitation creation, retaining durable scheduled retries and the existing worker safeguards. Both existing invitations now have completed jobs and Resend reports `delivered`; inbox placement is not proven. Type checking and lint passed; detailed verification and remaining scheduler/callback gates are in [dispatch evidence](Wedding-Implementation-Status.md#invitation-email-dispatch-correction--october-23-2026).
+
+**Stitch layout correction — October 23:** Reworked the workspace header/tabs, edit form/sidebar, family member rows and invitation/member confirmation dialogs from the named MMM V1 Stitch references. Input borders, labels and mobile actions are readable; invitation roles use selectable cards. Desktop/mobile visual and keyboard checks passed without sending invitations or changing access. Types, lint and the production webpack build passed; user visual approval and full mutation/live-email QA remain pending. See [visual verification](Wedding-Implementation-Status.md#workspace-stitch-layout-correction--october-23-2026).
+
+**Overview navigation spacing — October 23:** Grouped account/details/family links in a labelled wrapping navigation row with explicit gaps and consistent icon placement. This corrects the touching/colliding links shown in the user's screenshot. Type checking passed; evidence and verification limits are in [Implementation Status](Wedding-Implementation-Status.md#overview-navigation-spacing--october-23-2026).
+
+**Invitation preview review fix — October 23:** Bound displayed wedding/role, acceptance and feedback to the current fragment token. Responses for a superseded token are ignored, including errors and navigation effects. Type checking passed; detailed verification and browser regression limits are recorded in [Implementation Status](Wedding-Implementation-Status.md#invitation-preview-token-binding--october-23-2026).
+
+**Member administration — October 23:** ADMIN can change active members' roles and remove access, with version checks, activity history and transaction-safe last-active-ADMIN protection. Role changes are blocked after archive; ADMIN removal remains available as a privacy action. Removed memberships/accounts/history are retained, with wedding access denied on subsequent requests. Nine reported member tests and nine invitation regression tests passed; browser QA and user review remain pending. See [member evidence](Wedding-Implementation-Status.md#member-roles-and-removal--october-23-2026). New work remains uncommitted for review.
+
+**Member final checks:** Types, lint and the production webpack build passed. The separate wedding regression could not establish its database connection on either attempt, before cases ran; its previous 12-test pass is historical. Browser confirmations and live email remain review/release gates.
+
+**Independent QA follow-up — October 23:** Connectivity recovered; invitation/member/wedding suites freshly passed 30 reported tests. Browser invitation acceptance, role permissions/changes, conflict recovery, removal/revocation confirmations, retained account/access denial, session behavior and archive controls passed. No application code changed. Live provider delivery and fault-injected acceptance response handling remain open; user approval remains pending. See [QA matrix and limits](Family-Lifecycle-QA-2026-10-23.md).
+
+**Independent invitation/member QA attempt — October 23:** Both invitation/member suites and disposable fixture setup failed at initial database connection, before lifecycle cases or test writes. Standalone ping success was inconsistent with test-process connection failures; cause remains unverified. No new flow pass, live email or personal-data change is claimed. Browser acceptance/confirmations and fresh concurrency verification remain blocked pending restored connectivity; see [detailed attempt](Wedding-Implementation-Status.md#member-roles-and-removal--october-23-2026).
+
+**Family invitations — October 23:** Foundation committed at user request as `4c9c87e` on dev (not pushed). Added ADMIN invitation creation/revocation, durable queued email and a minimal matching-verified-email acceptance journey so emailed links are functional. Includes expiration, duplicate/conflict handling, same-wedding reactivation and one-wedding enforcement. Invitation, wedding and account suites pass 9/12/16 reported tests; production webpack build passes. Browser QA, live email and user acceptance remain pending. Role changes/removal remain planned. See [invitation evidence](Wedding-Implementation-Status.md#family-invitations-and-acceptance--october-23-2026).
 
 **Family access foundation — October 23:** Added `/wedding/family`, real paginated member lists and ADMIN-only invitation history, plus migration 003 for invitation validation/uniqueness. ADMIN/MANAGER role explanations, own-account marker, removed states and archived read-only presentation use the reviewed Stitch layout without invented people or controls. The expanded suite passes 12 reported tests; types/lint passed. Sending, acceptance, revoke, role changes and removal remain planned. See [foundation evidence](Wedding-Implementation-Status.md#family-access-foundation--october-23-2026).
 
@@ -89,7 +113,7 @@ The scaffold, homepage/logo, accounts and wedding onboarding are implemented. Ac
 
 ## Next useful feature
 
-After onboarding visual review, plan explicit family membership invitations and acceptance. Define ADMIN/MANAGER authorization, matching verified email, retained single-wedding membership, last-ADMIN protection and revoke/remove behavior before collaboration. Validate live email before releasing invitations. Events follow as a separate increment; households/RSVP, planning, public websites, gallery/archive and launch validation follow later.
+Review/test the complete family invitation and access-management increment, including browser confirmations and live email before release. Then plan event creation and management as a separate increment; households/RSVP, planning, public websites, gallery/archive and launch validation follow later.
 
 ## How to maintain this log
 

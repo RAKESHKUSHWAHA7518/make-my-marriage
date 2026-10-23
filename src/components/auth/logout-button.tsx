@@ -3,7 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { announceSessionChange } from "./session-sync";
 
-export function LogoutButton() {
+export function LogoutButton({
+  onSignedOut,
+}: { onSignedOut?: () => void } = {}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -28,7 +30,8 @@ export function LogoutButton() {
             });
             if (!response.ok) throw new Error();
             announceSessionChange("signed-out");
-            router.replace("/login");
+            if (onSignedOut) onSignedOut();
+            else router.replace("/login");
             router.refresh();
           } catch {
             setError("Could not sign out. Please try again.");

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { getServerEnv } from "@/infrastructure/config/env";
 import "./globals.css";
+import "./workspace.css";
 import { SessionSync } from "@/components/auth/session-sync";
 
 export const runtime = "nodejs";
@@ -34,8 +35,15 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${headingFont.variable} ${bodyFont.variable}`}>
-      <body><SessionSync />{children}</body>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={`${headingFont.variable} ${bodyFont.variable}`}
+    >
+      <body>
+        <SessionSync />
+        {children}
+      </body>
     </html>
   );
 }

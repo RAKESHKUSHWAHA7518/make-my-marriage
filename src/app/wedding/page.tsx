@@ -37,21 +37,19 @@ export default async function WeddingPage({
       }).format(new Date(`${wedding.weddingDate}T00:00:00Z`))
     : "Date not decided";
   return (
-    <WorkspaceShell name={user.displayName} role={wedding.role}>
+    <WorkspaceShell
+      name={user.displayName}
+      role={wedding.role}
+      weddingTitle={wedding.title}
+      activePage="overview"
+    >
       <main className="wedding-overview">
-        <Link href="/account" className="wedding-back">
-          <WeddingIcon name="back" />
-          Back to account
-        </Link>
-        <Link href="/wedding/details" className="wedding-back">
-          {wedding.state === "archived"
-            ? "Wedding details"
-            : "Edit wedding details"}{" "}
-          <WeddingIcon name="edit" />
-        </Link>
-        <Link href="/wedding/family" className="wedding-back">
-          Family &amp; access
-        </Link>
+        <nav className="wedding-overview-nav" aria-label="Wedding workspace">
+          <Link href="/account" className="wedding-back">
+            <WeddingIcon name="back" />
+            Back to account
+          </Link>
+        </nav>
         {updated && (
           <p className="wedding-notice wedding-success" role="status">
             Wedding details updated.
@@ -89,7 +87,7 @@ export default async function WeddingPage({
           </span>
           <div>
             <strong>Your wedding details are saved</strong>
-            <p>Family invitations and event planning will follow.</p>
+            <p>Manage your wedding details and family access from the workspace tabs.</p>
           </div>
         </aside>
         {wedding.state === "archived" && (

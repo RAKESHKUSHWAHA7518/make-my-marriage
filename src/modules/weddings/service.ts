@@ -79,6 +79,12 @@ export async function updateWedding(user: User, id: string, payload: unknown) {
     membership.weddingId.toString() !== id
   )
     throw new AccountError(404, "NOT_FOUND", "Wedding unavailable.");
+  if (membership.role !== "ADMIN")
+    throw new AccountError(
+      403,
+      "FORBIDDEN",
+      "Only an administrator can edit wedding details.",
+    );
   const session = db.client.startSession();
   try {
     return await session.withTransaction(
@@ -122,7 +128,7 @@ export async function updateWedding(user: User, id: string, payload: unknown) {
               userId: user._id,
               weddingId: wedding._id,
               status: "active",
-              role: { $in: ["ADMIN", "MANAGER"] },
+              role: "ADMIN",
             },
             { $set: { updatedAt: now } },
             { session, returnDocument: "after" },

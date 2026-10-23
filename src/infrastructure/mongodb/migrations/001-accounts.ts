@@ -94,7 +94,6 @@ export async function migrateAccounts(db: Db) {
       required: [
         "kind",
         "userId",
-        "authTokenId",
         "recipientKey",
         "payloadHash",
         "dedupeKey",
@@ -104,7 +103,9 @@ export async function migrateAccounts(db: Db) {
       properties: {
         userId: oid,
         authTokenId: oid,
-        kind: { enum: ["verify_email", "reset_password"] },
+        membershipInviteId: oid,
+        weddingId: oid,
+        kind: { enum: ["verify_email", "reset_password", "membership_invite"] },
         recipientKey: text,
         payloadHash: text,
         dedupeKey: text,
@@ -154,6 +155,22 @@ export async function migrateAccounts(db: Db) {
     const validator = {
       $jsonSchema: {
         bsonType: "object",
+        ...(name === "deliveries"
+          ? {
+              oneOf: [
+                {
+                  properties: {
+                    kind: { enum: ["verify_email", "reset_password"] },
+                  },
+                  required: ["authTokenId"],
+                },
+                {
+                  properties: { kind: { enum: ["membership_invite"] } },
+                  required: ["membershipInviteId", "weddingId"],
+                },
+              ],
+            }
+          : {}),
         required: [
           "schemaVersion",
           "createdAt",
@@ -220,4 +237,7 @@ export async function migrateAccounts(db: Db) {
     .collection("deliveries")
     .createIndex({ recipientKey: 1, bouncedAt: 1, complainedAt: 1 });
   await db.collection("deliveries").createIndex({ payloadExpiresAt: 1 });
+  await db
+    .collection("deliveries")
+    .createIndex({ membershipInviteId: 1 }, { sparse: true });
 }

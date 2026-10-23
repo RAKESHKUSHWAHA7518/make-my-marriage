@@ -281,7 +281,7 @@ test("wedding onboarding invariants in an isolated database", async (t) => {
       },
     );
     await t.test(
-      "MANAGER edits, currency lock and archive/removal guards",
+      "ADMIN-only edits, MANAGER read access, currency lock and archive/removal guards",
       async () => {
         const editor = await user();
         const outsider = await user();
@@ -293,6 +293,29 @@ test("wedding onboarding invariants in an isolated database", async (t) => {
         await db
           .collection("memberships")
           .updateOne({ userId: editor._id }, { $set: { role: "MANAGER" } });
+        const before = await db
+          .collection("weddings")
+          .findOne({ _id: new ObjectId(wedding.id) });
+        await assert.rejects(
+          updateWedding(editor, wedding.id, {
+            expectedVersion: 1,
+            currency: "USD",
+            title: "Manager must not change this",
+          }),
+          { status: 403, code: "FORBIDDEN" },
+        );
+        assert.deepEqual(
+          await db
+            .collection("weddings")
+            .findOne({ _id: new ObjectId(wedding.id) }),
+          before,
+        );
+        const managerView = await weddingFor(editor);
+        assert.equal(managerView!.title, input.title);
+        assert.equal(managerView!.role, "MANAGER");
+        await db
+          .collection("memberships")
+          .updateOne({ userId: editor._id }, { $set: { role: "ADMIN" } });
         await updateWedding(editor, wedding.id, {
           expectedVersion: 1,
           currency: "USD",

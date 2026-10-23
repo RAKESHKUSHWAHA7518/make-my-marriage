@@ -161,7 +161,7 @@ All success bodies use the common envelope unless marked media, acknowledgement 
 | 9 | POST | `/weddings` | Verified unassigned user | CreateWedding | Wedding summary | 201 |
 | 10 | GET | `/weddings/current` | Organizer | None | Wedding summary or null | 200 |
 | 11 | GET | `W` | Family | None | Wedding settings | 200 |
-| 12 | PATCH | `W` | Family active | PatchWedding | Updated wedding | 200 |
+| 12 | PATCH | `W` | ADMIN active | PatchWedding | Updated wedding | 200 |
 | 13 | GET | `W/dashboard` | Family | None | Dashboard | 200 |
 | 14 | POST | `W/archive` | ADMIN active | Version | Archived wedding | 200 |
 
@@ -382,6 +382,8 @@ Wedding summary returns id, title, state, public slug/publication state and vers
 
 ### PatchWedding and Dashboard
 
+October 24 user decision: wedding-details PATCH requires active ADMIN membership. MANAGER may read the saved details/settings but valid edit requests return 403 `FORBIDDEN`. This supersedes the earlier Family-active PATCH permission; no role change, publication or future feature is implicitly enabled by this route.
+
 PatchWedding allows create fields plus optional rsvpDeadline, privateWebsite and livestream, with expectedVersion. Private website accepts bounded intro, coverAssetId and guest-facing text; livestream accepts provider, URL and title or null to clear. Validate every referenced asset and permitted URL. No role, archive-state, gallery-secret or publication-state changes through this generic route. Currency changes are blocked after expense creation. Timezone changes never silently shift existing UTC event instants.
 
 Dashboard returns event counts, task counts by status, household counts by RSVP, confirmedPeople, expense totals/currency/optional budget, and storage used/reserved/limit bytes. Confirmed people sums each eligible active household once. Counts are derived from primary records; no new summary collection.
@@ -389,6 +391,8 @@ Dashboard returns event counts, task counts by status, household counts by RSVP,
 Archive takes Version and returns archived summary after committing state/fence/activity. Cancelling remaining jobs may continue asynchronously. External email already dispatched cannot be recalled.
 
 ## 8. Membership contracts
+
+October 23 invitation increment implements POST `W/member-invitations`, POST `W/member-invitations/{inviteId}/revoke` and POST `/membership-invitations/accept`. Adds supporting POST `/membership-invitations/preview` with strict `{token}` (106 total designed operations, including this extension). Preview requires the matching signed-in verified email and returns `{title,role,alreadyJoined}` without granting access. Acceptance returns `{weddingId,role}`. Tokens use the existing common CSRF/trusted-origin checks in JSON bodies; no GET token query. Creation returns metadata plus `emailSubmission:"queued"`, never a token or a delivered claim. Lists add safe emailSubmission display status backed by delivery/receipt state. Initial expiry is seven days. No resend endpoint is added; a new invitation requires settling/revoking the old pending invitation. Role change and member removal remain planned.
 
 October 23 edit-details increment: PATCH `/api/v1/weddings/{id}` implements only the ordinary create-field subset of PatchWedding plus required `expectedVersion`. Omitted fields are unchanged; `weddingDate:null` and `budgetMinor:null` clear those optional values. Empty patches and unknown fields are rejected. Settings GET adds `currencyLocked`; currency change returns 409 `CURRENCY_LOCKED` after any expense is recorded. Stale versions return 409 `VERSION_CONFLICT` with `error.currentVersion`. PrivateWebsite, livestream and rsvpDeadline updates remain planned; no endpoint stubs are provided for them.
 
@@ -402,6 +406,8 @@ October 23 foundation: both list GET operations are implemented, with default 25
 | ChangeRole | role and expectedVersion |
 | Acceptance | token; signed-in verified email must match recipient |
 | Revoke/remove | expectedVersion |
+
+October 23 member-management increment implements PATCH `W/members/{membershipId}` and POST `W/members/{membershipId}/remove`. Active same-wedding ADMIN required; role edits are blocked after archive, while removal remains an ADMIN privacy action. Stale versions return 409 VERSION_CONFLICT with error.currentVersion. Removing/demoting the final active ADMIN returns 409 LAST_ADMIN. Removed members return 409 MEMBER_REMOVED for role changes and require a fresh same-wedding invitation for restoration. Responses expose only `{id,userId,role,status,version}`. Member lists additionally expose top-level activeAdminCount across all pages for UI guidance. Self-removal/demotion obeys identical safeguards; no account deletion or wedding transfer is provided. Earlier dated planned statements are historical checkpoints.
 
 Only ADMIN issues, revokes, removes or changes family access. Duplicate pending invitations return INVITATION_ALREADY_PENDING; settle expired pending records before issuing replacements. Acceptance transaction consumes the invitation and writes/reactivates same-wedding membership while preserving the one-wedding rule. Never remove/demote the last active ADMIN. Member removal preserves audit/history and denies wedding access on subsequent requests. Invitation revocation and member removal remain ADMIN privacy actions after archive; new invitations, role promotions and acceptance do not.
 
