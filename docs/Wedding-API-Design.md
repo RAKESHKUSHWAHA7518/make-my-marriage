@@ -1,8 +1,12 @@
 # Wedding Management — Detailed API Design
 
-**Version:** 1.0 (detailed design baseline)  
-**Date:** October 14, 2026  
-**Related documents:** [Architecture v2.0](Wedding-System-Design-Architecture.md), [Database Design v2.1](Wedding-Database-Design.md)  
+> October 23, 2026 onboarding checkpoint: POST /weddings, GET /weddings/current and GET /weddings/{id} are implemented under /api/v1. Creation requires verified authentication and Idempotency-Key; settings responses omit secrets. Initial supported currencies: INR/USD/GBP/EUR/AUD/CAD/SGD/AED. Budget is a nonnegative integer string capped at 9223372036854775807 minor units. PATCH/dashboard/archive and membership invitation contracts remain planned. See Wedding-Implementation-Status.md for evidence.
+
+> Account implementation checkpoint — October 21, 2026: All eight /api/v1/auth operations are implemented, plus GET /api/internal/jobs/tick and POST /api/webhooks/resend for account email only (10 routes; 95 remaining). Browser POST requests require exact trusted Origin, application/json and X-MMM-CSRF: 1. Verification/reset tokens come from email-link fragments and are submitted in JSON. Register/resend/forgot acknowledge durable intent with neutral 202 responses; missing provider configuration fails 503. Live provider verification and broader worker contracts remain pending. Earlier scaffold-zero counts below are historical. See Wedding-Implementation-Status.md.
+
+**Version:** 1.1 (aligned design baseline)
+**Date:** October 15, 2026
+**Related documents:** [Architecture v2.1](Wedding-System-Design-Architecture.md), [Database Design v2.2](Wedding-Database-Design.md)
 **Status:** Design only. No endpoints have been implemented or deployed by creating this document.
 
 ## 1. Total API count
@@ -157,7 +161,7 @@ All success bodies use the common envelope unless marked media, acknowledgement 
 | 9 | POST | `/weddings` | Verified unassigned user | CreateWedding | Wedding summary | 201 |
 | 10 | GET | `/weddings/current` | Organizer | None | Wedding summary or null | 200 |
 | 11 | GET | `W` | Family | None | Wedding settings | 200 |
-| 12 | PATCH | `W` | Family active | PatchWedding | Updated wedding | 200 |
+| 12 | PATCH | `W` | ADMIN active | PatchWedding | Updated wedding | 200 |
 | 13 | GET | `W/dashboard` | Family | None | Dashboard | 200 |
 | 14 | POST | `W/archive` | ADMIN active | Version | Archived wedding | 200 |
 
@@ -378,6 +382,8 @@ Wedding summary returns id, title, state, public slug/publication state and vers
 
 ### PatchWedding and Dashboard
 
+October 24 user decision: wedding-details PATCH requires active ADMIN membership. MANAGER may read the saved details/settings but valid edit requests return 403 `FORBIDDEN`. This supersedes the earlier Family-active PATCH permission; no role change, publication or future feature is implicitly enabled by this route.
+
 PatchWedding allows create fields plus optional rsvpDeadline, privateWebsite and livestream, with expectedVersion. Private website accepts bounded intro, coverAssetId and guest-facing text; livestream accepts provider, URL and title or null to clear. Validate every referenced asset and permitted URL. No role, archive-state, gallery-secret or publication-state changes through this generic route. Currency changes are blocked after expense creation. Timezone changes never silently shift existing UTC event instants.
 
 Dashboard returns event counts, task counts by status, household counts by RSVP, confirmedPeople, expense totals/currency/optional budget, and storage used/reserved/limit bytes. Confirmed people sums each eligible active household once. Counts are derived from primary records; no new summary collection.
@@ -386,7 +392,13 @@ Archive takes Version and returns archived summary after committing state/fence/
 
 ## 8. Membership contracts
 
+October 23 invitation increment implements POST `W/member-invitations`, POST `W/member-invitations/{inviteId}/revoke` and POST `/membership-invitations/accept`. Adds supporting POST `/membership-invitations/preview` with strict `{token}` (106 total designed operations, including this extension). Preview requires the matching signed-in verified email and returns `{title,role,alreadyJoined}` without granting access. Acceptance returns `{weddingId,role}`. Tokens use the existing common CSRF/trusted-origin checks in JSON bodies; no GET token query. Creation returns metadata plus `emailSubmission:"queued"`, never a token or a delivered claim. Lists add safe emailSubmission display status backed by delivery/receipt state. Initial expiry is seven days. No resend endpoint is added; a new invitation requires settling/revoking the old pending invitation. Role change and member removal remain planned.
+
+October 23 edit-details increment: PATCH `/api/v1/weddings/{id}` implements only the ordinary create-field subset of PatchWedding plus required `expectedVersion`. Omitted fields are unchanged; `weddingDate:null` and `budgetMinor:null` clear those optional values. Empty patches and unknown fields are rejected. Settings GET adds `currencyLocked`; currency change returns 409 `CURRENCY_LOCKED` after any expense is recorded. Stale versions return 409 `VERSION_CONFLICT` with `error.currentVersion`. PrivateWebsite, livestream and rsvpDeadline updates remain planned; no endpoint stubs are provided for them.
+
 Member filters: status=active|removed, role=ADMIN|MANAGER, pagination. Invitation filters: state=pending|accepted|revoked|expired, pagination. Lists return safe user/recipient details, role, state and version; no tokens.
+
+October 23 foundation: both list GET operations are implemented, with default 25/max 50, descending ObjectId pagination and opaque cursors bound to kind/wedding/filters. Members return id, userId, displayName/email when available, role, status, joinedAt and version; invitations return id, email, role, effective state, expiresAt and version. Pending records past expiresAt are read as expired. Active ADMIN/MANAGER members may read members; invitation history is ADMIN-only, including after archive. All invitation/member mutations below remain planned.
 
 | Request | Fields |
 |---|---|
@@ -394,6 +406,8 @@ Member filters: status=active|removed, role=ADMIN|MANAGER, pagination. Invitatio
 | ChangeRole | role and expectedVersion |
 | Acceptance | token; signed-in verified email must match recipient |
 | Revoke/remove | expectedVersion |
+
+October 23 member-management increment implements PATCH `W/members/{membershipId}` and POST `W/members/{membershipId}/remove`. Active same-wedding ADMIN required; role edits are blocked after archive, while removal remains an ADMIN privacy action. Stale versions return 409 VERSION_CONFLICT with error.currentVersion. Removing/demoting the final active ADMIN returns 409 LAST_ADMIN. Removed members return 409 MEMBER_REMOVED for role changes and require a fresh same-wedding invitation for restoration. Responses expose only `{id,userId,role,status,version}`. Member lists additionally expose top-level activeAdminCount across all pages for UI guidance. Self-removal/demotion obeys identical safeguards; no account deletion or wedding transfer is provided. Earlier dated planned statements are historical checkpoints.
 
 Only ADMIN issues, revokes, removes or changes family access. Duplicate pending invitations return INVITATION_ALREADY_PENDING; settle expired pending records before issuing replacements. Acceptance transaction consumes the invitation and writes/reactivates same-wedding membership while preserving the one-wedding rule. Never remove/demote the last active ADMIN. Member removal preserves audit/history and denies wedding access on subsequent requests. Invitation revocation and member removal remain ADMIN privacy actions after archive; new invitations, role promotions and acceptance do not.
 
@@ -700,7 +714,7 @@ Archived privacy actions use narrow handlers, not an arbitrary bypass of active-
 
 ## 24. Persistence clarifications before implementation
 
-The API maps to the existing 26-collection design. These small additions/clarifications are proposed by this contract and have **not** been applied to Database Design v2.1 in this task:
+The API maps to the existing 26-collection design. The following contract clarifications were approved and incorporated into Database Design v2.2 on October 15, 2026. This is document alignment only: no database migration or API implementation has run.
 
 | Area | Required clarification |
 |---|---|
@@ -710,7 +724,7 @@ The API maps to the existing 26-collection design. These small additions/clarifi
 | Public-page edits | Explicit expectedDraftVersion versus expectedPublishedRevision rules, using the existing fields |
 | Gallery defaults | Initial disabled gallery/uploads as proposed privacy defaults, deliberately enabled by organizers |
 
-These are not new product modules or new collections. Match implementation validators and migrations to the final approved contracts. Earlier architecture route patterns were illustrative; this document proposes the normalized /api/v1 routes. The older PRD also still needs its separately identified product updates.
+These are not new product modules or collections. Match future validators/migrations to these approved contracts. Earlier architecture patterns are illustrative; this document defines normalized /api/v1 browser routes. PRD v3.0, UI Guidelines and Development Plan now reflect the approved product rules.
 
 ## 25. Acceptance checks and implementation status
 
@@ -735,3 +749,9 @@ These are not new product modules or new collections. Match implementation valid
 | Duplicate/out-of-order webhook | No duplicate effect; facts preserved |
 
 The endpoint inventory and counts were checked for unique HTTP method/path pairs. This is a design document, not a generated OpenAPI specification or a report of running API tests. Request validators, repositories, service implementations, provider configuration and integration/security tests remain to be built. Provider SDK wire payloads and exact operating limits must be validated during implementation.
+
+## 26. Scaffold status and remaining contract gates — October 15, 2026
+
+Zero of the 105 operations is implemented by Phase 0A. Only page routing/configuration/build infrastructure exists. Do not create dummy successful API responses or auth bypasses. Add Route Handlers incrementally with their services, scoped repositories, DTO validation and meaningful tests.
+
+Approved interpretation: event drafts require the core CreateEvent fields; contact is optional. Private website settings save directly; no separate private-site publication endpoint/state is introduced. Public publication remains explicit. Cancelled/removed events are omitted from active guest/public displays. Before event-cancellation messaging is implemented, define message-type-specific eligibility so a safe cancellation notice is not blocked by ordinary upcoming-event eligibility rules. Provider wire payloads, configured limits and protected original delivery remain validation gates.

@@ -1,13 +1,21 @@
 # Wedding Management — MongoDB Database Design
 
-**Version:** 2.1  
-**Date:** October 12, 2026  
-**Status:** Implementation specification; no live database has been created or changed.  
-**Baseline:** [System Design Architecture v2.0](Wedding-System-Design-Architecture.md) and [PRD](Wedding-Management-PRD.md).  
+**Wedding-details authorization update — October 24, 2026:** Only active ADMIN membership authorizes editing wedding details; MANAGER retains read access. The wedding update transaction rechecks ADMIN role on the membership write fence so concurrent demotion/removal cannot authorize an edit. This changes authorization, not document shape, indexes or migration requirements. Other planning permissions remain unchanged.
+
+> October 23, 2026 onboarding checkpoint: explicit migration 002 adds weddings, memberships, activity and idempotencyKeys (11 implemented collections total). Creation transaction and unique indexes enforce the retained single-wedding membership; gallery/uploads and public publication start disabled. Gallery secrets use the independent CAPABILITY_ENCRYPTION_KEY. Initial storage allowance is zero until media is configured; this is not a promised storage entitlement. Remaining collection specifications are plans. See Wedding-Implementation-Status.md for evidence.
+
+**Account callback correction, October 22, 2026:** Unmatched Resend receipts retain `state: received` with `nextAttemptAt` delayed one minute. After 48 hours unmatched, they become `failed` with `lastErrorCode: UNMATCHED_DELIVERY`; encrypted payload is removed and `purgeAt` schedules removal after 90 days. The explicit repeatable account migration adds the provider/state/nextAttemptAt/receivedAt index. No collection or API is added.
+
+> Account implementation checkpoint — October 21, 2026: Explicit migration 001-accounts installs users, sessions, authTokens, rateLimits, deliveries, jobs and webhookReceipts with validators and indexes. Validation currently permits implemented account mail kinds only; future features must expand it through migrations. Token/session hashes, credentialVersion revocation, transactional token consumption and durable email intent are implemented. Encrypted recipient/payload fields exist while pending and are unset on terminal/expired deliveries; minimal delivery facts remain for suppression. Membership and remaining collections are not migrated. The 26-collection design remains the target. See Wedding-Implementation-Status.md for measured evidence; earlier scaffold-only statements are historical.
+
+**Version:** 2.2
+**Date:** October 15, 2026
+**Status:** Implementation specification; no live database has been created or changed.
+**Baseline:** [System Design Architecture v2.1](Wedding-System-Design-Architecture.md) and [PRD](Wedding-Management-PRD.md).
 **Stack:** Next.js / Node.js modular monolith on Vercel, MongoDB Atlas, Cloudinary, Resend, Ably. Application-owned email/password authentication; no Better Auth.
 
 
-**Decision update:** This version incorporates the six latest user decisions and supersedes conflicting parts of the earlier PRD and architecture. System Design Architecture v2.0 now reflects these decisions; the earlier PRD still requires a separate update.
+**Decision update:** This version incorporates the six latest user decisions and supersedes conflicting parts of the earlier PRD and architecture. System Design Architecture v2.1, API Design v1.1 and PRD v3.0 reflect these decisions. API section 24 persistence clarifications are incorporated below as design only; no validators, indexes or database migrations have run.
 
 | Decision | Current behavior |
 |---|---|
@@ -167,6 +175,10 @@ Atomic consume requires unconsumed and unexpired. Reset consumes the token, chan
 
 ### `memberships`
 
+October 23 administration increment uses the wedding writeFence to serialize membership changes, checks active ADMIN count inside the transaction, and updates by weddingId/id/expected version. Removal retains the unique user membership, sets removedAt/status and writes activity; role changes retain before/after role evidence. No cached ADMIN counter or additional collection is needed. Counts use active membership status, independent of pagination. Existing schema/index migration 002 supports this increment unchanged.
+
+October 23 edit-details implementation: ordinary wedding updates use the documented transaction fence and expected version, retain expense history for currency locking and use `$unset` when optional date/budget are explicitly cleared. No collection/schema migration is required for this increment. Future expense writers must acquire the same active-wedding fence before checking currency and inserting an expense.
+
 | Field | Type | Required? | Meaning |
 |---|---|---|---|
 | `userId` | ObjectId | Required | Registered user connected to this record. |
@@ -180,6 +192,10 @@ Atomic consume requires unconsumed and unexpired. Reset consumes the token, chan
 Unique `userId` implements the agreed single-wedding model. Keep the removed row for audit and permit reactivation only for the same wedding. Moving a user to a different wedding is outside v1; do not silently change their wedding. Both roles can edit planning records. Only ADMIN can manage membership, archive the wedding, or rotate the shared gallery token. Never remove or demote the last active ADMIN. MANAGER cannot appoint an ADMIN.
 
 ### `membershipInvites`
+
+October 23 lifecycle implementation: seven-day hashed invitations and acceptance/revocation are transactionally fenced with activity. Invitation creation queues encrypted delivery/job in the same transaction. Repeatable account migration 001 now accepts `deliveries.kind=membership_invite`, requiring weddingId/membershipInviteId instead of authTokenId for that kind, retaining userId as the issuer reference. Account kinds still require authTokenId. A sparse membershipInviteId index supports safe delivery-state joins. No additional collection is introduced. Expiration is enforced in reads/acceptance before any cleanup.
+
+October 23 foundation: explicit migration 003 implements this collection's core validator, unique tokenHash, partial unique pending weddingId/emailNormalized and invitation-list indexes. List reads expose effective expiration without mutating the record; future invitation issuance must explicitly settle expired pending rows before replacement. No TTL removes history. Issuance and acceptance are not implemented by this migration.
 
 | Field | Type | Required? | Meaning |
 |---|---|---|---|
@@ -221,8 +237,8 @@ Acceptance requires a signed-in verified account matching the invited email. A t
 | `gallery.tokenHash` | Text | Required | Unique hash of the shared gallery secret. |
 | `gallery.encryptedSecret` | Object | Required | Encrypted copy for authorized admins/managers to copy or print the link again. |
 | `gallery.tokenVersion` | Integer | Required | Increment on rotation to invalidate old sessions. |
-| `gallery.isEnabled` | Boolean | Required | Enables or disables shared gallery access. |
-| `gallery.guestUploadsEnabled` | Boolean | Required | Allows shared-token visitors to upload while the wedding is active. |
+| `gallery.isEnabled` | Boolean | Required | Enables or disables shared gallery access; initially false. |
+| `gallery.guestUploadsEnabled` | Boolean | Required | Allows guest uploads while gallery enabled and wedding active; initially false. |
 | `livestream` | Object | Optional | Private guest-facing livestream details. |
 | `livestream.provider` | Text | If parent is present | Name of the streaming provider. |
 | `livestream.url` | Text | If parent is present | Link to the private livestream. |
@@ -583,6 +599,7 @@ Clients never provide trusted byte size, provider identity, or visibility. Recei
 | `capabilitySessionId` | ObjectId | Guest uploads | Session authorizing household or shared-gallery upload; never a registered guest account. |
 | `galleryTokenVersion` | Integer | Shared-token uploads | Shared gallery version used to authorize the upload; omit for member/household authorization. |
 | `purpose` | Text | Required | Reason this record exists; permitted values depend on the collection. |
+| `context` | Object | Where relevant | Validated attachment context; type task/design/expense and same-wedding resourceId. Persist only authorized scope, and recheck at finalization/attachment. |
 | `expectedPublicId` | Text | Required | Exact Cloudinary public ID reserved for this file. |
 | `reservedBytes` | 64-bit integer | Required | Storage reserved before the upload finishes. |
 | `maxBytes` | 64-bit integer | Required | Maximum permitted upload size in bytes. |
@@ -625,11 +642,13 @@ Deletion first blocks application access with `delete_pending`, then a job delet
 | `designVersionId` | ObjectId | Optional | Fixed published invitation version used for this send. |
 | `createdBy` | ObjectId | Required | User who created the record. |
 | `state` | Text (choice) | Required | Current processing state. Allowed: `preparing`, `queued`, `running`, `completed`, `cancelled`. |
-| `audienceCutoffAt` | Date and time | Required | Review cutoff for audience selection; a timestamp alone is not an immutable audience snapshot. |
-| `cursor` | Text | Optional | Restart position when processing an audience in pages. |
+| `audienceCutoffAt` | Date and time | Required | Review cutoff; not a substitute for the persisted exact audience. |
+| `audienceHouseholdIds` | List of ObjectIds | Required | Immutable unique reviewed audience, at most 2,000 IDs per current API processing limit; all same wedding. |
+| `manifestHash` | Text | Required | Hash of the canonical immutable reviewed audience/configuration. |
+| `cursor` | Text | Optional | Durable preparation cursor into the persisted audience; advance atomically with delivery materialization. |
 | `version` | Integer | Required | Edit number used to detect simultaneous changes. |
 
-The campaign materializes a reviewed audience into delivery rows in bounded pages. `cursor` permits restart; unique delivery dedupe prevents duplicate materialization. The send request must persist the reviewed household selection as delivery rows before dispatch starts; page retries may fill that same reviewed selection only. Do not rerun an unconstrained live audience query and label it a frozen snapshot. For the current small scale, send selected household IDs in bounded review/prepare requests and fail preparation if a selection cannot be recovered. Counts are derived from deliveries. At dispatch, recheck eligibility: removed households or households without eligible invited events must not receive a stale reminder. Reminders additionally require the one shared household RSVP to remain pending and current wedding-wide reminder timing to be eligible. Deduplicate by wedding, campaign and household, not by each invited event. Event-specific messages must contain only still-authorized events and a design version whose complete event scope the household can access. If an immutable queued payload becomes unauthorized or obsolete, suppress it; create a new reviewed delivery/key rather than editing the old provider-idempotent payload. Large campaigns are not one request or one giant transaction.
+The campaign materializes a reviewed audience into delivery rows in bounded pages. `cursor` permits restart; unique delivery dedupe prevents duplicate materialization. Before acknowledging campaign creation, persist the exact audienceHouseholdIds and manifestHash with the immutable campaign configuration. Materialize delivery rows in bounded restartable pages from that manifest, atomically advancing cursor with the rows. Dispatch only durably prepared eligible rows; retries use the same reviewed selection. Do not rerun an unconstrained live audience query and label it a frozen snapshot. Validate the bounded selected household IDs on creation and recover preparation from the persisted manifest after crashes. The audience cannot be replaced by a live search. Counts are derived from deliveries. At dispatch, recheck eligibility: removed households or households without eligible invited events must not receive a stale reminder. Reminders additionally require the one shared household RSVP to remain pending and current wedding-wide reminder timing to be eligible. Deduplicate by wedding, campaign and household, not by each invited event. Event-specific messages must contain only still-authorized events and a design version whose complete event scope the household can access. If an immutable queued payload becomes unauthorized or obsolete, suppress it; create a new reviewed delivery/key rather than editing the old provider-idempotent payload. Large campaigns are not one request or one giant transaction.
 
 ### `deliveries`
 
@@ -737,7 +756,7 @@ Append-only through application permissions. Record changes to access, invitatio
 | `leaseUntil` | Date and time | Optional | Time the worker claim expires. |
 | `expiresAt` | Date and time | Required | Time after which this record no longer grants access or remains valid. |
 
-Scope includes actor, wedding when relevant, and operation. Unique `(scopeKey,keyHash)`. Same key with different request hash returns conflict. Commit completed state with the created resource transactionally; stale processing requires recovery. Do not store raw response bodies containing secrets. Suggested retention 7 days; permanent business uniqueness remains after expiry (e.g. expense `operationKey`).
+Scope includes actor, wedding when relevant, and operation. Import commit additionally uses stable importId/clientRowId in each row operation scope, storing canonical requestHash and household resource references through these existing fields. Retry a row only under current authorization; mismatched content conflicts, successful rows are not recreated, and partial outcomes remain explicit. Unique `(scopeKey,keyHash)`. Same key with different request hash returns conflict. Commit completed state with the created resource transactionally; stale processing requires recovery. Do not store raw response bodies containing secrets. Suggested retention 7 days; permanent business uniqueness remains after expiry (e.g. expense `operationKey`).
 
 ### `rateLimits`
 
@@ -973,7 +992,7 @@ For evolving schemas, deploy readers compatible with old/new fields, backfill in
 
 This document specifies the revised model; no live database migration has run. Existing rows, if any, require an explicit migration: map owner to ADMIN and manager/member to MANAGER; consolidate event answers only after organizer review when they disagree; set maxGuests visibly; convert only actual recorded payments into simple expenses without counting estimates as spent; issue the shared gallery token and retire old upload-only grants. Do not silently merge contradictory responses or expense records.
 
-Implementation, validators, provider configuration, concurrency tests, query-plan checks and recovery drills are still required before production. Architecture v2.0 is aligned to these six decisions. The earlier PRD still requires a separate update before implementation of the affected flows.
+Implementation, validators, provider configuration, concurrency tests, query-plan checks and recovery drills are still required before production. Architecture v2.0 is aligned to these six decisions. PRD v3.0 is aligned; implementation of the affected flows remains pending.
 
 ## 21. Architecture alignment review
 
@@ -991,4 +1010,12 @@ Reviewed against System Design Architecture v2.0 on October 12, 2026. This is a 
 | Household reminder suppression | deliveries, campaign dedupe and current household RSVP | Clarified one reminder per household and payload eligibility checks. |
 | Archive with privacy exceptions | state, fence, token versions and activity | Clarified separate restricted handlers for archived privacy actions. |
 
-The collection count, schemas, index references and Markdown diagram blocks were checked. Schema migrations, database validators, query performance and provider integrations were not executed. The PRD still requires a separate update to the latest product decisions.
+The collection count, schemas, index references and Markdown diagram blocks were checked. Schema migrations, database validators, query performance and provider integrations were not executed. PRD v3.0 now records the latest product decisions.
+
+## 22. Contract alignment and implementation boundary — October 15, 2026
+
+API Design section 24 is resolved in this specification: immutable campaign audience/hash/cursor, stable import row identity using existing idempotency records, persisted authorized upload context, disabled initial gallery/uploads, and existing public draft/published revision checks. No new collections; the inventory remains 26.
+
+Public draft edits/publication use expectedDraftVersion; unpublish uses expectedPublishedRevision. Both update the proper nested counters plus wedding fence/audit in the owning transaction; do not substitute the generic wedding version for these contracts. No separate privateWebsite publication flag is introduced. Event drafts retain required core fields; incomplete drafts need a future explicit schema/API amendment.
+
+Scaffold code has no database driver, repositories, collections, validators or migrations. Add explicit versioned migrations with each feature rather than creating all collections at startup. MongoDB transactions need a transaction-capable environment, not an unconfigured standalone local server. See Implementation Status for actual verification.

@@ -1,140 +1,72 @@
-# Wedding Platform — Phase-by-Phase Development Plan
+# Make My Marriage — Development Plan
 
-**Source:** Detailed PRD v2.2 and Wedding UI Guidelines. All agreed features remain in full-release scope.
+> October 23, 2026: wedding onboarding and saved overview implemented from named Stitch V1 screens, with local integration/browser checks. User visual acceptance and production gates remain pending. Next incremental journey to plan: explicit family membership invitations and acceptance; events/dashboard follow separately. Full Phase 1 is not complete. See Wedding-Implementation-Status.md.
 
-No fixed delivery dates are assumed. Estimate each phase after the technology stack, team capacity, and operating budget are known. The design phase expands the PRD's existing development sequence; it does not replace it.
+> Incremental account checkpoint — October 21, 2026: Account code and local security/integration tests are implemented; live Resend configuration/verification remains pending. Local MongoDB transactions and Argon2id have been exercised; Vercel/provider/cron gates remain open. Phase 1 is not complete: wedding creation, unique membership/last-ADMIN enforcement, partner invitations, events and shared dashboard are next incremental work. Homepage coming-soon account actions described in the historical entry below are now real registration/login links.
 
-## Phase 0 — Product decisions and UI foundation
+**Updated:** October 15, 2026. Approved scope follows Architecture, Database Design, API Design and the latest user decisions. Track actual completion in [Implementation Status](Wedding-Implementation-Status.md). No dates, paid plans or launch readiness are implied.
 
-**Work**
+## Phase 0A — Approved scaffold
 
-- Choose organizer authentication, stack, hosting, database, media storage, and email provider.
-- Finalize owner-only administrative actions, default timezone/currency, RSVP deadline behavior, and upload limits.
-- Produce core mobile/desktop wireframes and reusable UI components using the UI guide.
-- Define the wedding/household/event data model and access rules.
-- Prepare sample data for multiple households, different event invitations, vendors, payments, and photos.
+- Next.js App Router and strict TypeScript in the repository root; Node.js backend runtime.
+- npm lockfile, lint/typecheck/build/start scripts, Tailwind semantic tokens and server-only configuration.
+- Technical placeholder and unavailable-page state; system fonts and no provider calls/credentials.
+- Environment example, secret exclusions, setup/structure/decision/progress documentation.
+- Reconcile legacy requirements and API section 24 persistence clarifications in the design documents.
+- Verify clean installation, lint, types, production build/start and development/root/404 smoke checks.
 
-**Done when:** Core user journeys are reviewable, pending decisions that block coding are resolved, and the same household/event concepts appear consistently in the UI and data model.
+Done when the recorded local checks pass. No account, database, API or provider feature is claimed. Homepage/login Stitch exports are now available; see the incremental homepage feature below. Do not create empty feature folders or all 105 API operations.
 
-## Phase 1 — Accounts, family workspace, and events
+## Incremental feature — Homepage and logo (October 16, 2026)
 
-**Work**
+User authorized the homepage before authentication, plus a matching logo. Implement the supplied Stitch sections with responsive layouts, a scalable SVG brand mark, local fonts/images, working navigation and FAQs. All wedding data is clearly illustrative. Account actions explain coming-soon availability; no fake signup, backend, QR destination or dead legal links. Verify the UI and record evidence in Implementation Status. Login/authentication is the next feature after visual review.
 
-- Registration, login, account recovery, and protected sessions.
-- Wedding creation and partner/family membership invitations.
-- One wedding per organizer and shared family editing.
-- Event templates, custom events, drafts, publication, and cancellation structure.
-- Workspace navigation, initial dashboard, activity history, and responsive shell.
+## Phase 0B — Technical gates, scheduled before dependent features
 
-**Done when:** A couple and a family member can join the same wedding and edit an event. Another wedding's records remain inaccessible. Returning users reach their existing workspace.
+Validate maintained Argon2id on Node/Vercel, secure sessions and atomic recovery; Atlas transactions/connectivity/network boundary; Cloudinary authenticated delivery/original download/phone formats and cost; Ably capabilities; production cron cadence/plan; environment isolation and secret rotation. These gates remain incomplete until measured, even if 0A passes. Account gates precede Phase 1 release; media/provider gates precede their integration releases.
 
-**Dependency:** Phase 0 authentication and data model decisions.
+## Phase 1 — Identity, shared workspace and events
 
-## Phase 2 — Households, private website, and RSVP
+Registration → verify email → sign in → create wedding → invite partner as ADMIN → accept with matching verified email → create event → shared dashboard.
 
-**Work**
+Include recovery/logout, opaque server sessions, persistent rate limits, one-wedding unique membership, last-ADMIN rule, role permissions, minimal durable account/member email handling, explicit migrations/indexes, audit/version/write-fence conventions and scoped repositories. Follow required draft fields and scheduled publication in API Design. Test two-wedding isolation, membership races, stale saves, reset replay and revocation. Acceptance requires the complete real journey, not mock authentication.
 
-- Manual household entry, tags, CSV preview/validation, and contact import where supported.
-- Explicit event invitations and revocable household links.
-- Private guest website, household-specific event display, and preview-as-household.
-- Separate public, view-only wedding page at the shared Vercel origin under /w/:slug, with automatic slug reservation and collision suffixes, explicit content/event/photo selection, preview, publish, and unpublish controls. No public RSVP or uploads; no per-wedding deployment or custom domain.
-- Per-event RSVP, unrestricted positive attendance totals, manual organizer response entry.
-- Dashboard invitation and attendance metrics.
-- Basic Copy link/manual sharing so families can pilot the guest journey before the full invitation designer is complete.
+## Phase 2 — Households, websites and RSVP
 
-**Done when:** A household invited to wedding/reception cannot access haldi, including through direct API requests. Four attendees at one event and two at another remain separate event counts. RSVP works on phones without login.
+Manual households, reviewed/retry-safe CSV and supported contact import; explicit invited events/maxGuests; revocable household sessions/links; household preview and private DTOs; one capped household response across invited events, soft shared deadline and conflict handling. Public /w/:slug has explicit snapshot selection, preview/publish/unpublish and separate media authorization. Add manual copy-link sharing for a small family pilot. Test hidden events, count calculations, publication scope and revoke/unpublish behavior.
 
-**Additional completion check:** Anonymous public-page requests expose only selected public details. Public links never grant private invitation, RSVP, gallery, or upload access; unpublishing removes public access.
+## Phase 3 — Planning and collaboration
 
-**Pilot checkpoint:** Test with a small set of real households. Record problems and fix blockers before expanding invitations.
+Tasks/checklists/attachments/comments, internal announcements, manual vendors and Google Places discovery, simple actual expenses/receipts/optional budget, Ably saved-change outbox and temporary presence. No booking or payment ledger. Test shared-charge totals, retry identities, provider outages, privacy and concurrent forms.
 
-**Dependency:** Phase 1 membership and event publication.
+## Phase 4 — Invitations and messaging
 
-## Phase 3 — Tasks, vendors, and finances
+Templates, uploaded images and accessible designer; immutable versions and event-scoped assets; manual WhatsApp with copy/download fallbacks; reviewed Resend campaigns, persisted audience manifests, bounded jobs/retries/callbacks/reminders. Check current access/RSVP before sending; distinguish acceptance/delivery and unknown outcomes. Define cancellation-notice eligibility separately from normal scheduled-event reminders before building that flow.
 
-**Work**
+## Phase 5 — Gallery, livestream and archive
 
-- Wedding/event tasks, assignments, deadlines, checklist templates, attachments, and comments.
-- Internal announcements and in-app updates.
-- Vendor contacts, categories, service bookings, coordinators, and arrival details.
-- Expenses, optional overall budget, partial payment records, receipts, and outstanding balances.
-- Connect vendor payment summaries to expense records and complete dashboard planning summaries.
+Direct verified uploads, quota reconciliation, authenticated delivery, per-file retry; one shared gallery link/QR for viewing/enabled uploads, also used by photographers; household gallery integration; private external livestream; ADMIN archive with write-fence protection and narrow privacy exceptions. Test rotated/revoked uploads, archive races, gallery-only scope and preserved read access.
 
-**Done when:** Families can coordinate a mehendi provider and Pandit Ji, assign tasks, and track advance payments. One package covering multiple events is counted only once. All family members can edit these records.
+## Phase 6 — Integrated validation and launch
 
-**Dependency:** Phase 1 workspace/events; Phase 2 is not required for every task but is needed for an integrated pilot.
+Access/security, mobile/accessibility, provider failures, realistic load, duplicate requests/callbacks, job recovery, spending/quotas/alerts, backups plus restore/media recovery, environment isolation and real-family pilot. Define concurrency separately from five weddings/500 people. Select provider plans and measured operating limits before release. Do not describe scaffold checks as launch acceptance.
 
-## Phase 4 — Invitation designer and messaging
+## Working method
 
-**Work**
+**Audit dependency:** Public cover photos (Phase 2), task attachments/receipts (Phase 3) and uploaded designs (Phase 4) require protected media capabilities currently grouped under Phase 5. Before those items are marked complete, bring the minimal secure media slice forward or explicitly defer their media acceptance. See [Compliance Audit](Wedding-Compliance-Audit.md). This note records an open sequencing dependency; it does not declare those features implemented or remove their scope.
 
-- Editable templates, invitation image uploads, and full drag-and-drop editor.
-- Draft/published versions, mobile/desktop previews, and optional design download for manual attachment.
-- Share on WhatsApp with the correct household link and copy fallbacks.
-- Automated email invitations, provider status handling, failed-send retries, and duplicate-send protection.
-- Automatic email reminders, manual WhatsApp reminder actions, event-change/cancellation messages.
+For each phase: choose a complete journey, align contracts/schema/UI, implement only needed directories/dependencies, test meaningful success/failure/access cases, demonstrate, and update the status document with exact evidence and remaining work. Keep existing source documents current; never mark a mocked screen as a completed feature. Commits, pushes and deployments are separate actions.
 
-**Done when:** Organizers can use all three design modes, share WhatsApp invitations manually, and send email through the configured provider. Opening WhatsApp never appears as verified delivery. Reminder eligibility is checked again at send time.
+## Clean implementation requirement
 
-**Dependency:** Phase 2 household links and event access; configured email provider for live sending. No WhatsApp Business API is needed.
+**User requirement:** Keep the project practical, readable and maintainable. Do not accumulate clutter or unfinished work disguised as completed features.
 
-## Phase 5 — Photos, venue QR, livestream, and archive
+- Create files, folders, components and dependencies only when the current implementation uses them. No empty future-feature directories, unused packages or generated endpoint stubs.
+- Keep code small and clearly named, with business rules in their owning modules. Reuse existing code where appropriate; avoid copy-paste implementations and speculative abstraction layers.
+- Complete the selected journey through UI, validation, authorization, persistence and meaningful verification. Never return fake success, bypass authentication or silently replace durable data with in-memory state to make a feature appear working.
+- Development fixtures and placeholders must be clearly identified and isolated. Remove temporary experiments, debug logging, dead code and unused imports introduced during the task before delivery.
+- Follow the approved architecture, database invariants and API contracts. Record conflicts and proposed resolutions rather than adding competing implementations.
+- Keep documentation concise and current: what works, evidence, known issues and what remains. Update existing records instead of creating duplicate reports. Preserve useful user material and explicitly labeled historical references.
+- Before marking work complete, review the diff for unnecessary changes and run checks appropriate to the change. Tests must verify meaningful behavior, not merely mirror implementation. Do not hide failures with disabled checks or ignored errors.
 
-**Work**
-
-- Shared gallery, thumbnail processing, file validation, per-file upload progress, and retries.
-- Guest phone uploads through private invitation links.
-- Separate upload-only venue QR generation/download, revocation, and regeneration.
-- Photographer contribution links.
-- External livestream link/embed with fallback viewing action.
-- Owner archive flow and read-only behavior across every module and background job.
-
-**Done when:** Both guest upload paths work without login, and the venue QR cannot expose RSVP or gallery access. Archived weddings reject edits/uploads and suppress pending application-controlled email sends. Authorized viewing remains available.
-
-**Dependency:** Phase 2 guest access; upload/storage decisions from Phase 0; Phase 4 jobs must honor archive state.
-
-## Phase 6 — Integrated testing and launch
-
-**Work**
-
-- Run the PRD's end-to-end acceptance scenarios across organizer, guest, and upload-only access.
-- Test mobile layouts, accessibility, long/missing data, failed networks, concurrent edits, and invalid links.
-- Test email failures, upload retries, duplicate requests, revoked links, and archive races.
-- Verify financial totals, backup restoration, error reporting, and data isolation.
-- Test realistic data for approximately 5 weddings with 500 expected guests each; define peak concurrency separately.
-- Finalize storage/retention rules and operating limits.
-- Complete a real-family trial, fix blockers, and then enable broader public onboarding.
-
-**Done when:** No unresolved access leaks, financial inconsistencies, or blockers in core organizer/guest flows remain; all agreed features pass their acceptance checks. Record any non-blocking issues explicitly.
-
-## Delivery sequence
-
-```text
-Phase 0: Decisions and design
-    ↓
-Phase 1: Family workspace and events
-    ↓
-Phase 2: Guests, private website, RSVP → Small real-family pilot
-    ↓
-Phase 3: Tasks, vendors, expenses
-    ↓
-Phase 4: Full designer, manual WhatsApp, automated email
-    ↓
-Phase 5: Gallery, QR uploads, livestream, archive
-    ↓
-Phase 6: Integrated validation and public release
-```
-
-## Working method for every phase
-
-1. Pick a complete user journey and its acceptance criteria.
-2. Implement its UI, validation, persistence, and access control together.
-3. Test the successful path and meaningful failure/access cases.
-4. Demonstrate with sample or pilot data and address feedback.
-5. Update the implementation checklist and document unresolved decisions.
-
-A visually complete screen with mock data is not a completed feature. Conversely, the pilot should not wait for every decorative detail once its essential workflows and access checks are ready.
-
-## Start here
-
-Begin with Phase 0, then implement this first vertical slice: sign up → create wedding → invite partner → create event → open shared dashboard. Continue with add household → private invitation → RSVP. This establishes the central product flow before adding the full designer and media features.
+These rules apply to every phase. They do not remove required security, reliability or accessibility work in the name of simplicity.
