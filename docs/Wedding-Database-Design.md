@@ -411,6 +411,8 @@ Disabling the gallery blocks gallery reads and uploads. Disabling guest uploads 
 
 ### `tasks`
 
+October 25 first increment: explicit migration 005 defines task validation plus tasks_created (weddingId/createdAt descending/ID descending), tasks_status_due (weddingId/status/dueAt/ID), tasks_assignee_due (weddingId/assigneeUserId/status/dueAt), tasks_event (weddingId/eventId/createdAt descending). These support the implemented cursor list, dashboard and filters. The migration was applied only after explicit user approval. Create/edit/status, activity and scoped idempotency records commit transactionally under existing wedding/actor/membership fences. completedAt is server-derived on entering done and cleared on leaving; optional fields use $unset. Checklist/attachments initialize empty and are deferred, not fake completed features.
+
 | Field | Type | Required? | Meaning |
 |---|---|---|---|
 | `weddingId` | ObjectId | Required | Wedding that owns this record. |

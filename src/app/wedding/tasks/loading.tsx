@@ -1,0 +1,1 @@
+export default function LoadingTasks(){return <main className="workspace-main" role="status" aria-busy="true"><span className="sr-only">Loading tasks…</span><div aria-hidden="true">{[1,2,3].map(i=><div key={i} className="event-skeleton wedding-skeleton"/>)}</div></main>;}

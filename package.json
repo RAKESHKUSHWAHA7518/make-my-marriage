@@ -22,6 +22,7 @@
     "test:weddings": "node --conditions=react-server --import tsx --test tests/weddings.test.ts",
     "test:invitations": "node --conditions=react-server --import tsx --test tests/invitations.test.ts",
     "test:members": "node --conditions=react-server --import tsx --test tests/members.test.ts",
+    "test:tasks": "node --conditions=react-server --import tsx --test tests/tasks.test.ts tests/task-form.test.mjs",
     "test:events": "node --conditions=react-server --import tsx --test tests/events.test.ts tests/event-form.test.mjs tests/schedule-event.test.mjs"
   },
   "dependencies": {

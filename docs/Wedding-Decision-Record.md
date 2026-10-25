@@ -1,5 +1,9 @@
 # Make My Marriage — Approved Decision Record
 
+### Task Management first increment — October 25, 2026
+
+User approved the named Stitch Task designs and requested implementation with dashboard integration. Implement list/create/read/edit/status, active-member assignment, optional event/deadline, documented priorities/statuses, filters and saved dashboard summaries only. Default todo/normal with empty checklist/attachment arrays; those arrays are not editable yet. Tasks are family-only. Both ADMIN/MANAGER manage them; archive is read-only. Use expectedVersion and required Idempotency-Key for edits/creation, with an optional saved wedding-timezone guard. Omitted patch fields remain; null clears description, assignee, event or dueAt. Due deadlines are instants and do not move with event dates. Preserve inactive assignments as history and require explicit clearing/reassignment. Prototype photos, concierge, vendor notifications, reminders, progress percentages and live-sync claims do not broaden scope. User separately approved applying only migration 005 to the shared production database, not production test tasks/accounts. No provider or separate deployment.
+
 ### Event scheduling — October 25, 2026
 
 User confirmed building event scheduling next: explicit Draft → Scheduled only, keeping invitations and public publishing separate. Implement as status-only version-checked PATCH using the existing event operation/idempotency record, with user confirmation of saved details. No reverse transition, automatic timed execution/completion, scheduled creation or scheduled-content editing in this increment. PRD section 5 governs private household eligibility; guest viewing/invitations are not claimed as built. Required core fields/contact-optional rules remain. Both active ADMIN/MANAGER may schedule; archive/revocation/conflict checks remain. No new production migration or QA writes authorized.

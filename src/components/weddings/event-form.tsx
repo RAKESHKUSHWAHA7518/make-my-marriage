@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
+import { useUnsavedNavigation } from "@/components/weddings/use-unsaved-navigation";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { createEventSchema, eventTypeLabels, eventTypes, localEventInstant, eventLocalFields } from "@/modules/events/schema";
 import type { EventView } from "@/modules/events/service";
 import { WeddingIcon } from "./wedding-icon";
@@ -25,26 +26,7 @@ export function EventForm({ weddingId, timezone, initial }: { weddingId: string;
   const [error, setError] = useState("");
   const [fields, setFields] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (!dirty && !pending) return;
-    const unload = (event: BeforeUnloadEvent) => { if (!leaving.current) event.preventDefault(); };
-    const leave = (event: MouseEvent) => {
-      const link = event.target instanceof Element ? event.target.closest("a") : null;
-      if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
-      const url = new URL(link.href, location.href);
-      if (url.origin === location.origin && url.pathname === location.pathname && url.search === location.search) return;
-      event.preventDefault(); event.stopPropagation();
-      if (pending) return;
-      // Only follow same-origin application destinations from this confirmation.
-      if (url.origin !== location.origin) return;
-      reloadRequested.current = false;
-      destination.current = url.pathname + url.search + url.hash;
-      discardDialog.current?.showModal();
-    };
-    window.addEventListener("beforeunload", unload);
-    document.addEventListener("click", leave, true);
-    return () => { window.removeEventListener("beforeunload", unload); document.removeEventListener("click", leave, true); };
-  }, [dirty, pending]);
+  useUnsavedNavigation({ dirty, pending, leaving, destination, reloadRequested, dialog: discardDialog });
 
   const errorFor = (name: string) => fields[name] ? <small id={`error-${name}`} className="event-field-error">{fields[name]}</small> : null;
   const attrs = (name: string) => ({ "aria-invalid": !!fields[name], "aria-describedby": fields[name] ? `error-${name}` : undefined });

@@ -25,7 +25,7 @@ function harness(responses) {
   const context = { React, exports: {}, Error, AbortSignal, HTMLInputElement: Input, HTMLTextAreaElement: class {},
     crypto: { randomUUID: () => "retained-save-key-0001" }, requestAnimationFrame: () => {},
     FormData: class { get(name) { return values[name] ?? ""; } },
-    require(id) { return id === "react" ? React : id === "next/navigation" ? { useRouter: () => ({ replace: (path) => destinations.push(path), refresh() {} }) } : id === "next/link" ? "a" : id.includes("schema") ? schema : { WeddingIcon: "svg" }; },
+    require(id) { return id.includes("use-unsaved-navigation") ? {useUnsavedNavigation(){}} : id === "react" ? React : id === "next/navigation" ? { useRouter: () => ({ replace: (path) => destinations.push(path), refresh() {} }) } : id === "next/link" ? "a" : id.includes("schema") ? schema : { WeddingIcon: "svg" }; },
     async fetch(url, options) { requests.push({ url, ...options }); const next = responses.shift(); if (next instanceof Error) throw next; return { ok: next.status < 300, status: next.status, json: async () => next.body }; },
   };
   runInNewContext(ts.transpileModule(readFileSync("src/components/weddings/event-form.tsx", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React } }).outputText, context);

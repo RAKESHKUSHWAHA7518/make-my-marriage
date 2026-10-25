@@ -241,6 +241,8 @@ Use ObjectId references, UTC dates plus IANA wedding timezone, explicit versions
 
 ## 8. API and request contracts
 
+October 25 task increment: protected task pages and four Node task Route Handlers call a server-only task service in this existing deployment. Dashboard summaries and safe selector choices use direct scoped service reads. A contained task-data failure preserves the rest of the dashboard. No permanent worker, provider integration or realtime behavior was added; Ably remains deferred for task collaboration. See Implementation Status for evidence.
+
 Routes below are historical illustrative patterns, not implementation paths or a mandatory route count. API Design v1.1 is authoritative: browser operations use /api/v1; internal/webhook paths remain absolute. No route in this table is implemented by the scaffold. Every mutation validates its body, authorization, lifecycle state, and relevant record version.
 
 | Route pattern | Purpose |

@@ -4,6 +4,9 @@ import { WeddingIcon } from "./wedding-icon";
 import type { EventView } from "@/modules/events/service";
 import { eventDate, eventTime } from "@/modules/events/schema";
 
+import type { TaskSummary } from "@/modules/tasks/service";
+import { TaskDashboard } from "@/components/tasks/task-dashboard";
+
 type Summary = {
   title: string;
   couple: string;
@@ -17,8 +20,9 @@ type Summary = {
   archived: boolean;
 };
 
-export function WorkspaceDashboard({ summary, sample = false, countdown, events = [], eventsUnavailable = false }: {
+export function WorkspaceDashboard({ summary, sample = false, countdown, events = [], eventsUnavailable = false, tasks = null }: {
   summary: Summary;
+  tasks?: TaskSummary | null;
   sample?: boolean;
   countdown?: ReactNode;
   events?: EventView[];
@@ -45,12 +49,13 @@ export function WorkspaceDashboard({ summary, sample = false, countdown, events 
         {metrics.map((metric) => (
           <article className="workspace-metric" key={metric.title}>
             <div><span>{metric.title}</span><WeddingIcon name={metric.icon} /></div>
-            <strong className={sample ? "" : "workspace-metric-soon"}>{sample ? metric.value : "Coming soon"}</strong>
-            <p>{sample ? metric.detail : "Available when this planning feature is built."}</p>
-            {sample ? <small>Sample data</small> : <Link href={`/wedding/plan/${metric.key}`}>See what’s planned <span aria-hidden="true">→</span></Link>}
+            <strong className={sample ? "" : "workspace-metric-soon"}>{sample ? metric.value : metric.key === "tasks" ? tasks ? String(tasks.counts.done) : "Unavailable" : "Coming soon"}</strong>
+            <p>{sample ? metric.detail : metric.key === "tasks" ? tasks ? `${tasks.total} saved tasks · ${tasks.overdue} overdue` : "Task data could not be loaded." : "Available when this planning feature is built."}</p>
+            {sample ? <small>Sample data</small> : <Link href={metric.key === "tasks" ? "/wedding/tasks" : `/wedding/plan/${metric.key}`}>{metric.key === "tasks" ? "View tasks" : "See what’s planned"} <span aria-hidden="true">→</span></Link>}
           </article>
         ))}
       </section>
+      {!sample && <TaskDashboard summary={tasks} timezone={summary.timezone} archived={summary.archived} />}
       {!sample && <section className="workspace-quick-links" aria-label="Available actions">
         <strong><WeddingIcon name="spark" /> Your workspace</strong>
         <div>
@@ -93,10 +98,10 @@ export function WorkspaceDashboard({ summary, sample = false, countdown, events 
             <p>Public information is published only by an explicit action. Names alone never grant access.</p>
           </section>
           <section className="workspace-panel">
-            <div className="workspace-panel-heading"><h2>Assigned to you</h2><span>{sample ? "Sample tasks" : "Coming soon"}</span></div>
+            <div className="workspace-panel-heading"><h2>Assigned to you</h2><span>{sample ? "Sample tasks" : "Saved tasks"}</span></div>
             {sample ? <ul className="workspace-sample-tasks">
               {["Review the catering menu", "Choose invitation artwork", "Confirm the ceremony playlist"].map((task) => <li key={task}><WeddingIcon name="checklist" /><div><strong>{task}</strong><small>Illustrative task · not assigned to your account</small></div></li>)}
-            </ul> : <div className="workspace-empty workspace-empty-compact"><span><WeddingIcon name="checklist" /></span><h3>Small steps, shared together</h3><p>Your assigned tasks will have a home here when checklists are available.</p></div>}
+            </ul> : tasks?.assigned.length ? <ul className="task-dashboard-list">{tasks.assigned.map(task => <li key={task.id}><Link href={`/wedding/tasks/${task.id}`}>{task.title} →</Link></li>)}</ul> : <div className="workspace-empty workspace-empty-compact"><h3>{tasks ? "No active tasks assigned to you" : "Tasks are temporarily unavailable"}</h3><Link href="/wedding/tasks?assigneeUserId=me">View your tasks →</Link></div>}
           </section>
           <section className="workspace-panel">
             <div className="workspace-panel-heading"><h2>Planning together</h2><WeddingIcon name="people" /></div>

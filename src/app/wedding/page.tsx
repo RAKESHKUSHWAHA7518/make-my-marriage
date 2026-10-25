@@ -7,6 +7,7 @@ import { WorkspaceDashboard } from "@/components/weddings/workspace-dashboard";
 import { WeddingCountdown } from "@/components/weddings/wedding-countdown";
 import { daysUntilWedding } from "@/modules/weddings/countdown";
 import { listEvents, type EventView } from "@/modules/events/service";
+import { taskSummary, type TaskSummary } from "@/modules/tasks/service";
 import { AccountError } from "@/modules/identity/security";
 import {
   WorkspaceShell,
@@ -38,6 +39,8 @@ export default async function WeddingPage({
     if (!(error instanceof AccountError) || error.code !== "EVENTS_UNAVAILABLE") throw error;
     eventsUnavailable = true;
   }
+  let tasks: TaskSummary | null = null;
+  try { tasks = await taskSummary(user, wedding.id); } catch { /* Task failures must not replace the rest of the workspace. */ }
   const date = wedding.weddingDate
     ? new Intl.DateTimeFormat("en-IN", {
       dateStyle: "long",
@@ -53,7 +56,7 @@ export default async function WeddingPage({
     >
       <main className="workspace-main">
         {updated && <p className="wedding-notice wedding-success" role="status">Wedding details updated.</p>}
-        <WorkspaceDashboard events={events} eventsUnavailable={eventsUnavailable} summary={{
+        <WorkspaceDashboard tasks={tasks} events={events} eventsUnavailable={eventsUnavailable} summary={{
           title: wedding.title,
           couple: wedding.couple.brideName + " & " + wedding.couple.groomName,
           date,

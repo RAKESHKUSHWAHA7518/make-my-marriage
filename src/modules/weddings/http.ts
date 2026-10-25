@@ -6,6 +6,7 @@ import { z } from "zod";
 import { body, cookieName, trustedMutation } from "@/modules/identity/http";
 import { AccountError } from "@/modules/identity/security";
 import { currentUser, rateLimit } from "@/modules/identity/service";
+import { listTasks, taskFor, saveTask } from "@/modules/tasks/service";
 import { listWeddingAccess } from "./access";
 import { manageMember } from "./members";
 import { createEvent, updateEvent, eventFor, listEvents } from "@/modules/events/service";
@@ -40,7 +41,11 @@ export async function handleWedding(
     | "list-events"
     | "create-event"
     | "event-detail"
-    | "update-event",
+    | "update-event"
+    | "list-tasks"
+    | "task-detail"
+    | "create-task"
+    | "update-task",
   id?: string,
   inviteId?: string,
 ) {
@@ -61,6 +66,8 @@ export async function handleWedding(
       "remove-member",
       "create-event",
       "update-event",
+      "create-task",
+      "update-task",
     ].includes(action);
     if (mutation) trustedMutation(request);
     const user = await currentUser(request.cookies.get(cookieName())?.value);
@@ -74,8 +81,17 @@ export async function handleWedding(
       await rateLimit(
         `wedding-${action}`,
         user._id.toString(),
-        ["create", "invite", "create-event"].includes(action) ? 20 : 60,
+        ["create", "invite", "create-event", "create-task"].includes(action) ? 20 : 60,
       );
+    if (action === "list-tasks") {
+      const result = await listTasks(user, id!, Object.fromEntries(request.nextUrl.searchParams));
+      return NextResponse.json({ ...result, requestId }, { headers });
+    }
+    if (action === "task-detail") {
+      const result = await taskFor(user, id!, inviteId!);
+      if (!result) throw new AccountError(404, "NOT_FOUND", "Task unavailable.");
+      return NextResponse.json({ data: result, requestId }, { headers });
+    }
     if (action === "list-events") {
       const result = await listEvents(user, id!, Object.fromEntries(request.nextUrl.searchParams));
       return NextResponse.json({ ...result, requestId }, { headers });
@@ -95,7 +111,9 @@ export async function handleWedding(
       return NextResponse.json({ ...result, requestId }, { headers });
     }
     const data =
-      action === "update-event"
+      action === "create-task" || action === "update-task"
+        ? await saveTask(user, id!, action === "update-task" ? inviteId! : null, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
+        : action === "update-event"
         ? await updateEvent(user, id!, inviteId!, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
         : action === "create-event"
         ? await createEvent(user, id!, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
@@ -142,7 +160,7 @@ export async function handleWedding(
       });
     return NextResponse.json(
       { data, requestId },
-      { status: ["create", "invite", "create-event"].includes(action) ? 201 : 200, headers },
+      { status: ["create", "invite", "create-event", "create-task"].includes(action) ? 201 : 200, headers },
     );
   } catch (error) {
     const validation = error instanceof z.ZodError;
