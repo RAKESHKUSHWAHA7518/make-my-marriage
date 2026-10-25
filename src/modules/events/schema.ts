@@ -31,10 +31,12 @@ export type CreateEvent = z.infer<typeof createEventSchema>;
 
 export const patchEventSchema = eventFields.omit({ status: true }).partial().extend({
   expectedVersion: z.number().int().positive(),
+  status: z.literal("scheduled").optional(),
   endsAt: instant.nullable().optional(),
   description: z.string().trim().max(10000).nullable().optional(),
   dressCode: text.nullable().optional(),
-}).refine((value) => Object.keys(value).some((key) => key !== "expectedVersion"), "Supply at least one editable field.");
+}).refine((value) => Object.keys(value).some((key) => key !== "expectedVersion"), "Supply at least one editable field.")
+  .refine((value) => !value.status || Object.keys(value).every((key) => key === "status" || key === "expectedVersion"), "Schedule the saved event separately from editing its details.");
 
 /** Form values in the wedding timezone, independent of browser locale. */
 export function eventLocalFields(value: string, timezone: string) {

@@ -1,5 +1,9 @@
 # Make My Marriage — Approved Decision Record
 
+### Event scheduling — October 25, 2026
+
+User confirmed building event scheduling next: explicit Draft → Scheduled only, keeping invitations and public publishing separate. Implement as status-only version-checked PATCH using the existing event operation/idempotency record, with user confirmation of saved details. No reverse transition, automatic timed execution/completion, scheduled creation or scheduled-content editing in this increment. PRD section 5 governs private household eligibility; guest viewing/invitations are not claimed as built. Required core fields/contact-optional rules remain. Both active ADMIN/MANAGER may schedule; archive/revocation/conflict checks remain. No new production migration or QA writes authorized.
+
 ### Edit draft events — October 25, 2026
 
 User approved the completed Stitch Edit Draft Event designs and authorized implementation. Add version-checked PATCH for private drafts only; ADMIN and MANAGER may edit active-wedding events. Require an Idempotency-Key for safe uncertain-save reconciliation and retain immutable retries on 429. No scheduling or lifecycle transition. Null clears optional endsAt/description/dressCode; venue replacement covers supported name/address/map link, preserving future coordinates. No production QA mutations or additional migration authorized. Prototype extras do not broaden the documented product scope.

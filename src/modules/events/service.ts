@@ -117,14 +117,14 @@ export async function updateEvent(user: User, weddingId: string, id: string, pay
       return view(row);
     }
     if (wedding.state !== "active") throw new AccountError(409, "WEDDING_ARCHIVED", "This wedding is archived. Event details are read-only.");
-    if (row.status !== "draft") throw new AccountError(409, "EVENT_NOT_DRAFT", "Only draft events can be edited in this phase.");
+    if (row.status !== "draft") throw new AccountError(409, "EVENT_NOT_DRAFT", "Only draft events can be edited or scheduled in this phase.");
     if (expectedTimezone && expectedTimezone !== wedding.timezone) throw new AccountError(409, "WEDDING_TIMEZONE_CHANGED", "Your wedding’s time zone has changed. Reload the event and review its dates and times before saving.");
     if (row.version !== input.expectedVersion) throw Object.assign(new AccountError(409, "VERSION_CONFLICT", "This event changed while you were editing. Reload the latest details before saving."), { currentVersion: row.version });
-    const { expectedVersion, ...patch } = input;
+    const { expectedVersion, status, ...patch } = input;
     const merged = { name: row.name, type: row.type, startsAt: row.startsAt.toISOString(), ...(row.endsAt ? { endsAt: row.endsAt.toISOString() } : {}), venue: row.venue, description: row.description, dressCode: row.dressCode, status: "draft", ...patch };
     for (const field of ["endsAt", "description", "dressCode"] as const) if (merged[field] === null) delete merged[field];
     const validated = createEventSchema.parse(merged);
-    const changes: Document = { name: validated.name, type: validated.type, startsAt: new Date(validated.startsAt), venue: { ...row.venue, ...validated.venue }, updatedAt: now };
+    const changes: Document = { name: validated.name, type: validated.type, startsAt: new Date(validated.startsAt), venue: { ...row.venue, ...validated.venue }, ...(status ? { status } : {}), updatedAt: now };
     // Venue is replaced for this editor's supported fields, while preserving future coordinates.
     if (!validated.venue.mapUrl) delete changes.venue.mapUrl;
     const unset: Document = {};
@@ -134,7 +134,7 @@ export async function updateEvent(user: User, weddingId: string, id: string, pay
     }
     const updated = await db.collection("events").findOneAndUpdate({ _id: row._id, weddingId: wedding._id, version: expectedVersion, status: "draft" }, { $set: changes, $inc: { version: 1 }, ...(Object.keys(unset).length ? { $unset: unset } : {}) }, { session, returnDocument: "after" });
     if (!updated) throw new AccountError(409, "VERSION_CONFLICT", "This event changed while you were editing. Reload the latest details before saving.");
-    await db.collection("activity").insertOne({ weddingId: wedding._id, actor: { type: "user", userId: user._id }, action: "event.updated", entityType: "event", entityId: row._id, summary: "Private event draft updated", beforeVersion: row.version, afterVersion: updated.version, occurredAt: now, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
+    await db.collection("activity").insertOne({ weddingId: wedding._id, actor: { type: "user", userId: user._id }, action: status ? "event.scheduled" : "event.updated", entityType: "event", entityId: row._id, summary: status ? "Event marked scheduled" : "Private event draft updated", beforeVersion: row.version, afterVersion: updated.version, occurredAt: now, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
     await db.collection("idempotencyKeys").insertOne({ scopeKey, keyHash, requestHash, state: "completed", resourceType: "event", resourceId: row._id, responseCode: 200, expiresAt: new Date(now.getTime() + 7 * 86400000), schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
     return view(updated);
   }, { writeConcern: { w: "majority" } }));

@@ -115,3 +115,5 @@ Pages/Route Handlers authenticate/parse/delegate. Services enforce current weddi
 All wedding media/receipts belong in Cloudinary, not public/. MongoDB holds metadata/state. No booking/payment ledger or dedicated photographer permission module. One deployment can execute multiple functions; persistent correctness never relies on local memory.
 
 October 25 draft-edit increment: `src/app/wedding/events/[eventId]/edit/` contains the protected edit page and loading state. Existing EventForm supports create/edit without duplicating controls. Existing event detail API adds PATCH; events schema/service implement version-checked, retry-safe draft updates. `tests/event-form.test.mjs` covers uncertain retry and conflict handling without network/database calls.
+
+October 25 scheduling increment: `src/components/weddings/schedule-event.tsx` supplies the explicit confirmation action on saved event details. Existing PATCH/schema/service handle the version-checked status-only transition. `tests/schedule-event.test.mjs` verifies confirmation, immutable retries, conflicts and duplicate submission protection without network/database calls.

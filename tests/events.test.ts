@@ -132,7 +132,7 @@ test("event persistence and authorization in an explicitly isolated database", a
     await t.test("draft edits reject cross-wedding access, stale credentials, invalid merged times and lifecycle changes", async () => {
       const a=await fixture(),b=await fixture();const event=await createEvent(a.user,a.wedding.id,base,"edit-boundary-key-001");
       assert.equal(patchEventSchema.safeParse({expectedVersion:1}).success,false);
-      assert.equal(patchEventSchema.safeParse({expectedVersion:1,status:"scheduled"}).success,false);
+      assert.equal(patchEventSchema.safeParse({expectedVersion:1,status:"completed"}).success,false);
       await assert.rejects(updateEvent(b.user,b.wedding.id,event.id,{expectedVersion:1,name:"Wrong"},"edit-tenant-key-0001"),{status:404});
       await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:1,name:"Timezone"},"edit-timezone-key-001","UTC"),{code:"WEDDING_TIMEZONE_CHANGED"});
       await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:1,endsAt:base.startsAt},"edit-invalid-key-0001"),{name:"ZodError"});
@@ -143,6 +143,38 @@ test("event persistence and authorization in an explicitly isolated database", a
       await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:2,name:"Scheduled"},"edit-scheduled-key-01"),{code:"EVENT_NOT_DRAFT"});
       await db.collection("users").updateOne({_id:a.user._id},{$inc:{credentialVersion:1}});
       await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:2,name:"Stale"},"edit-credentials-001"),{status:401});
+    });
+    await t.test("scheduling is an explicit versioned transition with one audit and no guest/public/email side effects", async () => {
+      const {user,wedding}=await fixture();
+      const created=await createEvent(user,wedding.id,base,"schedule-create-0001");
+      await db.collection("memberships").updateOne({userId:user._id},{$set:{role:"MANAGER"}});
+      const before=await db.collection("weddings").findOne({_id:new ObjectId(wedding.id)});
+      const input={expectedVersion:1,status:"scheduled"};
+      const results=await Promise.all([1,2,3].map(()=>updateEvent(user,wedding.id,created.id,input,"schedule-retry-0001","Asia/Kolkata")));
+      assert(results.every(e=>e.id===created.id && e.status==="scheduled" && e.version===2));
+      const after=await db.collection("weddings").findOne({_id:new ObjectId(wedding.id)});
+      assert.deepEqual(after!.publicPage,before!.publicPage);assert.deepEqual(after!.gallery,before!.gallery);
+      assert.equal(await db.collection("deliveries").countDocuments({weddingId:new ObjectId(wedding.id)}),0);
+      assert.equal(await db.collection("households").countDocuments({weddingId:new ObjectId(wedding.id)}),0);
+      assert.equal(await db.collection("activity").countDocuments({entityId:new ObjectId(created.id),action:"event.scheduled"}),1);
+      assert.equal((await listEvents(user,wedding.id,{status:"scheduled"})).data[0].id,created.id);
+      const stored=await db.collection("events").findOne({_id:new ObjectId(created.id)});assert.deepEqual(stored!.schedule,[]);assert.equal(stored!.name,base.name);
+      await assert.rejects(updateEvent(user,wedding.id,created.id,{expectedVersion:2,status:"scheduled"},"schedule-another-001"),{code:"EVENT_NOT_DRAFT"});
+      await db.collection("weddings").updateOne({_id:new ObjectId(wedding.id)},{$set:{state:"archived"}});
+      assert.equal((await updateEvent(user,wedding.id,created.id,input,"schedule-retry-0001")).version,2);
+      await db.collection("memberships").updateOne({userId:user._id},{$set:{status:"removed"}});
+      await assert.rejects(updateEvent(user,wedding.id,created.id,input,"schedule-retry-0001"),{status:404});
+    });
+    await t.test("scheduling refuses stale, invalid, cross-wedding and archived changes",async()=>{
+      const a=await fixture(),b=await fixture();const event=await createEvent(a.user,a.wedding.id,base,"schedule-gates-0001");
+      assert.equal(patchEventSchema.safeParse({expectedVersion:1,status:"scheduled",name:"Mixed"}).success,false);
+      assert.equal(patchEventSchema.safeParse({expectedVersion:1,status:"draft"}).success,false);
+      await assert.rejects(updateEvent(b.user,b.wedding.id,event.id,{expectedVersion:1,status:"scheduled"},"schedule-tenant-001"),{status:404});
+      await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:1,status:"scheduled"},"schedule-timezone-01","UTC"),{code:"WEDDING_TIMEZONE_CHANGED"});
+      await updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:1,name:"Newer details"},"schedule-edit-first-01");
+      await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:1,status:"scheduled"},"schedule-stale-0001"),{code:"VERSION_CONFLICT"});
+      await db.collection("weddings").updateOne({_id:new ObjectId(a.wedding.id)},{$set:{state:"archived"}});
+      await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:2,status:"scheduled"},"schedule-archived-01"),{code:"WEDDING_ARCHIVED"});
     });
     await t.test("HTTP checks origin/session, POST validation, successful save and read", async () => {
       const { user, wedding } = await fixture();
@@ -162,6 +194,8 @@ test("event persistence and authorization in an explicitly isolated database", a
       const editUrl=url+"/"+data.id;
       const edited=await handleWedding(new NextRequest(editUrl,{method:"PATCH",headers:{...headers,"Idempotency-Key":"http-event-update-001"},body:JSON.stringify({name:"HTTP edited",expectedVersion:1})}),"update-event",wedding.id,data.id);
       assert.equal(edited.status,200);assert.equal((await edited.json()).data.version,2);
+      const scheduled=await handleWedding(new NextRequest(editUrl,{method:"PATCH",headers:{...headers,"Idempotency-Key":"http-schedule-0001"},body:JSON.stringify({status:"scheduled",expectedVersion:2})}),"update-event",wedding.id,data.id);
+      assert.equal(scheduled.status,200);assert.equal((await scheduled.json()).data.status,"scheduled");
       assert.equal((await handleWedding(new NextRequest(editUrl,{method:"PATCH",headers:{...headers,Origin:"https://other.example"},body:"{}"}),"update-event",wedding.id,data.id)).status,403);
     });
   } finally {

@@ -14,7 +14,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
   const events = await listEvents(user, wedding.id, cursor ? { cursor } : {});
   return <WorkspaceShell name={user.displayName} role={wedding.role} weddingTitle={wedding.title} activePage="events">
     <main className="workspace-main events-page">
-      <aside className="event-privacy"><WeddingIcon name="lock" /><p><strong>Private planning drafts</strong> Events created here are visible to your planning family. They are not shared with guests or published publicly.</p></aside>
+      <aside className="event-privacy"><WeddingIcon name="lock" /><p><strong>Event visibility</strong> Drafts are for your planning family. Scheduled events are eligible only for explicitly invited households. Scheduling does not send invitations or publish your public website. Guest access will follow in a later feature.</p></aside>
       <div className="event-page-heading"><div><span className="wedding-kicker">Itinerary &amp; schedule</span><h1>Your celebrations</h1><p>Keep every wedding event together, from the first gathering to the final celebration.</p></div>{wedding.state === "active" && <Link href="/wedding/events/new" className="button button-primary">+ Create event</Link>}</div>
       {wedding.state === "archived" && <p className="wedding-notice">This wedding is archived. Events are viewable but cannot be created.</p>}
       <div className="event-list-caption"><span>Chronological sequence</span><span><WeddingIcon name="clock" />All times in {wedding.timezone}</span></div>
