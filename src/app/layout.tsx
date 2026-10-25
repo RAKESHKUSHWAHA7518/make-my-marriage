@@ -4,6 +4,7 @@ import { getServerEnv } from "@/infrastructure/config/env";
 import "./globals.css";
 import "./workspace.css";
 import "./dashboard.css";
+import "./events.css";
 import { SessionSync } from "@/components/auth/session-sync";
 
 export const runtime = "nodejs";

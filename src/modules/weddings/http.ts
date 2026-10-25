@@ -8,6 +8,7 @@ import { AccountError } from "@/modules/identity/security";
 import { currentUser, rateLimit } from "@/modules/identity/service";
 import { listWeddingAccess } from "./access";
 import { manageMember } from "./members";
+import { createEvent, eventFor, listEvents } from "@/modules/events/service";
 import {
   inviteFamily,
   revokeFamilyInvitation,
@@ -35,7 +36,10 @@ export async function handleWedding(
     | "preview-invite"
     | "accept-invite"
     | "change-role"
-    | "remove-member",
+    | "remove-member"
+    | "list-events"
+    | "create-event"
+    | "event-detail",
   id?: string,
   inviteId?: string,
 ) {
@@ -54,6 +58,7 @@ export async function handleWedding(
       "accept-invite",
       "change-role",
       "remove-member",
+      "create-event",
     ].includes(action);
     if (mutation) trustedMutation(request);
     const user = await currentUser(request.cookies.get(cookieName())?.value);
@@ -67,8 +72,17 @@ export async function handleWedding(
       await rateLimit(
         `wedding-${action}`,
         user._id.toString(),
-        ["create", "invite"].includes(action) ? 20 : 60,
+        ["create", "invite", "create-event"].includes(action) ? 20 : 60,
       );
+    if (action === "list-events") {
+      const result = await listEvents(user, id!, Object.fromEntries(request.nextUrl.searchParams));
+      return NextResponse.json({ ...result, requestId }, { headers });
+    }
+    if (action === "event-detail") {
+      const result = await eventFor(user, id!, inviteId!);
+      if (!result) throw new AccountError(404, "NOT_FOUND", "Event unavailable.");
+      return NextResponse.json({ data: result, requestId }, { headers });
+    }
     if (action === "members" || action === "invitations") {
       const result = await listWeddingAccess(
         user,
@@ -79,7 +93,9 @@ export async function handleWedding(
       return NextResponse.json({ ...result, requestId }, { headers });
     }
     const data =
-      action === "change-role" || action === "remove-member"
+      action === "create-event"
+        ? await createEvent(user, id!, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
+        : action === "change-role" || action === "remove-member"
         ? await manageMember(
             user,
             id!,
@@ -122,7 +138,7 @@ export async function handleWedding(
       });
     return NextResponse.json(
       { data, requestId },
-      { status: ["create", "invite"].includes(action) ? 201 : 200, headers },
+      { status: ["create", "invite", "create-event"].includes(action) ? 201 : 200, headers },
     );
   } catch (error) {
     const validation = error instanceof z.ZodError;

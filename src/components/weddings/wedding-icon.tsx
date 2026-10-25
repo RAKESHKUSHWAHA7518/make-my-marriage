@@ -1,4 +1,5 @@
 const paths = {
+  pin: "M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0ZM15 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z",
   dashboard: "M3 3h7v7H3ZM14 3h7v7h-7ZM3 14h7v7H3ZM14 14h7v7h-7Z",
   people: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11 10v-2a4 4 0 0 0-3-4M16 3a4 4 0 0 1 0 8",
   checklist: "m3 6 2 2 4-4M12 6h9M3 13l2 2 4-4m3 2h9M3 20h6m3 0h9",

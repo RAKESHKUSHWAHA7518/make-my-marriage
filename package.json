@@ -21,7 +21,8 @@
     "test:countdown": "node --import tsx --test tests/countdown.test.ts",
     "test:weddings": "node --conditions=react-server --import tsx --test tests/weddings.test.ts",
     "test:invitations": "node --conditions=react-server --import tsx --test tests/invitations.test.ts",
-    "test:members": "node --conditions=react-server --import tsx --test tests/members.test.ts"
+    "test:members": "node --conditions=react-server --import tsx --test tests/members.test.ts",
+    "test:events": "node --conditions=react-server --import tsx --test tests/events.test.ts"
   },
   "dependencies": {
     "argon2": "0.45.1",

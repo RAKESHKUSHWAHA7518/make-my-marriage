@@ -1,6 +1,6 @@
 # Make My Marriage — Project Structure
 
-**Updated:** October 24, 2026. Application root is the existing make-my-marriage repository at C:/Users/rk751/Downloads/WeddingManagement. No nested app, git init or separate backend.
+**Updated:** October 25, 2026. Application root is the existing make-my-marriage repository at C:/Users/rk751/Downloads/WeddingManagement. No nested app, git init or separate backend.
 
 ## Current implemented paths
 
@@ -15,11 +15,13 @@ WeddingManagement/
       globals.css                    Tailwind, brand tokens and homepage styles
       workspace.css                  wedding forms, details and family dialogs
       dashboard.css                  workspace shell, navigation and dashboard presentation
+      events.css                     event list/form/details styles
       (auth)/                        shared layout and five account screens
       account/                       protected welcome page and error boundary
       wedding/                       protected onboarding, workspace overview, details and family access
         plan/[section]/              allowlisted coming-soon presentation; no business APIs
         sample/                      protected illustrative workspace; no saved dummy records
+        events/                      protected list/create/details with loading/error states
       membership-invitation/         fragment-token invitation preview and explicit acceptance
       api/v1/membership-invitations/ safe matching-email preview and atomic acceptance
       api/v1/weddings/               create, current summary, scoped settings reads and ordinary detail updates
@@ -33,6 +35,7 @@ WeddingManagement/
       weddings/                      workspace shell, access gates and shared create/edit form
     modules/identity/                contracts, account services, security and HTTP adapter
     modules/weddings/                strict contracts, exact money, services and HTTP/page adapters
+    modules/events/                  strict draft/time contracts, scoped transactional persistence and page session
     infrastructure/
       config/env.ts                  server-only validated APP_ORIGIN
       mongodb/                       shared client, migration readiness and explicit migration

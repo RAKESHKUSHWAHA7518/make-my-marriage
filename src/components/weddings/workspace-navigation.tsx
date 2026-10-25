@@ -45,7 +45,7 @@ export function WorkspaceNavigation({ activePage }: { activePage?: string }) {
         <Link href="/wedding" aria-current={activePage === "overview" ? "page" : undefined}>
           <WeddingIcon name="dashboard" /><span>Overview</span>
         </Link>
-        <Link href="/wedding/plan/events" aria-current={activePage === "events" ? "page" : undefined}>
+        <Link href="/wedding/events" aria-current={activePage === "events" ? "page" : undefined}>
           <WeddingIcon name="calendar" /><span>Events</span>
         </Link>
         <Link href="/wedding/family" aria-current={activePage === "family" ? "page" : undefined}>

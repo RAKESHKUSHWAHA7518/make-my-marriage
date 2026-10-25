@@ -413,6 +413,8 @@ Only ADMIN issues, revokes, removes or changes family access. Duplicate pending 
 
 ## 9. Event contracts
 
+**October 25 first increment:** POST/GET `/api/v1/weddings/{id}/events` and GET `/api/v1/weddings/{id}/events/{eventId}` are implemented for active ADMIN/MANAGER membership; archived members retain reads. Initial creation accepts only `draft` (default), and only name/type/startsAt/endsAt/venue.name/venue.address/venue.mapUrl/description/dressCode. Agenda/contact/coordinates and scheduled creation remain designed, not implemented. Unknown fields are rejected. Require a 16–128 character `Idempotency-Key`; immutable retries within the retained seven-day key window return the same event, mismatched payloads return 409 IDEMPOTENCY_CONFLICT, and access is rechecked before replay. The browser sends optional `X-MMM-Wedding-Timezone`; a changed timezone returns 409 WEDDING_TIMEZONE_CHANGED before a new save. Timestamps require an explicit offset or Z. Map links require HTTPS and no embedded credentials. Create writes event/activity/idempotency records atomically under wedding, user and membership fences; it never queues mail or publishes anything. Lists use ascending startsAt/ID, 25 default/50 maximum, status/type/from/to filters and wedding/filter-bound cursors. Unavailable migration returns 503 EVENTS_UNAVAILABLE, not a fake empty list. Migration 004 was applied with explicit approval October 25; user acceptance is recorded in Project Status.
+
 Event filters: status, type, from, to, pagination. Sort by startsAt and ID. CreateEvent fields:
 
 | Field | Required | Rules |

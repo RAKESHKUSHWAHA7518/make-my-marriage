@@ -4,7 +4,7 @@ A wedding planning application for couples and families. One Next.js/TypeScript 
 
 ## Current state
 
-The scaffold, homepage/logo, application-owned accounts, wedding onboarding/details and family invitations/access management are implemented. Verified users can create one private wedding and view its saved overview. Only active ADMIN members can edit wedding details; MANAGER members can view them. ADMIN also manages invitations, member roles and removal, with last-ADMIN protection. Events and remaining wedding planning features are pending. Live Resend delivery, family browser QA and deployment checks remain pending. Public/account screen previews need no credentials; saving a wedding requires MongoDB and server keys.
+The scaffold, homepage/logo, application-owned accounts, wedding onboarding/details and family invitations/access management are implemented. Verified users can create one private wedding and view its saved overview. Only active ADMIN members can edit wedding details; MANAGER members can view them. ADMIN also manages invitations, member roles and removal, with last-ADMIN protection. Event draft list/create/details are implemented with isolated tests; migration 004 is applied; isolated QA passed and the user approved this increment October 25; targeted QA gaps remain. Remaining wedding planning features are planned. Live Resend delivery, family browser QA and deployment checks remain pending. Public/account screen previews need no credentials; saving a wedding requires MongoDB and server keys.
 
 See [Project Status](docs/Wedding-Project-Status.md) for the ongoing major-feature progress log and next steps. See [Implementation Status](docs/Wedding-Implementation-Status.md) for detailed verification evidence and remaining technical work. See [Decision Record](docs/Wedding-Decision-Record.md) for approved conflict resolutions.
 
@@ -13,6 +13,10 @@ The [Document Compliance Audit](docs/Wedding-Compliance-Audit.md) maps every pro
 ## Workspace foundation
 
 The signed-in wedding overview now uses the V1 workspace sidebar/mobile navigation. Existing details/family pages are connected; future sections open honest coming-soon pages. `/wedding/sample` is an explicitly illustrative preview, not business functionality or saved dummy records. The user confirms local development currently shares the production database: do not create QA fixtures or run migrations/test mutations there; prepare an isolated development environment first. Production/custom-domain deployment is user-reported, not independently audited here.
+
+## Event management — first increment
+
+Event list, draft creation and saved details are implemented at `/wedding/events`, with a private dashboard timeline. ADMIN and MANAGER may create drafts in active weddings; archived weddings are read-only. Drafts do not publish or send invitations. Editing, scheduling, guest assignment and messaging are deferred. Explicit migration 004 must be applied to the intended environment before activation; it was applied to the shared production database on October 25 after explicit user approval. Its validator/indexes and local list/create-form loading were verified. No production test events were saved. Do not run `npm run db:migrate` with the current production-connected local environment. `npm run test:events` creates a uniquely named temporary database and removes only that database.
 
 ## Local setup
 
@@ -72,7 +76,7 @@ npm run db:migrate
 npm run dev -- --port 3001
 ```
 
-The check is read-only. Migration explicitly installs seven account and four onboarding collections with validators/indexes; it is repeatable and must run before writes. It requires a transaction-capable MongoDB deployment and migration permissions. Runtime does not create schema automatically.
+The check is read-only. Migration explicitly installs account, wedding, invitation and event validators/indexes (13 migration-defined collections); it is repeatable and must run against the intended isolated environment before feature writes. It requires a transaction-capable MongoDB deployment and migration permissions. Runtime does not create schema automatically.
 
 Wedding creation also requires an independent random 32-byte hex `CAPABILITY_ENCRYPTION_KEY` for the initial disabled gallery secret. Preserve this key; never use an account-email key for it. The existing ignored local key is configured. Run `npm run test:weddings` for isolated onboarding integration tests (a uniquely named disposable database is created and dropped). Initial currencies are INR/USD/GBP/EUR/AUD/CAD/SGD/AED. Gallery/media stays disabled with zero storage allowance until a later explicit media configuration. On this machine the default Turbopack build currently fails to connect its CSS subprocess; `npm run build -- --webpack` passed and `npm run dev -- --webpack --port 3001` is the supported local fallback. Compiler defaults have not been changed.
 

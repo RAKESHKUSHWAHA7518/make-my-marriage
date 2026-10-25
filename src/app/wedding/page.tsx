@@ -6,6 +6,8 @@ import { displayBudget } from "@/modules/weddings/schema";
 import { WorkspaceDashboard } from "@/components/weddings/workspace-dashboard";
 import { WeddingCountdown } from "@/components/weddings/wedding-countdown";
 import { daysUntilWedding } from "@/modules/weddings/countdown";
+import { listEvents, type EventView } from "@/modules/events/service";
+import { AccountError } from "@/modules/identity/security";
 import {
   WorkspaceShell,
   WeddingGate,
@@ -29,6 +31,13 @@ export default async function WeddingPage({
     );
   const wedding = await weddingFor(user);
   if (!wedding) throw new Error("Wedding unavailable");
+  let events: EventView[] = [];
+  let eventsUnavailable = false;
+  try { events = (await listEvents(user, wedding.id, { limit: 3, status: "draft" })).data; }
+  catch (error) {
+    if (!(error instanceof AccountError) || error.code !== "EVENTS_UNAVAILABLE") throw error;
+    eventsUnavailable = true;
+  }
   const date = wedding.weddingDate
     ? new Intl.DateTimeFormat("en-IN", {
       dateStyle: "long",
@@ -44,7 +53,7 @@ export default async function WeddingPage({
     >
       <main className="workspace-main">
         {updated && <p className="wedding-notice wedding-success" role="status">Wedding details updated.</p>}
-        <WorkspaceDashboard summary={{
+        <WorkspaceDashboard events={events} eventsUnavailable={eventsUnavailable} summary={{
           title: wedding.title,
           couple: wedding.couple.brideName + " & " + wedding.couple.groomName,
           date,

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { WeddingIcon } from "./wedding-icon";
+import type { EventView } from "@/modules/events/service";
+import { eventDate, eventTime } from "@/modules/events/schema";
 
 type Summary = {
   title: string;
@@ -15,10 +17,12 @@ type Summary = {
   archived: boolean;
 };
 
-export function WorkspaceDashboard({ summary, sample = false, countdown }: {
+export function WorkspaceDashboard({ summary, sample = false, countdown, events = [], eventsUnavailable = false }: {
   summary: Summary;
   sample?: boolean;
   countdown?: ReactNode;
+  events?: EventView[];
+  eventsUnavailable?: boolean;
 }) {
   const metrics = [
     { title: "Household replies", icon: "mail", value: "42 / 60", detail: "18 sample households awaiting a reply", key: "guests" },
@@ -69,14 +73,14 @@ export function WorkspaceDashboard({ summary, sample = false, countdown }: {
             </dl>
           </section>
           <section className="workspace-panel">
-            <div className="workspace-panel-heading"><h2>Celebration timeline</h2><span>{sample ? "Sample events" : "Coming soon"}</span></div>
+            <div className="workspace-panel-heading"><h2>Celebration timeline</h2>{sample ? <span>Sample events</span> : <Link className="workspace-text-link" href="/wedding/events">View events →</Link>}</div>
             {sample ? <ol className="workspace-timeline">
               {[
                 ["13 FEB · 10:00 AM", "Haldi ceremony", "Courtyard Garden · Yellow festive attire"],
                 ["13 FEB · 7:00 PM", "Sangeet evening", "Garden Pavilion · Festive attire"],
                 ["14 FEB · 10:30 AM", "Wedding ceremony", "Main Pavilion · Traditional attire"],
               ].map(([date, name, venue]) => <li key={name}><small>{date}</small><h3>{name}</h3><p>{venue}</p></li>)}
-            </ol> : <div className="workspace-empty"><span><WeddingIcon name="calendar" /></span><h3>A place for every celebration</h3><p>Events, dates and venues will appear here once event planning is available.</p><Link href="/wedding/plan/events">Explore planned event features →</Link></div>}
+            </ol> : events.length ? <ol className="workspace-timeline">{events.map((event) => <li key={event.id}><small>{eventDate(event.startsAt, summary.timezone)} · {eventTime(event.startsAt, summary.timezone)}</small><h3><Link href={`/wedding/events/${event.id}`}>{event.name}</Link></h3><p>{event.venue.name} · {event.status}</p></li>)}</ol> : <div className="workspace-empty"><span><WeddingIcon name="calendar" /></span><h3>{eventsUnavailable ? "Events are temporarily unavailable" : "A place for every celebration"}</h3><p>{eventsUnavailable ? "Your saved wedding details are still available. Try opening the event list again later." : "Add your first private event draft with its date, time and venue."}</p><Link href="/wedding/events">{eventsUnavailable ? "Open events" : summary.archived ? "View events" : "Plan your celebrations"} →</Link></div>}
           </section>
         </div>
         <div className="workspace-column">

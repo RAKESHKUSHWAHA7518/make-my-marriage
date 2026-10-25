@@ -1,7 +1,7 @@
 /** Navigation and honest V1 availability; planned destinations are presentation only. */
 export const workspaceSections = [
   { key: "overview", label: "Overview", href: "/wedding", icon: "dashboard", planned: false, description: "Your saved wedding and planning space." },
-  { key: "events", label: "Events", href: "/wedding/plan/events", icon: "calendar", planned: true, description: "Keep your celebrations, dates, venues and schedules together." },
+  { key: "events", label: "Events", href: "/wedding/events", icon: "calendar", planned: false, description: "Keep your celebrations, dates, venues and schedules together." },
   { key: "guests", label: "Guests & RSVP", href: "/wedding/plan/guests", icon: "people", planned: true, description: "Organize households, choose their invited events and track one RSVP per household." },
   { key: "tasks", label: "Tasks", href: "/wedding/plan/tasks", icon: "checklist", planned: true, description: "Share checklists, assign responsibilities and follow up on the details." },
   { key: "vendors", label: "Vendors", href: "/wedding/plan/vendors", icon: "store", planned: true, description: "Keep vendor contacts and notes together, with Google Places discovery to follow." },

@@ -1,5 +1,13 @@
 # Make My Marriage — Approved Decision Record
 
+### Event management first increment — October 25, 2026
+
+User-approved activation — October 25, 2026: applied only migration 004 to the shared production database. Verified the events collection, strict validator and both events_chronological and events_status_chronological indexes. Authenticated Chrome MANAGER checks now load the empty Events list and complete Create Event form. No production test event was saved. Earlier missing-migration diagnosis is resolved; broader browser QA and user acceptance remain pending. General restrictions on production QA writes still apply.
+
+User approved implementation from the seven named MMM V1 event screens in Stitch project 1860855833908619349. Implement list/create-draft/details and the private dashboard timeline only. The initial CreateEvent subset supports name/type, explicit start instant, optional end, manual venue name/address/HTTPS link, description and dress code; schedule is initialized empty. This increment accepts only draft creation even though the full designed API also permits scheduled events. Editing, scheduling, cancellation/removal, guest assignment/messaging, contact/agenda editors, venue images/maps integration and design-added concierge/palette/transport claims remain deferred. Existing brand/workspace navigation and ADMIN/MANAGER event access remain; ADMIN-only wedding-details edits are unchanged.
+
+Browser wall-clock times are resolved using the saved wedding timezone, rejecting nonexistent/repeated DST hours rather than guessing. Optional X-MMM-Wedding-Timezone detects stale form timezone; explicit ISO instants remain the API contract. Idempotency-Key is required for draft creation; immutable retries return the same authorized event, including a previously committed save after archive, without creating another event. The user chose to keep local connected to production and permit isolated automated tests only. Migration 004 and QA mutations must not run against production without separate authorization; migration activation and user acceptance are recorded above; remaining QA gaps are tracked in Implementation Status.
+
 ### Login landing page — October 25, 2026
 
 User requested the dashboard immediately after login instead of the intermediate account welcome page. Successful login, already-signed-in login/register visits and cross-tab sign-in redirects now enter `/wedding`. That protected route preserves existing membership, onboarding, verification and removed-access handling; archived members still get their read-only overview. `/account` remains available intentionally from the account menu and setup's Back to account action. No authentication or authorization rule changes.
