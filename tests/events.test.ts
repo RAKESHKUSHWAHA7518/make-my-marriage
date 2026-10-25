@@ -8,14 +8,15 @@ import { getDatabase, closeDatabase } from "../src/infrastructure/mongodb/client
 import { migrateAccounts } from "../src/infrastructure/mongodb/migrations/001-accounts";
 import { migrateWeddings } from "../src/infrastructure/mongodb/migrations/002-weddings";
 import { migrateEvents } from "../src/infrastructure/mongodb/migrations/004-events";
-import { createEvent, eventFor, listEvents } from "../src/modules/events/service";
-import { createEventSchema, localEventInstant } from "../src/modules/events/schema";
+import { createEvent, updateEvent, eventFor, listEvents } from "../src/modules/events/service";
+import { createEventSchema, patchEventSchema, eventLocalFields, localEventInstant } from "../src/modules/events/schema";
 import { createWedding } from "../src/modules/weddings/service";
 import { handleWedding } from "../src/modules/weddings/http";
 import { digest } from "../src/modules/identity/security";
 import type { User } from "../src/modules/identity/service";
 
 test("event date/time validation and DST disambiguation", () => {
+  assert.deepEqual(eventLocalFields("2027-02-11T18:30:00Z", "Asia/Kolkata"), {date: "2027-02-12", time: "00:00"});
   assert.equal(localEventInstant("2027-02-12", "10:00", "Asia/Kolkata"), "2027-02-12T04:30:00.000Z");
   assert.equal(localEventInstant("2027-02-12", "00:00", "Asia/Kolkata"), "2027-02-11T18:30:00.000Z");
   assert.equal(localEventInstant("2028-02-29", "12:00", "UTC"), "2028-02-29T12:00:00.000Z");
@@ -107,6 +108,42 @@ test("event persistence and authorization in an explicitly isolated database", a
       await db.collection("users").updateOne({ _id: user._id }, { $inc: { credentialVersion: 1 } });
       await assert.rejects(createEvent(user, wedding.id, base, "archived-event-key-001"), { status: 401 });
     });
+    await t.test("draft edits retain identity/privacy, clear optional values, and audit once across retries", async () => {
+      const { user, wedding } = await fixture();
+      const created = await createEvent(user, wedding.id, { ...base, endsAt: "2027-02-12T06:30:00Z", dressCode: "Yellow", description: "Before", venue: { ...base.venue, mapUrl: "https://example.test/map" } }, "edit-create-key-0001");
+      await db.collection("memberships").updateOne({userId:user._id}, {$set:{role:"MANAGER"}});
+      const patch = {expectedVersion:1,name:"Updated Haldi",endsAt:null,dressCode:null,description:null,venue:base.venue};
+      const results = await Promise.all([1,2,3].map(() => updateEvent(user,wedding.id,created.id,patch,"edit-retry-key-0001","Asia/Kolkata")));
+      assert(results.every(e=>e.id===created.id && e.version===2 && e.name==="Updated Haldi" && e.status==="draft"));
+      const stored = await db.collection("events").findOne({_id:new ObjectId(created.id)});
+      assert.equal(stored!.endsAt,undefined);assert.equal(stored!.dressCode,undefined);assert.equal(stored!.description,undefined);assert.equal(stored!.venue.mapUrl,undefined);
+      assert.deepEqual(stored!.schedule,[]);assert.equal(stored!.createdBy.toString(),user._id.toString());
+      assert.equal(await db.collection("events").countDocuments({weddingId:new ObjectId(wedding.id)}),1);
+      assert.equal(await db.collection("activity").countDocuments({entityId:new ObjectId(created.id),action:"event.updated"}),1);
+      assert.equal(await db.collection("deliveries").countDocuments({weddingId:new ObjectId(wedding.id)}),0);
+      await assert.rejects(updateEvent(user,wedding.id,created.id,{...patch,name:"Other"},"edit-retry-key-0001"),{code:"IDEMPOTENCY_CONFLICT"});
+      await assert.rejects(updateEvent(user,wedding.id,created.id,{expectedVersion:1,name:"Stale"},"edit-stale-key-0001"),{code:"VERSION_CONFLICT",currentVersion:2});
+      await db.collection("weddings").updateOne({_id:new ObjectId(wedding.id)},{$set:{state:"archived"}});
+      assert.equal((await updateEvent(user,wedding.id,created.id,patch,"edit-retry-key-0001")).version,2);
+      await assert.rejects(updateEvent(user,wedding.id,created.id,{expectedVersion:2,name:"New"},"edit-archive-key-0001"),{code:"WEDDING_ARCHIVED"});
+      await db.collection("memberships").updateOne({userId:user._id},{$set:{status:"removed"}});
+      await assert.rejects(updateEvent(user,wedding.id,created.id,patch,"edit-retry-key-0001"),{status:404});
+    });
+    await t.test("draft edits reject cross-wedding access, stale credentials, invalid merged times and lifecycle changes", async () => {
+      const a=await fixture(),b=await fixture();const event=await createEvent(a.user,a.wedding.id,base,"edit-boundary-key-001");
+      assert.equal(patchEventSchema.safeParse({expectedVersion:1}).success,false);
+      assert.equal(patchEventSchema.safeParse({expectedVersion:1,status:"scheduled"}).success,false);
+      await assert.rejects(updateEvent(b.user,b.wedding.id,event.id,{expectedVersion:1,name:"Wrong"},"edit-tenant-key-0001"),{status:404});
+      await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:1,name:"Timezone"},"edit-timezone-key-001","UTC"),{code:"WEDDING_TIMEZONE_CHANGED"});
+      await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:1,endsAt:base.startsAt},"edit-invalid-key-0001"),{name:"ZodError"});
+      const first=await Promise.allSettled(["One","Two"].map(name=>updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:1,name},"edit-race-key-"+name)));
+      assert.equal(first.filter(x=>x.status==="fulfilled").length,1);
+      assert.equal(first.filter(x=>x.status==="rejected" && x.reason.code==="VERSION_CONFLICT").length,1);
+      await db.collection("events").updateOne({_id:new ObjectId(event.id)},{$set:{status:"scheduled"}});
+      await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:2,name:"Scheduled"},"edit-scheduled-key-01"),{code:"EVENT_NOT_DRAFT"});
+      await db.collection("users").updateOne({_id:a.user._id},{$inc:{credentialVersion:1}});
+      await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:2,name:"Stale"},"edit-credentials-001"),{status:401});
+    });
     await t.test("HTTP checks origin/session, POST validation, successful save and read", async () => {
       const { user, wedding } = await fixture();
       const url = `http://localhost:3001/api/v1/weddings/${wedding.id}/events`;
@@ -122,6 +159,10 @@ test("event persistence and authorization in an explicitly isolated database", a
       const { data } = await saved.json();
       const read = await handleWedding(new NextRequest(url + "/" + data.id, { headers: { Cookie: `mmm_session=${token}` } }), "event-detail", wedding.id, data.id);
       assert.equal(read.status, 200); assert.match(read.headers.get("cache-control")!, /no-store/);
+      const editUrl=url+"/"+data.id;
+      const edited=await handleWedding(new NextRequest(editUrl,{method:"PATCH",headers:{...headers,"Idempotency-Key":"http-event-update-001"},body:JSON.stringify({name:"HTTP edited",expectedVersion:1})}),"update-event",wedding.id,data.id);
+      assert.equal(edited.status,200);assert.equal((await edited.json()).data.version,2);
+      assert.equal((await handleWedding(new NextRequest(editUrl,{method:"PATCH",headers:{...headers,Origin:"https://other.example"},body:"{}"}),"update-event",wedding.id,data.id)).status,403);
     });
   } finally {
     if (db.databaseName === testDatabase && /^mmm_events_test_[a-f0-9]{16}$/.test(testDatabase)) await db.dropDatabase();

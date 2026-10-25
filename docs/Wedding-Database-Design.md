@@ -291,6 +291,8 @@ Wedding creation and its first ADMIN membership are transactional. The second AD
 
 ### `events`
 
+October 25 edit increment: existing migration 004 supports version-checked draft updates unchanged. Update, event.updated activity and scoped seven-day idempotency record commit together under existing wedding/actor/membership fences. Clear optional fields with $unset; preserve event identity, creator and schedule. No new collection/index or production migration is required.
+
 | Field | Type | Required? | Meaning |
 |---|---|---|---|
 | `weddingId` | ObjectId | Required | Wedding containing this event. |

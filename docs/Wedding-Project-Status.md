@@ -6,6 +6,10 @@ This is our ongoing progress log for major features. Update it whenever a major 
 
 ## Current progress
 
+**Edit draft events accepted — October 25, 2026:** User reports the feature looks good and code review/manual QA pass; approved this increment and requested commit/push on dev. Automated evidence remains 11 isolated event tests plus two form-handler regressions, type checking, lint and production webpack build. Earlier agent browser-tool limitations remain historical; user-reported QA is recorded separately. No deployment verification or broader lifecycle completion is implied.
+
+**Edit draft events — October 25, 2026:** Implemented from the approved Stitch desktop/mobile/states screens. Active ADMIN and MANAGER members can edit private drafts; version conflicts, timezone changes and archived/access restrictions prevent unsafe saves. Includes prefilled fields, optional-value clearing, a saved summary, unchanged-save disabling, discard/reload confirmation, success notice and immutable retries including HTTP 429. Isolated event integration tests (11 reported tests) and two network-free form-handler regressions passed; type checking, lint and the production webpack build passed. Authenticated isolated HTTP rendering verified saved fields and disabled unchanged save. Browser controls failed to initialize, so visual/keyboard interaction QA and user acceptance remain pending. No production records, settings or migrations changed. See [detailed evidence](Wedding-Implementation-Status.md#edit-draft-events--october-25-2026).
+
 **User acceptance and GitHub checkpoint — October 25, 2026:** User approved the event draft feature and reports code review and manual QA passing, including the uncertain-save retry fix. Authorized commit and push on dev. Migration 004 is applied with explicit approval; isolated automated/browser evidence is recorded in Events-QA-2026-10-25.md. This supersedes earlier pending-acceptance notes for this delivered increment. Remaining targeted QA gaps and future event lifecycle features stay open; GitHub push is not independent confirmation of production deployment.
 
 **Independent event QA — October 25:** 21 reported isolated event/wedding tests passed. Separate isolated browser testing passed draft creation/details, saved timeline/list ordering, validation/discard, mobile layout and retry/timezone/archive guards. Production data and application code were unchanged. Forced development-server restart navigation remains inconclusive; no-restart recovery passed. Targeted browser gaps and user acceptance remain; see [full QA evidence](Events-QA-2026-10-25.md).
@@ -31,6 +35,7 @@ The scaffold, homepage/logo, accounts, wedding onboarding, detail editing and fa
 | Family invitations and acceptance | Implemented and user-approved October 24; lifecycle browser QA passed; two provider-delivered emails confirmed; callback/scheduler gates remain | October 23, 2026 |
 | Member roles and removal | Implemented and user-approved October 24; browser role/removal flows and automated permissions/concurrency checks passed | October 23, 2026 |
 | V1 workspace shell and sample preview | Implemented and user-approved October 25; local build/render checks and read-only browser QA passed; future modules remain planned | October 24, 2026 |
+| Edit draft event details | Implemented, isolated-test verified and user-approved October 25; manual QA/code review reported passing | October 25, 2026 |
 | Events — list, create draft and details | Implemented and isolated-test verified; migration applied; isolated QA passed; user-approved October 25; targeted QA gaps remain | October 25, 2026 |
 
 ## 4. Wedding onboarding and saved overview

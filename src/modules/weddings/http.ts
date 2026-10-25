@@ -8,7 +8,7 @@ import { AccountError } from "@/modules/identity/security";
 import { currentUser, rateLimit } from "@/modules/identity/service";
 import { listWeddingAccess } from "./access";
 import { manageMember } from "./members";
-import { createEvent, eventFor, listEvents } from "@/modules/events/service";
+import { createEvent, updateEvent, eventFor, listEvents } from "@/modules/events/service";
 import {
   inviteFamily,
   revokeFamilyInvitation,
@@ -39,7 +39,8 @@ export async function handleWedding(
     | "remove-member"
     | "list-events"
     | "create-event"
-    | "event-detail",
+    | "event-detail"
+    | "update-event",
   id?: string,
   inviteId?: string,
 ) {
@@ -59,6 +60,7 @@ export async function handleWedding(
       "change-role",
       "remove-member",
       "create-event",
+      "update-event",
     ].includes(action);
     if (mutation) trustedMutation(request);
     const user = await currentUser(request.cookies.get(cookieName())?.value);
@@ -93,7 +95,9 @@ export async function handleWedding(
       return NextResponse.json({ ...result, requestId }, { headers });
     }
     const data =
-      action === "create-event"
+      action === "update-event"
+        ? await updateEvent(user, id!, inviteId!, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
+        : action === "create-event"
         ? await createEvent(user, id!, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
         : action === "change-role" || action === "remove-member"
         ? await manageMember(

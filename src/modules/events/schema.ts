@@ -7,7 +7,7 @@ export const eventTypeLabels: Record<(typeof eventTypes)[number], string> = {
 };
 const text = z.string().trim().min(1, "Please complete this field.").max(200, "Use 200 characters or fewer.");
 const instant = z.iso.datetime({ offset: true }).refine((s) => Number.isFinite(Date.parse(s)), "Choose a valid date and time.");
-export const createEventSchema = z.strictObject({
+const eventFields = z.strictObject({
   name: text,
   type: z.enum(eventTypes),
   startsAt: instant,
@@ -22,11 +22,25 @@ export const createEventSchema = z.strictObject({
   description: z.string().trim().max(10000).optional(),
   dressCode: text.optional(),
   status: z.literal("draft").default("draft"),
-}).superRefine((value, context) => {
+});
+export const createEventSchema = eventFields.superRefine((value, context) => {
   if (value.endsAt && Date.parse(value.endsAt) <= Date.parse(value.startsAt))
     context.addIssue({ code: "custom", path: ["endsAt"], message: "End date and time must be after the start." });
 });
 export type CreateEvent = z.infer<typeof createEventSchema>;
+
+export const patchEventSchema = eventFields.omit({ status: true }).partial().extend({
+  expectedVersion: z.number().int().positive(),
+  endsAt: instant.nullable().optional(),
+  description: z.string().trim().max(10000).nullable().optional(),
+  dressCode: text.nullable().optional(),
+}).refine((value) => Object.keys(value).some((key) => key !== "expectedVersion"), "Supply at least one editable field.");
+
+/** Form values in the wedding timezone, independent of browser locale. */
+export function eventLocalFields(value: string, timezone: string) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: timezone, calendar: "gregory", numberingSystem: "latn", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(value)).map((p) => [p.type, p.value]));
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` };
+}
 
 /** Resolve wall-clock input without silently shifting DST gaps or picking a repeated hour. */
 export function localEventInstant(date: string, time: string, timezone: string): string {

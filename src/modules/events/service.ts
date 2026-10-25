@@ -5,7 +5,7 @@ import { getDatabase } from "@/infrastructure/mongodb/client";
 import { AccountError, digest } from "@/modules/identity/security";
 import type { User } from "@/modules/identity/service";
 import { membershipFor } from "@/modules/weddings/service";
-import { createEventSchema, eventTypes } from "./schema";
+import { createEventSchema, patchEventSchema, eventTypes } from "./schema";
 
 export type EventView = { id: string; name: string; type: (typeof eventTypes)[number]; startsAt: string; endsAt?: string; venue: { name: string; address: string; mapUrl?: string }; description?: string; dressCode?: string; status: string; version: number };
 function view(row: Document): EventView {
@@ -87,5 +87,55 @@ export async function createEvent(user: User, weddingId: string, payload: unknow
     await db.collection("activity").insertOne({ weddingId: wedding._id, actor: { type: "user", userId: user._id }, action: "event.created", entityType: "event", entityId: row._id, summary: "Private event draft created", afterVersion: 1, occurredAt: now, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
     await db.collection("idempotencyKeys").insertOne({ scopeKey, keyHash, requestHash, state: "completed", resourceType: "event", resourceId: row._id, responseCode: 201, expiresAt: new Date(now.getTime() + 7 * 86400000), schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
     return view(row);
+  }, { writeConcern: { w: "majority" } }));
+}
+
+/** Version checked draft edits with durable reconciliation of uncertain saves. */
+export async function updateEvent(user: User, weddingId: string, id: string, payload: unknown, key: string | null, expectedTimezone?: string | null) {
+  if (!key || !/^[A-Za-z0-9_-]{16,128}$/.test(key)) throw new AccountError(400, "IDEMPOTENCY_KEY_REQUIRED", "A valid Idempotency-Key is required.");
+  const input = patchEventSchema.parse(payload);
+  const member = await access(user, weddingId);
+  if (!/^[a-f0-9]{24}$/.test(id)) throw new AccountError(404, "NOT_FOUND", "Event unavailable.");
+  await eventsReady();
+  const db = await getDatabase();
+  const indexes = await db.collection("idempotencyKeys").indexes();
+  if (!indexes.some((i) => i.unique && Object.keys(i.key).join() === "scopeKey,keyHash")) throw Error("Idempotency migration required");
+  const scopeKey = `user:${user._id}:wedding:${weddingId}:event:${id}:update`, keyHash = digest(key), requestHash = digest(JSON.stringify(input));
+  return db.client.withSession((session) => session.withTransaction(async () => {
+    const now = new Date();
+    const wedding = await db.collection("weddings").findOneAndUpdate({ _id: member.weddingId }, { $inc: { writeFence: Long.ONE } }, { session, returnDocument: "after" });
+    if (!wedding) throw new AccountError(404, "NOT_FOUND", "Event unavailable.");
+    const actor = await db.collection<User>("users").findOneAndUpdate({ _id: user._id, status: "active", credentialVersion: user.credentialVersion }, { $set: { updatedAt: now } }, { session, returnDocument: "after" });
+    if (!actor) throw new AccountError(401, "UNAUTHENTICATED", "Please sign in again.");
+    const current = await db.collection("memberships").findOneAndUpdate({ _id: member._id, userId: user._id, weddingId: wedding._id, role: { $in: ["ADMIN", "MANAGER"] }, status: "active" }, { $set: { updatedAt: now } }, { session, returnDocument: "after" });
+    if (!current) throw new AccountError(404, "NOT_FOUND", "Event unavailable.");
+    const row = await db.collection("events").findOne({ _id: new ObjectId(id), weddingId: wedding._id, status: { $ne: "removed" } }, { session });
+    if (!row) throw new AccountError(404, "NOT_FOUND", "Event unavailable.");
+    const previous = await db.collection("idempotencyKeys").findOne({ scopeKey, keyHash }, { session });
+    if (previous) {
+      if (previous.requestHash !== requestHash) throw new AccountError(409, "IDEMPOTENCY_CONFLICT", "This save key was already used for different changes.");
+      return view(row);
+    }
+    if (wedding.state !== "active") throw new AccountError(409, "WEDDING_ARCHIVED", "This wedding is archived. Event details are read-only.");
+    if (row.status !== "draft") throw new AccountError(409, "EVENT_NOT_DRAFT", "Only draft events can be edited in this phase.");
+    if (expectedTimezone && expectedTimezone !== wedding.timezone) throw new AccountError(409, "WEDDING_TIMEZONE_CHANGED", "Your wedding’s time zone has changed. Reload the event and review its dates and times before saving.");
+    if (row.version !== input.expectedVersion) throw Object.assign(new AccountError(409, "VERSION_CONFLICT", "This event changed while you were editing. Reload the latest details before saving."), { currentVersion: row.version });
+    const { expectedVersion, ...patch } = input;
+    const merged = { name: row.name, type: row.type, startsAt: row.startsAt.toISOString(), ...(row.endsAt ? { endsAt: row.endsAt.toISOString() } : {}), venue: row.venue, description: row.description, dressCode: row.dressCode, status: "draft", ...patch };
+    for (const field of ["endsAt", "description", "dressCode"] as const) if (merged[field] === null) delete merged[field];
+    const validated = createEventSchema.parse(merged);
+    const changes: Document = { name: validated.name, type: validated.type, startsAt: new Date(validated.startsAt), venue: { ...row.venue, ...validated.venue }, updatedAt: now };
+    // Venue is replaced for this editor's supported fields, while preserving future coordinates.
+    if (!validated.venue.mapUrl) delete changes.venue.mapUrl;
+    const unset: Document = {};
+    for (const field of ["endsAt", "description", "dressCode"] as const) {
+      if (validated[field] === undefined) unset[field] = "";
+      else changes[field] = field === "endsAt" ? new Date(validated[field]!) : validated[field];
+    }
+    const updated = await db.collection("events").findOneAndUpdate({ _id: row._id, weddingId: wedding._id, version: expectedVersion, status: "draft" }, { $set: changes, $inc: { version: 1 }, ...(Object.keys(unset).length ? { $unset: unset } : {}) }, { session, returnDocument: "after" });
+    if (!updated) throw new AccountError(409, "VERSION_CONFLICT", "This event changed while you were editing. Reload the latest details before saving.");
+    await db.collection("activity").insertOne({ weddingId: wedding._id, actor: { type: "user", userId: user._id }, action: "event.updated", entityType: "event", entityId: row._id, summary: "Private event draft updated", beforeVersion: row.version, afterVersion: updated.version, occurredAt: now, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
+    await db.collection("idempotencyKeys").insertOne({ scopeKey, keyHash, requestHash, state: "completed", resourceType: "event", resourceId: row._id, responseCode: 200, expiresAt: new Date(now.getTime() + 7 * 86400000), schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
+    return view(updated);
   }, { writeConcern: { w: "majority" } }));
 }

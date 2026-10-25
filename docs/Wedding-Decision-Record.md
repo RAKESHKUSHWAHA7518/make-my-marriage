@@ -1,5 +1,9 @@
 # Make My Marriage — Approved Decision Record
 
+### Edit draft events — October 25, 2026
+
+User approved the completed Stitch Edit Draft Event designs and authorized implementation. Add version-checked PATCH for private drafts only; ADMIN and MANAGER may edit active-wedding events. Require an Idempotency-Key for safe uncertain-save reconciliation and retain immutable retries on 429. No scheduling or lifecycle transition. Null clears optional endsAt/description/dressCode; venue replacement covers supported name/address/map link, preserving future coordinates. No production QA mutations or additional migration authorized. Prototype extras do not broaden the documented product scope.
+
 ### Event management first increment — October 25, 2026
 
 User-approved activation — October 25, 2026: applied only migration 004 to the shared production database. Verified the events collection, strict validator and both events_chronological and events_status_chronological indexes. Authenticated Chrome MANAGER checks now load the empty Events list and complete Create Event form. No production test event was saved. Earlier missing-migration diagnosis is resolved; broader browser QA and user acceptance remain pending. General restrictions on production QA writes still apply.
