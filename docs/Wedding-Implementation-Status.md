@@ -1,7 +1,9 @@
 # Make My Marriage — Implementation Status
 
-**Updated:** October 24, 2026 (Asia/Kolkata).
-**Scope:** Scaffold, homepage/logo, accounts, wedding onboarding/details and family invitations/access management. Earlier dated entries are historical snapshots.
+**Updated:** October 25, 2026 (Asia/Kolkata).
+
+**Dashboard read-only QA — October 25:** Existing Chrome MANAGER session passed saved overview/countdown consistency, all 13 navigation destinations, view-only details/family permissions, refresh, signed-in login/register redirects, sample separation and account navigation. Responsive checks at 320/390/768/1280px found no horizontal overflow; mobile drawer Escape/focus return/navigation passed. Signed-out browser redirected to login. One hydration warning names Grammarly-injected body attributes; app source cause not established. No production mutations or application-code changes. State variants/fault injection need an isolated environment. See [full dashboard QA matrix and limits](Dashboard-QA-2026-10-25.md).
+**Scope:** Scaffold, homepage/logo, accounts, wedding onboarding/details, family invitations/access management and V1 workspace presentation. Earlier dated entries are historical snapshots.
 **Repository:** RAKESHKUSHWAHA7518/make-my-marriage, existing root checkout.
 **State:** Accounts and onboarding implemented, locally tested and user-approved. Live email, production gates and remaining Phase 1 journeys are pending.
 
@@ -11,11 +13,33 @@
 
 **Document audit:** The historical scaffold [Compliance Audit](Wedding-Compliance-Audit.md) counted 105 designed operations and 26 designed collections. A safe invitation-preview operation brings the designed total to 106. The current checkpoint implements 22 operations (eight auth, account job tick, Resend webhook, four wedding operations, eight family list/invitation/member operations) and 12 migrated collections. The remaining 84 operations and broader provider use cases are future work; wedding PATCH supports only its documented initial subset.
 
+## Approved workspace checkpoint — October 25, 2026
+
+User approved the V1 workspace presentation and direct dashboard login behavior, reported successful code review/testing, and requested commit/push on the existing `dev` branch. Include navigation, real saved overview, coming-soon pages, labelled sample view, auth destinations, environment safety guidance and the read-only QA report. The tracked local MCP configuration change is only its existing loopback port, 3940 to 3939; no provider credential is included. [Dashboard QA](Dashboard-QA-2026-10-25.md) supersedes earlier unavailable signed-in review for its covered MANAGER, responsive, navigation, sample and signed-in auth-redirect cases. Other roles/account states, fresh credential login/cross-tab changes, fault injection and production gates remain unverified. Earlier no-commit/pending-review notes preserve their historical context. Future V1 modules are still presentation-only. Final October 25 webpack production build passed; type/lint results remain those recorded for the delivered code. Credential-pattern scan found no matches and environment files remain ignored. No production records, migrations or email jobs were changed for this checkpoint.
+
+## Dashboard after login — October 25, 2026
+
+Changed the successful login form destination from `/account` to `/wedding`. Updated the server guard for already-signed-in login/register pages and SessionSync sign-in/focus redirects to the same destination. Explicit account-menu access remains available. The existing wedding route still sends no-membership users through setup/verification, shows removed-access gates, and permits archived members only the existing read-only experience. Invitation acceptance still requires returning to its explicit preview/accept flow; no automatic joining was added.
+
+Type checking, lint and diff whitespace checks passed. No state-changing browser/login tests or production database writes were run; signed-in and cross-tab browser regression remains pending. No new dependency, API/schema or permission change, commit, push or deployment.
+
+## V1 workspace foundation — October 24, 2026
+
+
+Implemented the user-approved shell increment from Stitch `Make My Marriage — Overview Dashboard` (`7bc1faadd8a649fe8b2213ebd422e846`) and its mobile reference (`e571648801d8456cb1b218d4a40d8554`). Retained local fonts/logo and burgundy/ivory tokens; replaced the green prototype's contract/booking/hotel/capacity claims with saved facts and clear future-feature states.
+
+- Shared `WorkspaceShell` now provides a desktop sidebar and mobile bottom navigation/More dialog with all 13 V1 destinations, active-page labels, account access and skip link. Existing onboarding/access gates retain the simple shell. Removed the obsolete header-tab CSS.
+- `/wedding` renders real couple/title/date/timezone/currency/budget/public/gallery values, the existing timezone-aware countdown only when a date exists, and ADMIN/MANAGER/archive-appropriate links to existing pages. Unimplemented metrics show Coming soon, not made-up counts or zero business records.
+- `/wedding/plan/[section]` is one protected allowlisted presentation route for ten future areas. Unknown sections return 404. It offers no creation/publish/send controls and distinguishes future guest invitations from implemented family access. Settings links to current details instead of duplicating editing.
+- `/wedding/sample` is a protected, clearly labelled illustrative overview, using static sample names/figures/events/tasks. It makes no writes and has no feature-mutation controls. No schema/API/provider/dependency changes or empty feature directories.
+
+Verification: type checking and lint passed. Production webpack build passed with the new protected routes. A local React rendering check passed sample/live data separation (no sample counts or timeline in the real view), MANAGER view-only/ADMIN edit/archive labels, 13 unique navigation destinations and ten planned labels; no database/provider calls were made. Signed-in browser interaction/responsive checks remain pending: automation has no authenticated local session; a static visual-only render attempt also could not connect through the in-app browser and produced no screenshot. The temporary in-memory visual-check process is no longer running. The local development server was started on port 3001 for review. No QA users, migrations, emails or business-data changes were performed.
+
+User confirmed local development shares the production database. Recorded this in AGENTS.md; do not run state-changing QA without an isolated environment. User reports Vercel/custom-domain deployment; that report does not certify callbacks/scheduler/production gates. Remaining: signed-in desktop/mobile visual review, drawer keyboard/navigation and unknown/removed/archived-route browser checks, user approval, and isolated environments. Events/guests/tasks/expenses/vendors/websites/media functionality stays planned. No commit, push or deployment for this increment.
+
 ## Approved GitHub checkpoint — October 24, 2026
 
 User approved the delivered family-access increment and requested commit/push to the existing `dev` branch. Scope includes invitations/acceptance, member roles/removal, last-ADMIN protection, current-token preview binding, Stitch layout refinements, after-response invitation email dispatch and ADMIN-only wedding-details edits. [Lifecycle QA](Family-Lifecycle-QA-2026-10-23.md) supplies the recovered browser/integration evidence and supersedes the earlier database-blocked attempt; its no-live-email statement describes that isolated QA run. Later Resend reads confirmed two real invitations delivered, without proving inbox placement or signed callbacks. The latest permission regression passed 12 reported tests; type checking and lint passed. Final October 24 production build (`npm run build -- --webpack`), staged whitespace check and pending-file credential-pattern scan passed; environment files remain ignored. Remaining targeted browser/hash-response checks, signed callbacks, deployment retries and production gates stay open. Earlier no-commit/pending-user-review statements retain their dated context; this checkpoint records approval, not deployment.
-
-## ADMIN-only wedding details — October 24, 2026
 
 ## Read-only details presentation — October 24, 2026
 

@@ -1,6 +1,6 @@
 # Make My Marriage — Project Structure
 
-**Updated:** October 23, 2026. Application root is the existing make-my-marriage repository at C:/Users/rk751/Downloads/WeddingManagement. No nested app, git init or separate backend.
+**Updated:** October 24, 2026. Application root is the existing make-my-marriage repository at C:/Users/rk751/Downloads/WeddingManagement. No nested app, git init or separate backend.
 
 ## Current implemented paths
 
@@ -13,9 +13,13 @@ WeddingManagement/
       page.tsx                       Stitch-based marketing homepage
       not-found.tsx                  unavailable-page state
       globals.css                    Tailwind, brand tokens and homepage styles
+      workspace.css                  wedding forms, details and family dialogs
+      dashboard.css                  workspace shell, navigation and dashboard presentation
       (auth)/                        shared layout and five account screens
       account/                       protected welcome page and error boundary
-      wedding/                       protected create, saved overview, details editing and family lists; loading/failure states
+      wedding/                       protected onboarding, workspace overview, details and family access
+        plan/[section]/              allowlisted coming-soon presentation; no business APIs
+        sample/                      protected illustrative workspace; no saved dummy records
       membership-invitation/         fragment-token invitation preview and explicit acceptance
       api/v1/membership-invitations/ safe matching-email preview and atomic acceptance
       api/v1/weddings/               create, current summary, scoped settings reads and ordinary detail updates

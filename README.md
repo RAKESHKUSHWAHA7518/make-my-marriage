@@ -10,6 +10,10 @@ See [Project Status](docs/Wedding-Project-Status.md) for the ongoing major-featu
 
 The [Document Compliance Audit](docs/Wedding-Compliance-Audit.md) maps every product area to the actual implementation and records open findings; a working scaffold does not mean the full application is implemented.
 
+## Workspace foundation
+
+The signed-in wedding overview now uses the V1 workspace sidebar/mobile navigation. Existing details/family pages are connected; future sections open honest coming-soon pages. `/wedding/sample` is an explicitly illustrative preview, not business functionality or saved dummy records. The user confirms local development currently shares the production database: do not create QA fixtures or run migrations/test mutations there; prepare an isolated development environment first. Production/custom-domain deployment is user-reported, not independently audited here.
+
 ## Local setup
 
 Family & access supports ADMIN invitations/revocation, matching-verified-email acceptance, role changes and access removal. Creation queues durable email and triggers a bounded delivery attempt after the response. Run `npm run email:process` locally to process an existing backlog; a frequent authenticated scheduler is still required for retries in deployment. Resend delivery was confirmed for two invitations on October 23; signed delivery callbacks and production scheduling remain release gates. Run `npm run db:migrate` after updating to apply the extended delivery validator/index; do not run email processing against production from a preview environment. Use `npm run test:members` and `npm run test:invitations` for isolated permission/concurrency checks without live email.

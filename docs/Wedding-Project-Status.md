@@ -1,10 +1,12 @@
 # Make My Marriage — Project Status
 
-**Last updated:** October 24, 2026 (Asia/Kolkata).
+**Last updated:** October 25, 2026 (Asia/Kolkata).
 
 This is our ongoing progress log for major features. Update it whenever a major feature is built or materially changed. Detailed checks, implementation files and technical gates belong in [Implementation Status](Wedding-Implementation-Status.md). Requirements and approved decisions remain governed by the existing product, architecture, database and API documents and the [Decision Record](Wedding-Decision-Record.md).
 
 ## Current progress
+
+**Production milestone — user-reported October 24:** Application deployed on Vercel with a custom domain. Domain/configuration and production readiness were not independently verified in this workspace delivery. Local development currently shares production data; state-changing QA requires a separate development/test environment.
 
 The scaffold, homepage/logo, accounts, wedding onboarding, detail editing and family access code are implemented. Accounts were user-approved October 22; wedding onboarding and its follow-ups were user-approved October 23. Family invitations/acceptance, member role changes/removal, Stitch refinements and ADMIN-only wedding details were user-approved October 24. Recorded lifecycle browser QA and automated tests pass; Resend reports two real invitations delivered. Signed callbacks, retry scheduling, targeted remaining regressions and deployment gates remain pending. Events and remaining planning features are future work.
 
@@ -18,8 +20,17 @@ The scaffold, homepage/logo, accounts, wedding onboarding, detail editing and fa
 | Family & access foundation | Implemented and user-approved October 24; browser lists/access and invitation mutations verified | October 23, 2026 |
 | Family invitations and acceptance | Implemented and user-approved October 24; lifecycle browser QA passed; two provider-delivered emails confirmed; callback/scheduler gates remain | October 23, 2026 |
 | Member roles and removal | Implemented and user-approved October 24; browser role/removal flows and automated permissions/concurrency checks passed | October 23, 2026 |
+| V1 workspace shell and sample preview | Implemented and user-approved October 25; local build/render checks and read-only browser QA passed; future modules remain planned | October 24, 2026 |
 
 ## 4. Wedding onboarding and saved overview
+
+**User approval and GitHub checkpoint — October 25:** User accepted the V1 workspace/dashboard and direct dashboard login flow, reported code review/testing passed, and requested commit/push on `dev`. Recorded [dashboard QA](Dashboard-QA-2026-10-25.md) verifies read-only MANAGER desktop/mobile navigation, planned destinations, sample separation and signed-in login/register redirects. Historical pending-review statements below are superseded for covered checks; untested variants and production release gates remain open. Next: establish separate development data, approve Event designs, then implement event list/create/details as one bounded increment.
+
+**Dashboard browser QA — October 25:** Read-only MANAGER checks passed desktop/mobile layout and drawer behavior, saved values/countdown, all workspace destinations, sample separation, refresh and signed-in auth-page redirects. Signed-out dashboard access redirects to login. No production changes; one Grammarly-associated hydration warning recorded. Other account/state variants and fault injection remain unverified; user review remains pending. See [test matrix](Dashboard-QA-2026-10-25.md).
+
+**Dashboard after login — October 25:** Removed the intermediate account welcome step from login and signed-in auth-page/cross-tab redirects. Existing members enter their dashboard; no-wedding, verification, archived and removed-access handling stays in place. The account page remains explicitly accessible. See [routing evidence](Wedding-Implementation-Status.md#dashboard-after-login--october-25-2026). Signed-in browser regression remains pending; production data was not changed.
+
+**V1 workspace foundation — October 24:** Implemented the Stitch-inspired burgundy desktop sidebar, mobile navigation/drawer, overview with real saved wedding details and existing role-aware actions. All 13 V1 destinations are represented; 10 future sections have coming-soon pages. Illustrative events/tasks/RSVP/spending exist only in the labelled sample view. No future business modules, API stubs or database fixtures were created. Types, lint, production build and sample/live rendering checks passed; signed-in responsive/browser interaction review and user approval remain pending. See [workspace evidence](Wedding-Implementation-Status.md#v1-workspace-foundation--october-24-2026).
 
 **Read-only details presentation — October 24:** Replaced the centered, unstructured MANAGER/archived summary with a compact saved-wedding header, readable grouped labels/values, responsive two-column layout, highlighted budget and separated overview action. Dates use a human-readable format without timezone shifts. Types/lint passed; authenticated visual review remains pending. See [presentation evidence](Wedding-Implementation-Status.md#read-only-details-presentation--october-24-2026).
 

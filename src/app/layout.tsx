@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { getServerEnv } from "@/infrastructure/config/env";
 import "./globals.css";
 import "./workspace.css";
+import "./dashboard.css";
 import { SessionSync } from "@/components/auth/session-sync";
 
 export const runtime = "nodejs";

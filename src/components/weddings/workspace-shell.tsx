@@ -5,6 +5,8 @@ import { Brand } from "@/components/brand";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { WeddingIcon } from "./wedding-icon";
 import { ResendVerificationButton } from "./resend-verification-button";
+import { WorkspaceNavigation } from "./workspace-navigation";
+import type { WorkspacePage } from "./workspace-sections";
 
 export function WorkspaceShell({
   name,
@@ -16,40 +18,24 @@ export function WorkspaceShell({
   name?: string;
   role?: "ADMIN" | "MANAGER";
   weddingTitle?: string;
-  activePage?: "overview" | "details" | "family";
+  activePage?: WorkspacePage;
   children: ReactNode;
 }) {
   return (
-    <div className="wedding-shell">
+    <div className={`wedding-shell${weddingTitle ? " workspace-shell" : ""}`}>
+      {weddingTitle && (
+        <>
+          <a href="#workspace-content" className="workspace-skip">Skip to workspace content</a>
+          <WorkspaceNavigation activePage={activePage} />
+        </>
+      )}
       <header className="wedding-header">
         <Brand />
         {weddingTitle && (
-          <>
-            <div className="wedding-header-title">
-              <small>Wedding workspace</small>
-              <strong>{weddingTitle}</strong>
-            </div>
-            <nav className="wedding-header-nav" aria-label="Wedding workspace">
-              <Link
-                href="/wedding"
-                aria-current={activePage === "overview" ? "page" : undefined}
-              >
-                Overview
-              </Link>
-              <Link
-                href="/wedding/details"
-                aria-current={activePage === "details" ? "page" : undefined}
-              >
-                Wedding details
-              </Link>
-              <Link
-                href="/wedding/family"
-                aria-current={activePage === "family" ? "page" : undefined}
-              >
-                Family &amp; access
-              </Link>
-            </nav>
-          </>
+          <div className="wedding-header-title">
+            <small>Wedding workspace</small>
+            <strong>{weddingTitle}</strong>
+          </div>
         )}
         <div className="wedding-account">
           {name && (
@@ -71,7 +57,12 @@ export function WorkspaceShell({
           <LogoutButton />
         </div>
       </header>
-      {children}
+      <div
+        id={weddingTitle ? "workspace-content" : undefined}
+        tabIndex={weddingTitle ? -1 : undefined}
+      >
+        {children}
+      </div>
       <footer className="wedding-footer">
         © {new Date().getFullYear()} Make My Marriage
       </footer>

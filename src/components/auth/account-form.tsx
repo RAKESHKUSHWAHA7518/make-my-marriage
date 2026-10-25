@@ -158,7 +158,7 @@ export function AccountForm({ mode }: { mode: Mode }) {
       } else if (mode === "login") {
         announceSessionChange("signed-in");
         form.reset();
-        router.replace("/account");
+        router.replace("/wedding");
         router.refresh();
       } else {
         form.reset();

@@ -1,4 +1,13 @@
 const paths = {
+  dashboard: "M3 3h7v7H3ZM14 3h7v7h-7ZM3 14h7v7H3ZM14 14h7v7h-7Z",
+  people: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11 10v-2a4 4 0 0 0-3-4M16 3a4 4 0 0 1 0 8",
+  checklist: "m3 6 2 2 4-4M12 6h9M3 13l2 2 4-4m3 2h9M3 20h6m3 0h9",
+  wallet: "M3 5h16v4H3V5Zm0 4h18v12H3V9Zm13 4h5v4h-5v-4Z",
+  store: "M3 10V4h18v6M2 10h20M4 10v11h16V10M9 21v-7h6v7M8 4v6m8-6v6",
+  announcement: "M3 10v6h5l11 5V4L8 10H3Zm5 6 2 6m11-12 2-1m-2 6 2 1",
+  photo: "M3 3h18v18H3V3Zm0 15 6-6 4 4 3-3 5 5M15 8h.01",
+  settings: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1 1-3Z",
+  menu: "M3 6h18M3 12h18M3 18h18",
   heart:
     "M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z",
   person:

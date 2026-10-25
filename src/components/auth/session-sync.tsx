@@ -48,7 +48,7 @@ export function SessionSync() {
         if (disposed) return;
         if (response.status === 401 && protectedPage)
           window.location.replace("/login");
-        else if (response.ok && entry) window.location.replace("/account");
+        else if (response.ok && entry) window.location.replace("/wedding");
       } catch {
         /* A network error is not proof of logout. */
       } finally {
@@ -67,7 +67,7 @@ export function SessionSync() {
       // A full navigation clears cached private markup and rechecks the server cookie.
       if (protectedPage)
         window.location.replace(
-          message.kind === "signed-out" ? "/login" : "/account",
+          message.kind === "signed-out" ? "/login" : "/wedding",
         );
       else void check();
     };

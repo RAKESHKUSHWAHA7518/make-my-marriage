@@ -119,11 +119,6 @@
     width: 100%;
   }
 }
-.wedding-header:has(.wedding-header-nav) {
-  gap: 24px;
-  flex-wrap: wrap;
-  padding-block: 18px;
-}
 .wedding-header-title {
   border-left: 1px solid var(--border);
   padding-left: 22px;
@@ -142,24 +137,6 @@
   font-size: 19px;
   font-weight: 500;
   overflow-wrap: anywhere;
-}
-.wedding-header-nav {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-}
-.wedding-header-nav a {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  color: #635557;
-  font-size: 13px;
-  font-weight: 600;
-  border-bottom: 2px solid transparent;
-}
-.wedding-header-nav a[aria-current="page"] {
-  border-color: #802b3a;
-  color: #802b3a;
 }
 .wedding-details-page.wedding-create {
   width: min(100% - 48px, 1160px);
@@ -492,14 +469,6 @@
   .wedding-header-title {
     display: none;
   }
-  .wedding-header-nav {
-    order: 3;
-    flex: 1 0 100%;
-    justify-content: center;
-    border-top: 1px solid #f0e1e3;
-    padding-top: 10px;
-    gap: 24px;
-  }
   .wedding-details-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -508,16 +477,6 @@
   }
 }
 @media (max-width: 600px) {
-  .wedding-header:has(.wedding-header-nav) {
-    gap: 14px;
-  }
-  .wedding-header-nav {
-    gap: 16px;
-    justify-content: space-between;
-  }
-  .wedding-header-nav a {
-    font-size: 12px;
-  }
   .wedding-details-page.wedding-create {
     width: calc(100% - 32px);
     margin-top: 28px;

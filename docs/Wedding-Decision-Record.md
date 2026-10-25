@@ -1,5 +1,13 @@
 # Make My Marriage — Approved Decision Record
 
+### Login landing page — October 25, 2026
+
+User requested the dashboard immediately after login instead of the intermediate account welcome page. Successful login, already-signed-in login/register visits and cross-tab sign-in redirects now enter `/wedding`. That protected route preserves existing membership, onboarding, verification and removed-access handling; archived members still get their read-only overview. `/account` remains available intentionally from the account menu and setup's Back to account action. No authentication or authorization rule changes.
+
+### V1 workspace foundation — October 24, 2026
+
+User approved a workspace shell before further feature implementation, based on Stitch Overview Dashboard desktop/mobile references. Include V1 navigation, connect existing wedding-details/family features and provide honest coming-soon destinations. Keep illustrative numbers/events/tasks exclusively in a clearly labelled sample workspace, never persisted as user records or presented as real activity. Follow the existing burgundy brand, not the prototype's green palette. No contract/booking/hotel workflows, fake progress, new business APIs, automatic publication or additional V1 scope. ADMIN-only wedding-details editing and archived/removed access rules remain authoritative. User reports the app is deployed with a custom domain; deployment configuration was not independently audited. User also confirmed local and production currently share a database; no QA writes are authorized there.
+
 ### Wedding details permission — October 24, 2026
 
 User explicitly changed the rule: only active ADMIN members may edit wedding details; MANAGER members may view them. This supersedes earlier shared-edit permission for the wedding PATCH/create-field subset (couple names, workspace title, date, timezone, currency and overall budget). Enforce on the server, including the transactional membership check, and render a read-only details page for MANAGER. Other planning permissions are unchanged. Archived weddings remain read-only for both roles. No schema migration or new role is needed.
