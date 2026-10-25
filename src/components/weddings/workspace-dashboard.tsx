@@ -6,6 +6,7 @@ import { eventDate, eventTime } from "@/modules/events/schema";
 
 import type { TaskSummary } from "@/modules/tasks/service";
 import { TaskDashboard } from "@/components/tasks/task-dashboard";
+import type { GuestTotals } from "@/modules/households/service";
 
 type Summary = {
   title: string;
@@ -20,9 +21,10 @@ type Summary = {
   archived: boolean;
 };
 
-export function WorkspaceDashboard({ summary, sample = false, countdown, events = [], eventsUnavailable = false, tasks = null }: {
+export function WorkspaceDashboard({ summary, sample = false, countdown, events = [], eventsUnavailable = false, tasks = null, guests = null }: {
   summary: Summary;
   tasks?: TaskSummary | null;
+  guests?: GuestTotals | null;
   sample?: boolean;
   countdown?: ReactNode;
   events?: EventView[];
@@ -48,10 +50,10 @@ export function WorkspaceDashboard({ summary, sample = false, countdown, events 
       <section className="workspace-metrics" aria-label={sample ? "Sample planning figures" : "Upcoming planning features"}>
         {metrics.map((metric) => (
           <article className="workspace-metric" key={metric.title}>
-            <div><span>{metric.title}</span><WeddingIcon name={metric.icon} /></div>
-            <strong className={sample ? "" : "workspace-metric-soon"}>{sample ? metric.value : metric.key === "tasks" ? tasks ? String(tasks.counts.done) : "Unavailable" : "Coming soon"}</strong>
-            <p>{sample ? metric.detail : metric.key === "tasks" ? tasks ? `${tasks.total} saved tasks · ${tasks.overdue} overdue` : "Task data could not be loaded." : "Available when this planning feature is built."}</p>
-            {sample ? <small>Sample data</small> : <Link href={metric.key === "tasks" ? "/wedding/tasks" : `/wedding/plan/${metric.key}`}>{metric.key === "tasks" ? "View tasks" : "See what’s planned"} <span aria-hidden="true">→</span></Link>}
+            <div><span>{!sample && metric.key === "guests" ? metric.icon === "mail" ? "Invitation groups" : "Maximum invited people" : metric.title}</span><WeddingIcon name={metric.icon} /></div>
+            <strong className={sample ? "" : "workspace-metric-soon"}>{sample ? metric.value : metric.key === "guests" ? guests ? (metric.icon === "mail" ? guests.groups : guests.maximumPeople).toLocaleString("en-IN") : "Unavailable" : metric.key === "tasks" ? tasks ? String(tasks.counts.done) : "Unavailable" : "Coming soon"}</strong>
+            <p>{sample ? metric.detail : metric.key === "guests" ? guests ? metric.icon === "mail" ? "Active invitation or family groups" : "Includes representatives · not confirmed attendance" : "Guest totals could not be loaded." : metric.key === "tasks" ? tasks ? `${tasks.total} saved tasks · ${tasks.overdue} overdue` : "Task data could not be loaded." : "Available when this planning feature is built."}</p>
+            {sample ? <small>Sample data</small> : <Link href={metric.key === "guests" ? "/wedding/guests" : metric.key === "tasks" ? "/wedding/tasks" : `/wedding/plan/${metric.key}`}>{metric.key === "guests" ? "View guest groups" : metric.key === "tasks" ? "View tasks" : "See what’s planned"} <span aria-hidden="true">→</span></Link>}
           </article>
         ))}
       </section>

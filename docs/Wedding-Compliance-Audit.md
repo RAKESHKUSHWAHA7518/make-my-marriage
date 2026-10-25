@@ -1,5 +1,7 @@
 # Make My Marriage — Document Compliance Audit
 
+> Guest foundation addendum — October 25, 2026: Organizer household CRUD/soft removal, required event assignments, contacts/party limit, search/pagination and saved totals are implemented with isolated automated and core browser evidence. Migration 006 activation and implementation acceptance are pending. Capability links, imports, guest RSVP submission, sharing and delivery remain unimplemented. Current extended catalog has 35 implemented operations of 106; 15 collections have explicit migrations. This scoped checkpoint does not re-audit the historical scaffold matrix below. See [guest evidence and limits](Wedding-Implementation-Status.md#guest-management-foundation--october-25-2026).
+
 > Account addendum — October 21, 2026: The historical audit below predates accounts. Current code adds eight account APIs, account-scoped job tick and signed Resend webhook, plus seven explicitly migrated MongoDB collections. Security/integration tests use a temporary database and mock provider delivery only inside tests. Live Resend and production deployment gates remain unverified. This is a scoped update, not a new full-product audit. See Wedding-Implementation-Status.md for current evidence.
 
 **Date:** October 15, 2026 (Asia/Kolkata).

@@ -48,7 +48,7 @@ export function authorizedScheduler(request: Request) {
     b = Buffer.from(received);
   return a.length === b.length && timingSafeEqual(a, b);
 }
-export async function body(request: Request) {
+export async function body(request: Request, maxBytes = 8192) {
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     throw new AccountError(400, "INVALID_CONTENT_TYPE", "Expected JSON.");
   const reader = request.body?.getReader();
@@ -60,7 +60,7 @@ export async function body(request: Request) {
     const next = await reader.read();
     if (next.done) break;
     size += next.value.length;
-    if (size > 8192) {
+    if (size > maxBytes) {
       await reader.cancel();
       throw new AccountError(413, "PAYLOAD_TOO_LARGE", "Request is too large.");
     }

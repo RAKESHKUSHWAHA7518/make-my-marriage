@@ -7,6 +7,7 @@ import { body, cookieName, trustedMutation } from "@/modules/identity/http";
 import { AccountError } from "@/modules/identity/security";
 import { currentUser, rateLimit } from "@/modules/identity/service";
 import { listTasks, taskFor, saveTask } from "@/modules/tasks/service";
+import { listHouseholds, householdFor, saveHousehold } from "@/modules/households/service";
 import { listWeddingAccess } from "./access";
 import { manageMember } from "./members";
 import { createEvent, updateEvent, eventFor, listEvents } from "@/modules/events/service";
@@ -45,7 +46,8 @@ export async function handleWedding(
     | "list-tasks"
     | "task-detail"
     | "create-task"
-    | "update-task",
+    | "update-task"
+    | "list-households" | "household-detail" | "create-household" | "update-household" | "remove-household",
   id?: string,
   inviteId?: string,
 ) {
@@ -68,6 +70,7 @@ export async function handleWedding(
       "update-event",
       "create-task",
       "update-task",
+      "create-household", "update-household", "remove-household",
     ].includes(action);
     if (mutation) trustedMutation(request);
     const user = await currentUser(request.cookies.get(cookieName())?.value);
@@ -81,8 +84,18 @@ export async function handleWedding(
       await rateLimit(
         `wedding-${action}`,
         user._id.toString(),
-        ["create", "invite", "create-event", "create-task"].includes(action) ? 20 : 60,
+        ["create", "invite", "create-event", "create-task", "create-household"].includes(action) ? 20 : 60,
       );
+    if (action === "list-households") return NextResponse.json({ ...await listHouseholds(user, id!, Object.fromEntries(request.nextUrl.searchParams)), requestId }, { headers });
+    if (action === "household-detail") {
+      const data = await householdFor(user, id!, inviteId!);
+      if (!data) throw new AccountError(404, "NOT_FOUND", "Guest group unavailable.");
+      return NextResponse.json({ data, requestId }, { headers });
+    }
+    if (["create-household", "update-household", "remove-household"].includes(action)) {
+      const data = await saveHousehold(user, id!, action === "create-household" ? null : inviteId!, await body(request, 65536), request.headers.get("idempotency-key"), action === "remove-household");
+      return NextResponse.json({ data, requestId }, { status: action === "create-household" ? 201 : 200, headers });
+    }
     if (action === "list-tasks") {
       const result = await listTasks(user, id!, Object.fromEntries(request.nextUrl.searchParams));
       return NextResponse.json({ ...result, requestId }, { headers });

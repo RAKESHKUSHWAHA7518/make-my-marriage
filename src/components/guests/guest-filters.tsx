@@ -1,0 +1,7 @@
+import Link from "next/link";
+import type { GuestEvent } from "@/modules/households/service";
+import { rsvpStatuses } from "@/modules/households/schema";
+export function GuestFilters({ query, choices }: { query: Record<string, string>; choices: GuestEvent[] }) {
+  const unavailable = query.eventId && !choices.some(e => e.id === query.eventId);
+  return <form method="get" action="/wedding/guests" className="workspace-panel guest-filters"><label>Search guest groups<input type="search" name="q" maxLength={100} defaultValue={query.q ?? ""} placeholder="Representative name, email or phone…" /></label><label>Invited event<select name="eventId" defaultValue={query.eventId ?? ""}><option value="">All events</option>{unavailable && <option value={query.eventId}>Previously selected event</option>}{choices.map(e => <option key={e.id} value={e.id}>{e.name} · {e.status}</option>)}</select></label><label>RSVP status<select name="rsvpStatus" defaultValue={query.rsvpStatus ?? ""}><option value="">All responses</option>{rsvpStatuses.map(status => <option key={status} value={status}>{status === "not_attending" ? "Not attending" : status[0].toUpperCase() + status.slice(1)}</option>)}</select></label><button type="submit" className="button button-primary">Search</button>{(query.q || query.eventId || query.rsvpStatus || query.status || query.cursor) && <Link href="/wedding/guests" className="button button-secondary">Clear search and filters</Link>}</form>;
+}

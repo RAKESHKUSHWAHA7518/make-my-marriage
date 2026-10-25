@@ -1,14 +1,18 @@
 # Make My Marriage — Project Status
 
-**Last updated:** October 25, 2026 (Asia/Kolkata).
+**Last updated:** October 26, 2026 (Asia/Kolkata).
 
 This is our ongoing progress log for major features. Update it whenever a major feature is built or materially changed. Detailed checks, implementation files and technical gates belong in [Implementation Status](Wedding-Implementation-Status.md). Requirements and approved decisions remain governed by the existing product, architecture, database and API documents and the [Decision Record](Wedding-Decision-Record.md).
 
 ## Current progress
 
+**Guest Management commit/push checkpoint — October 26, 2026:** User explicitly requested committing and pushing the pending Guest Management code on dev. Recorded scope and verification remain the foundation described below; this does not activate migration 006, implement invitation sharing/RSVP submission or independently verify a deployment. No production migration or QA writes authorized by this Git checkpoint.
+
+**Guest Management foundation — October 25, 2026:** Implemented the nine approved Stitch guest screens: list/create/details/edit, optional contacts/notes, party limit and event assignments, search/event/RSVP filters, soft removal, Guests navigation and saved overview totals. ADMIN/MANAGER, tenant/version/archive safeguards and retry deduplication are included. All 15 guest checks, 14 task regressions and 18 event regressions passed on a separate localhost MongoDB; types, lint and production build passed. Desktop/mobile browser checks passed the core synthetic create/edit/discard/remove/search flows. Designs are user-approved; implementation acceptance, production activation through migration 006 and deployment remain pending. See [guest evidence](Wedding-Implementation-Status.md#guest-management-foundation--october-25-2026).
+
 **Task Management accepted — October 25, 2026:** User approved the delivered task foundation and dashboard integration, reports code review/testing complete, and authorized commit/push on `dev`. Recorded automated and isolated HTTP evidence remains unchanged; agent desktop/mobile interaction checks were not performed. Earlier pending-acceptance notes are historical. See [task evidence](Wedding-Implementation-Status.md#task-management-foundation--october-25-2026). Deployment and deferred task features are not implied complete.
 
-**Next proposed task:** Guest households foundation: manual household list/create/details/edit, representative contact, maxGuests including the representative, and explicit same-wedding event assignments. Plan approved Stitch desktop/mobile/state designs first; retain tenant/version/archive controls and isolated verification. Imports, guest capability links, RSVP submission, messaging and publication are separate follow-ups. This is a proposal, not implemented scope or authorization for production mutations.
+**Next checkpoint:** Review and accept Guest Management, then separately approve migration 006 for production activation. Invitation sharing/capability links, RSVP submission, imports, messaging and publication remain future increments; choose the next increment after acceptance.
 
 **Task Management foundation — October 25, 2026:** Implemented task list/create/details/edit, status updates, assignment/event/deadline controls, filtering/pagination and real dashboard counts/overdue/upcoming/assigned links from the 11 supplied Stitch screens. Four task APIs and explicit migration 005 are implemented. Migration 005 was applied to the shared database after explicit user approval; strict validator and four indexes verified, no production task fixtures. Fourteen task tests and 18 event regressions passed in isolation; type checking, lint and production webpack build passed. Browser controls could not initialize, so visual/keyboard QA and user acceptance remain pending. See [task evidence](Wedding-Implementation-Status.md#task-management-foundation--october-25-2026).
 
@@ -36,6 +40,7 @@ The scaffold, homepage/logo, accounts, wedding onboarding, detail editing and fa
 
 | Major feature | Status | Milestone date |
 |---|---|---|
+| Guest Management foundation | Implemented and isolated-test/browser verified; design approved; implementation acceptance and migration 006 activation pending | October 25, 2026 |
 | Project scaffold — Phase 0A | Completed and locally verified; technical gates remain | October 15, 2026 |
 | Homepage and logo | Implemented and locally verified; visual approval pending | October 16, 2026 |
 | Accounts: registration, login, verification and recovery | Implemented, locally verified and user-approved October 22; live delivery pending | October 21, 2026 |

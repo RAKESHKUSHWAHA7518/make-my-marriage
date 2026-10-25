@@ -16,12 +16,14 @@ WeddingManagement/
       workspace.css                  wedding forms, details and family dialogs
       dashboard.css                  workspace shell, navigation and dashboard presentation
       events.css                     event list/form/details styles
+      guests.css                     responsive guest list/form/details/dialog styles
       (auth)/                        shared layout and five account screens
       account/                       protected welcome page and error boundary
       wedding/                       protected onboarding, workspace overview, details and family access
         plan/[section]/              allowlisted coming-soon presentation; no business APIs
         sample/                      protected illustrative workspace; no saved dummy records
         events/                      protected list/create/details with loading/error states
+        guests/                      protected list/new/detail/edit with loading/error states
       membership-invitation/         fragment-token invitation preview and explicit acceptance
       api/v1/membership-invitations/ safe matching-email preview and atomic acceptance
       api/v1/weddings/               create, current summary, scoped settings reads and ordinary detail updates
@@ -36,6 +38,7 @@ WeddingManagement/
     modules/identity/                contracts, account services, security and HTTP adapter
     modules/weddings/                strict contracts, exact money, services and HTTP/page adapters
     modules/events/                  strict draft/time contracts, scoped transactional persistence and page session
+    modules/households/              strict guest contracts, scoped persistence, choices and saved totals
     infrastructure/
       config/env.ts                  server-only validated APP_ORIGIN
       mongodb/                       shared client, migration readiness and explicit migration
@@ -43,6 +46,8 @@ WeddingManagement/
   scripts/                           database check/migration and manual email processing
   tests/auth.test.ts                 isolated MongoDB account/security integration tests
   tests/weddings.test.ts             isolated onboarding/race/access/privacy tests
+  tests/households.test.ts           isolated guest validation/database/HTTP integration tests
+  tests/guest-form.test.mjs          immutable retry/conflict/association form-handler checks
   public/brand/logo-mark.svg          custom SVG logo and favicon
   public/images/                     three supplied Stitch marketing images
   src/app/fonts/                     two local fonts and their licenses
@@ -108,7 +113,7 @@ Route groups in parentheses do not alter URLs. This abbreviated tree shows list/
 
 ## Feature convention
 
-Example modules/guests: components/, schemas.ts, types.ts, service.ts, repository.ts, service.test.ts. Split further only as complexity warrants. Unit tests live next to domain services; integration and browser journeys live in tests. Shared invitation editor UI stays in its owning invitations module, not a global validation or catch-all library folder.
+The implemented guest foundation uses modules/households with schema.ts/service.ts and components/guests for forms, filters, display and removal. Split further only as complexity warrants. Integration and form-handler checks live in tests. Shared invitation editor UI stays in its owning invitations module, not a global validation or catch-all library folder.
 
 Pages/Route Handlers authenticate/parse/delegate. Services enforce current wedding scope, role, lifecycle, record versions and invariants. Repositories require explicit authorized wedding scope. Provider-specific payloads stay in infrastructure adapters. Server Components may call services directly; client components use safe DTOs and API contracts. Mark server files with server-only; import client-safe types separately.
 

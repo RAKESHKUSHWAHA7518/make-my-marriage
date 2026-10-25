@@ -2,7 +2,7 @@
 export const workspaceSections = [
   { key: "overview", label: "Overview", href: "/wedding", icon: "dashboard", planned: false, description: "Your saved wedding and planning space." },
   { key: "events", label: "Events", href: "/wedding/events", icon: "calendar", planned: false, description: "Keep your celebrations, dates, venues and schedules together." },
-  { key: "guests", label: "Guests & RSVP", href: "/wedding/plan/guests", icon: "people", planned: true, description: "Organize households, choose their invited events and track one RSVP per household." },
+  { key: "guests", label: "Guests & RSVP", href: "/wedding/guests", icon: "people", planned: false, description: "Organize invitation groups and their celebrations. RSVP responses follow separately." },
   { key: "tasks", label: "Tasks", href: "/wedding/tasks", icon: "checklist", planned: false, description: "Share checklists, assign responsibilities and follow up on the details." },
   { key: "vendors", label: "Vendors", href: "/wedding/plan/vendors", icon: "store", planned: true, description: "Keep vendor contacts and notes together, with Google Places discovery to follow." },
   { key: "expenses", label: "Expenses", href: "/wedding/plan/expenses", icon: "wallet", planned: true, description: "Record actual expenses and receipts in your wedding currency." },
