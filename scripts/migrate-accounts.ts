@@ -11,6 +11,8 @@ import { migrateEvents } from "../src/infrastructure/mongodb/migrations/004-even
 import { migrateTasks } from "../src/infrastructure/mongodb/migrations/005-tasks";
 import { migrateHouseholds } from "../src/infrastructure/mongodb/migrations/006-households";
 
+import { migrateHouseholdAccess } from "../src/infrastructure/mongodb/migrations/007-household-access";
+
 async function main() {
   try {
     await migrateAccounts(await getDatabase());
@@ -19,8 +21,9 @@ async function main() {
     await migrateEvents(await getDatabase());
     await migrateTasks(await getDatabase());
     await migrateHouseholds(await getDatabase());
+    await migrateHouseholdAccess(await getDatabase());
     console.log(
-      "Migrations 001–006 applied: account, wedding, invitations, events, task and household validators/indexes ready.",
+      "Migrations 001–007 applied: account, wedding, invitations, events, task and household validators/indexes ready.",
     );
   } catch {
     console.error(

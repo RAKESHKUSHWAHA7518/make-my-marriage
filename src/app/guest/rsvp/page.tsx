@@ -1,0 +1,8 @@
+import Link from "next/link";
+import { guestPageSite } from "@/modules/guest-access/page-session";
+import { GuestUnavailable } from "@/components/invitation/guest-unavailable";
+import { GuestEvents } from "@/components/invitation/guest-events";
+import { eventDate, eventTime } from "@/modules/events/schema";
+import { RsvpForm } from "@/components/invitation/rsvp-form";
+export const dynamic="force-dynamic";
+export default async function RsvpPage(){const site=await guestPageSite();if(!site)return <GuestUnavailable/>;return <><Link className="wedding-back" href="/guest">← Back to invitation</Link><header className="invitation-heading"><h1>Your response</h1><p>One response applies to all events shown in your invitation.</p></header><section className="invitation-panel"><h2>{site.household.name}</h2><p>Your invitation allows up to {site.rsvp.maxGuests} people, including you.</p>{site.rsvp.deadline && <p>Requested response date: {eventDate(site.rsvp.deadline,site.timezone)} · {eventTime(site.rsvp.deadline,site.timezone)} ({site.timezone})</p>}{site.rsvp.deadlinePassed && !site.archived && <p>Your response is after the requested date, but you can still save it.</p>}</section>{site.archived ? <p className="wedding-notice">This wedding is archived. Responses are read-only.</p> : !site.events.length ? <section className="invitation-panel"><h2>Your invitation details aren’t available yet</h2><p>Please check with the family who shared this link.</p></section> : <RsvpForm key={site.rsvp.version+":"+site.rsvp.invitationRevision} site={site}/>} {!!site.events.length && <GuestEvents site={site}/>}</>;}

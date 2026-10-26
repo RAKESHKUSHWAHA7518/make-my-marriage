@@ -1,5 +1,11 @@
 # Wedding Management Platform — System Design Architecture
 
+## Private invitations delivery — October 26, 2026
+
+The household invitation/RSVP increment stays inside the existing Next.js Node modular monolith and Vercel deployment. Route handlers delegate to modules/guest-access; MongoDB holds capability/session state and household RSVP, with explicit migration 007. No provider, worker, new deployment or automatic email/WhatsApp sending is introduced. Migration 007 was subsequently applied with explicit approval; no production application records were created.
+
+Household URLs use /invite#token=<secret>, superseding path-secret examples below. A client captures/removes the fragment and exchanges it through the same-origin access API; clean /guest pages use a distinct opaque HttpOnly cookie. Server code validates current household grant/version/session, active household and wedding lifecycle before returning an allowlisted invitation. Eligible events are assigned scheduled/completed events only. Organizer sessions and public website publishing are independent. Archived guests may view but cannot submit new responses. Shared gallery/livestream/upload access, background reminders and Ably refresh remain deferred. Updates are visible on navigation/refresh.
+
 > October 23, 2026 onboarding checkpoint: protected creation/overview pages, three thin Node wedding Route Handlers, server-only wedding business services and explicit MongoDB migration now exist within this deployment. No separate server/provider/background process was added. Invitations, events/dashboard, publication and media remain planned; see Wedding-Implementation-Status.md.
 
 > Account implementation checkpoint — October 21, 2026: Node Route Handlers, application-owned identity services, MongoDB persistence and bounded Resend account jobs are implemented in this single Next.js deployment. Eight auth routes, the account-scoped job tick and signed Resend webhook exist. No permanent worker or Express service was added. Live provider delivery, production scheduling and Vercel runtime validation remain gates. Earlier Phase 0A statements below are historical; see Wedding-Implementation-Status.md.

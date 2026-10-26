@@ -1,6 +1,14 @@
 # Make My Marriage — Approved Decision Record
 
+## October 26 — Private household sharing and RSVP increment
+
+Implement the eleven supplied Stitch screens using the existing burgundy/ivory brand. Prototype passcodes, concierge, meal/adult-child/accommodation/seating controls, automatic messages and live-sync claims do not expand scope. Guests need no account/OTP. One household response/count applies to all eligible invited events; attending includes the representative, and maybe/not-attending are zero. Keep soft deadline semantics and archived read-only access.
+
+Use fragment-only sharing secrets, encrypted stable link retrieval, explicit confirmed replacement, separate seven-day household cookie, strict DTO projection, optimistic household/context checks and immutable idempotent retries (including 429). The context guard also prevents a form for one household being submitted after another invitation changes the browser cookie. Keep the existing event-scope-review gate after a response; no organizer RSVP editor in this increment. Dashboard summaries count household responses and eligible attending people once per household. Migration 007 required a new explicit production approval; the user granted it in this delivery and only that migration was applied, with no application records created.
+
 ### Guest Management first increment — October 25, 2026
+
+**Guest database activation — October 26, 2026:** User explicitly approved applying only migration 006 after the unavailable screen was traced to the missing households collection. Applied migrateHouseholds to the configured shared production database; verified the collection, strict validator and all five named indexes (households_list, households_rsvp, households_events, households_email, households_phone). No guest/account test records were created and existing wedding records were not changed. Earlier pending-migration notes are superseded for migration 006; deployment and live browser verification are separate.
 
 User approved the Guest Management Stitch designs and requested implementation. One guest record is one invitation/family group, with a representative name, optional email/phone, maximum party size including that representative, invited celebrations and private notes. The UI uses the representative name as displayName; side defaults to other and tags to empty, preserving existing values on edit. This bounded increment requires at least one explicitly selected same-wedding draft/scheduled/completed event (the broader empty-assignment design below remains future work). Draft assignments are private planning only. No duplicate-contact uniqueness or automatic merging; no arbitrary prototype maximum of 25 people.
 

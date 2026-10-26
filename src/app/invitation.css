@@ -1,0 +1,47 @@
+
+.guest-invitation { min-height: 100vh; background: #fffdf9; color: #38282d; }
+.invitation-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; max-width: 1240px; padding: 24px; margin: auto; border-bottom: 1px solid #efdae1; }
+.invitation-header nav { display: flex; gap: 24px; font-size: 14px; color: #802b3a; }
+.invitation-header nav a { padding: 14px 4px; }
+.invitation-main { max-width: 1080px; margin: auto; padding: 44px 24px 64px; }
+.invitation-panel { background: white; border: 1px solid #f0dfe5; border-radius: 12px; padding: clamp(22px,4vw,40px); margin: 24px 0; box-shadow: 0 3px 12px #802b3a06; }
+.invitation-panel h1,.invitation-heading h1 { font-family: var(--font-heading),serif; font-size: clamp(32px,5vw,52px); line-height: 1.2; color: #802b3a; margin: 12px 0 24px; overflow-wrap: anywhere; }
+.invitation-panel h2 { font-size: clamp(23px,3vw,30px); margin: 16px 0; }
+.invitation-panel h3 { font-size: 26px; margin: 0 0 20px; }
+.invitation-panel p { line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.invitation-welcome { border-top: 4px solid #802b3a; }
+.invitation-welcome .button { margin: 18px 0; }
+.invitation-events { margin-top: 42px; }
+.invitation-events dl { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; padding: 22px; background: #fff0f4; border-radius: 8px; }
+.invitation-events dt { color: #802b3a; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.invitation-events dd { margin: 0; line-height: 1.8; overflow-wrap: anywhere; }
+.invitation-events small { display: block; }
+.invitation-events a { display: inline-block; min-height: 44px; padding: 12px 0; color: #802b3a; font-weight: 600; }
+.invitation-empty { text-align: center; padding-top: 70px; padding-bottom: 70px; }
+.invitation-footer { padding: 26px; text-align: center; border-top: 1px solid #efdae1; color: #796468; font-size: 12px; }
+.invitation-sharing { margin: 28px 0; padding: 28px; }
+.invitation-sharing p { line-height: 1.8; }
+.invitation-sharing label { display: grid; gap: 12px; margin: 22px 0; font-size: 13px; font-weight: 600; }
+.invitation-link-field { width: 100%; min-height: 48px; font: inherit; padding: 14px; border: 1px solid #d8bec7; border-radius: 6px; background: #fff0f4; }
+.invitation-sharing small { display: block; margin-top: 20px; color: #796468; }
+.rsvp-form { margin-top: 36px; }
+.rsvp-choices { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; border: 0; padding: 0; margin: 0 0 30px; }
+.rsvp-choices legend { font-size: 15px; font-weight: 600; margin-bottom: 18px; }
+.rsvp-choices label { display: flex; align-items: center; gap: 14px; min-height: 100px; padding: 24px; background: white; border: 1px solid #e8d2db; border-radius: 10px; cursor: pointer; }
+.rsvp-choices label:has(input:checked) { background: #fbe8ee; border: 2px solid #802b3a; }
+.rsvp-choices input { accent-color: #802b3a; width: 20px; height: 20px; }
+.rsvp-form .invitation-panel label { display: grid; gap: 12px; max-width: 300px; font-size: 14px; font-weight: 600; }
+.rsvp-form input[type=number] { min-height: 52px; width: 100%; padding: 14px; border: 1px solid #d8bec7; border-radius: 6px; font: inherit; background: #fff5f7; }
+.rsvp-form :disabled { opacity: .65; }
+.rsvp-form [aria-invalid=true] { outline: 2px solid #a52b3a; }
+.rsvp-form .event-form-actions { justify-content: space-between; gap: 18px; margin-top: 26px; }
+.rsvp-form :focus-visible,.invitation-sharing :focus-visible,.invitation-header :focus-visible { outline: 2px solid #802b3a; outline-offset: 4px; }
+.invitation-receipt { text-align: center; }
+.invitation-receipt .event-form-actions { justify-content: center; margin-top: 28px; }
+.rsvp-summary { padding: 28px; margin: 28px 0; }
+.rsvp-summary-counts { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; margin: 24px 0; }
+.rsvp-summary-counts a { display: grid; gap: 14px; background: #fff0f4; padding: 20px; border-radius: 8px; min-height: 100px; color: #802b3a; }
+.rsvp-summary-counts strong { font-size: 28px; font-family: var(--font-heading),serif; }
+.rsvp-summary small { color: #796468; line-height: 1.8; }
+.guest-list .guest-status small { display: block; font-weight: 400; margin-top: 7px; }
+@media(max-width:650px) { .invitation-header { flex-direction: column; padding: 20px; gap: 10px; } .invitation-header .brand strong { font-size: 18px; } .invitation-main { padding: 24px 18px 40px; } .invitation-events dl { grid-template-columns: minmax(0,1fr); } .rsvp-choices { grid-template-columns: minmax(0,1fr); } .rsvp-choices label { min-height: 72px; } .rsvp-form .event-form-actions { flex-direction: column-reverse; align-items: stretch; } .rsvp-summary-counts { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; } .rsvp-summary { padding: 20px; } }

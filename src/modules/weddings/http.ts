@@ -6,6 +6,7 @@ import { z } from "zod";
 import { body, cookieName, trustedMutation } from "@/modules/identity/http";
 import { AccountError } from "@/modules/identity/security";
 import { currentUser, rateLimit } from "@/modules/identity/service";
+import { invitationLink } from "@/modules/guest-access/service";
 import { listTasks, taskFor, saveTask } from "@/modules/tasks/service";
 import { listHouseholds, householdFor, saveHousehold } from "@/modules/households/service";
 import { listWeddingAccess } from "./access";
@@ -47,13 +48,14 @@ export async function handleWedding(
     | "task-detail"
     | "create-task"
     | "update-task"
-    | "list-households" | "household-detail" | "create-household" | "update-household" | "remove-household",
+    | "list-households" | "household-detail" | "create-household" | "update-household" | "remove-household" | "household-link" | "rotate-household-link",
   id?: string,
   inviteId?: string,
 ) {
   const requestId = randomUUID();
   const headers = {
     "Cache-Control": "private, no-store",
+    "Referrer-Policy": "no-referrer",
     "X-Request-Id": requestId,
   };
   try {
@@ -70,6 +72,8 @@ export async function handleWedding(
       "update-event",
       "create-task",
       "update-task",
+      "household-link",
+      "rotate-household-link",
       "create-household", "update-household", "remove-household",
     ].includes(action);
     if (mutation) trustedMutation(request);
@@ -124,7 +128,9 @@ export async function handleWedding(
       return NextResponse.json({ ...result, requestId }, { headers });
     }
     const data =
-      action === "create-task" || action === "update-task"
+      action === "household-link" || action === "rotate-household-link"
+        ? await invitationLink(user,id!,inviteId!,action === "rotate-household-link" ? { payload: await body(request), key: request.headers.get("idempotency-key") } : undefined)
+        : action === "create-task" || action === "update-task"
         ? await saveTask(user, id!, action === "update-task" ? inviteId! : null, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
         : action === "update-event"
         ? await updateEvent(user, id!, inviteId!, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))

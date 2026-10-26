@@ -24,7 +24,8 @@
     "test:members": "node --conditions=react-server --import tsx --test tests/members.test.ts",
     "test:tasks": "node --conditions=react-server --import tsx --test tests/tasks.test.ts tests/task-form.test.mjs",
     "test:guests": "node --conditions=react-server --import tsx --test tests/households.test.ts tests/guest-form.test.mjs",
-    "test:events": "node --conditions=react-server --import tsx --test tests/events.test.ts tests/event-form.test.mjs tests/schedule-event.test.mjs"
+    "test:events": "node --conditions=react-server --import tsx --test tests/events.test.ts tests/event-form.test.mjs tests/schedule-event.test.mjs",
+    "test:rsvp": "node --conditions=react-server --import tsx --test tests/guest-access.test.ts tests/rsvp-form.test.mjs"
   },
   "dependencies": {
     "argon2": "0.45.1",

@@ -1,0 +1,1 @@
+export function GuestUnavailable() { return <section className="invitation-panel invitation-empty"><h1>Invitation unavailable</h1><p>This invitation is unavailable. Please contact the family who shared it.</p></section>; }

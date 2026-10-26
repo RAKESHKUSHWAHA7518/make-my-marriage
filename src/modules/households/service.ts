@@ -7,7 +7,7 @@ import { membershipFor } from "@/modules/weddings/service";
 import { createHouseholdSchema, patchHouseholdSchema, removeHouseholdSchema, householdQuerySchema } from "./schema";
 
 export type GuestEvent = { id: string; name: string; status: string; startsAt?: string; venue?: string; available: boolean };
-export type HouseholdView = { id: string; displayName: string; representative: { name: string; email?: string; phone?: string }; side: "bride" | "groom" | "both" | "other"; tags: string[]; maxGuests: number; invitedEventIds: string[]; events: GuestEvent[]; notes?: string; status: "active" | "removed"; rsvp: { status: string; attendeeCount: number }; version: number; createdAt: string; updatedAt: string };
+export type HouseholdView = { id: string; displayName: string; representative: { name: string; email?: string; phone?: string }; side: "bride" | "groom" | "both" | "other"; tags: string[]; maxGuests: number; invitedEventIds: string[]; events: GuestEvent[]; notes?: string; status: "active" | "removed"; rsvp: { status: string; attendeeCount: number; respondedAt?: string; updatedAfterDeadline?: boolean }; version: number; createdAt: string; updatedAt: string };
 export type GuestTotals = { groups: number; maximumPeople: number };
 const missing = () => new AccountError(404, "NOT_FOUND", "Guest group unavailable.");
 async function access(user: User, weddingId: string) {
@@ -24,7 +24,7 @@ async function views(rows: Document[], weddingId: ObjectId): Promise<HouseholdVi
   const events = await (await getDatabase()).collection("events").find({ weddingId, _id: { $in: rows.flatMap(r => r.invitedEventIds) } }, { projection: { name: 1, status: 1, startsAt: 1, "venue.name": 1 } }).toArray();
   return rows.map(r => ({ id: r._id.toString(), displayName: r.displayName, representative: { name: r.representative.name, email: r.representative.email, phone: r.representative.phone }, side: r.side, tags: r.tags, maxGuests: r.maxGuests, invitedEventIds: r.invitedEventIds.map((id: ObjectId) => id.toString()),
     events: r.invitedEventIds.map((id: ObjectId) => { const e = events.find(e => e._id.equals(id)); return e ? eventView(e) : { id: id.toString(), name: "Unavailable celebration", status: "unavailable", available: false }; }),
-    notes: r.notes, status: r.status, rsvp: { status: r.rsvp.status, attendeeCount: r.rsvp.attendeeCount }, version: r.version, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString() }));
+    notes: r.notes, status: r.status, rsvp: { status: r.rsvp.status, attendeeCount: r.rsvp.attendeeCount, respondedAt: r.rsvp.respondedAt?.toISOString(), updatedAfterDeadline: r.rsvp.updatedAfterDeadline }, version: r.version, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString() }));
 }
 export async function guestEventChoices(user: User, weddingId: string): Promise<GuestEvent[]> {
   const member = await access(user, weddingId);
@@ -36,6 +36,20 @@ export async function guestTotals(user: User, weddingId: string): Promise<GuestT
   const member = await access(user, weddingId); await householdsReady();
   const [row] = await (await getDatabase()).collection("households").aggregate([{ $match: { weddingId: member.weddingId, status: "active" } }, { $group: { _id: null, groups: { $sum: 1 }, maximumPeople: { $sum: "$maxGuests" } } }]).toArray();
   return { groups: row?.groups ?? 0, maximumPeople: row?.maximumPeople ?? 0 };
+}
+export type RsvpTotals = { counts: { pending: number; attending: number; not_attending: number; maybe: number }; attendingPeople: number };
+export async function rsvpTotals(user: User, weddingId: string): Promise<RsvpTotals> {
+  const member = await access(user, weddingId); await householdsReady();
+  const [row] = await (await getDatabase()).collection("households").aggregate([
+    { $match: { weddingId: member.weddingId, status: "active" } },
+    { $lookup: { from: "events", localField: "invitedEventIds", foreignField: "_id", pipeline: [{ $match: { weddingId: member.weddingId, status: { $in: ["scheduled", "completed"] } } }, { $limit: 1 }, { $project: { _id: 1 } }], as: "eligible" } },
+    { $group: { _id: null,
+      pending: { $sum: { $cond: [{ $eq: ["$rsvp.status", "pending"] }, 1, 0] } }, attending: { $sum: { $cond: [{ $eq: ["$rsvp.status", "attending"] }, 1, 0] } },
+      not_attending: { $sum: { $cond: [{ $eq: ["$rsvp.status", "not_attending"] }, 1, 0] } }, maybe: { $sum: { $cond: [{ $eq: ["$rsvp.status", "maybe"] }, 1, 0] } },
+      attendingPeople: { $sum: { $cond: [{ $and: [{ $eq: ["$rsvp.status", "attending"] }, { $gt: [{ $size: "$eligible" }, 0] }] }, "$rsvp.attendeeCount", 0] } },
+    } },
+  ]).toArray();
+  return { counts: { pending: row?.pending ?? 0, attending: row?.attending ?? 0, not_attending: row?.not_attending ?? 0, maybe: row?.maybe ?? 0 }, attendingPeople: row?.attendingPeople ?? 0 };
 }
 export async function listHouseholds(user: User, weddingId: string, query: unknown = {}) {
   const member = await access(user, weddingId), input = householdQuerySchema.parse(query); await householdsReady();
@@ -85,7 +99,7 @@ export async function saveHousehold(user: User, weddingId: string, id: string | 
     if (old?.status === "removed") throw new AccountError(409, "GUEST_REMOVED", "This guest group has been removed.");
     let saved: Document;
     if (remove && old) {
-      // Capability issuance and messaging are not implemented in this increment. Status gates future access.
+      // Every guest access resolution checks active household status; removal invalidates its links and sessions.
       saved = (await db.collection("households").findOneAndUpdate({ _id: old._id, weddingId: wedding._id, version: old.version }, { $set: { status: "removed", removedAt: now, updatedAt: now }, $inc: { version: 1 } }, { session, returnDocument: "after" }))!;
     } else {
       const source: Document = old ? { displayName: old.displayName, representative: { name: old.representative.name, email: old.representative.email, phone: old.representative.phone }, side: old.side, tags: old.tags, maxGuests: old.maxGuests, invitedEventIds: old.invitedEventIds.map((v: ObjectId) => v.toString()), notes: old.notes, ...input } : { ...input };

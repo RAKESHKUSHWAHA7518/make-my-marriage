@@ -63,11 +63,11 @@ export function encrypt(
     keyVersion: 1,
   };
 }
-export function decrypt(value: Encrypted) {
+export function decrypt(value: Encrypted, keyName = "ACCOUNT_EMAIL_ENCRYPTION_KEY") {
   if (value.keyVersion !== 1) throw new Error("Unsupported email key version");
   const cipher = createDecipheriv(
     "aes-256-gcm",
-    key("ACCOUNT_EMAIL_ENCRYPTION_KEY"),
+    key(keyName),
     Buffer.from(value.iv, "base64"),
   );
   cipher.setAuthTag(Buffer.from(value.tag, "base64"));
