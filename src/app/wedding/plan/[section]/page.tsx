@@ -12,6 +12,7 @@ export const metadata: Metadata = { title: "Planning workspace | Make My Marriag
 
 export default async function PlannedWorkspacePage({ params }: { params: Promise<{ section: string; }>; }) {
   const { section } = await params;
+  if (section === "photos") redirect("/wedding/gallery");
   if (section === "guests") redirect("/wedding/guests");
   if (section === "tasks") redirect("/wedding/tasks");
   if (section === "events") redirect("/wedding/events");

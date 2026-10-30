@@ -1,5 +1,18 @@
 # Make My Marriage — Approved Decision Record
 
+## October 30 — Gallery integration and storage approval
+
+User authorized remaining family gallery integration, selected a 1 GB original-photo allowance per wedding, and explicitly approved applying migration 008 to shared production. Apply zero-quota initialization only, preserve existing nonzero limits; new wedding default becomes 1,000,000,000 bytes. No guest enabling, sharing, public publishing or original downloads. Only the approved migration may change shared production; test saves remain isolated.
+
+Keep a fixed upload target/key across uncertain retries; ordinary retries verify rather than retransmit; an explicit transfer retry checks existing success first and reauthorizes the same key and target. Reject unsupported actual provider media and reconcile late arrivals; signed-upload timestamps do not become fifteen-minute provider revocation. A 15-minute application intent governs publication. Protected thumbnail/gallery streaming is bounded to 4 MB and requires current family authorization. Retain rejected/expired intent tombstones for repeated provider reconciliation, and decrement used quota only after confirmed deletion. Quota covers original bytes; transformations/delivery have separate provider implications. Existing tick endpoint handles media alongside mail, but scheduler configuration/cadence and production runtime validation remain operational gates, not assumed complete.
+
+## October 29 — Family gallery scope and provider gate
+
+User approved development from the named gallery designs. First increment is family-only JPEG/PNG/WebP upload/view/removal for active ADMIN/MANAGER; archive viewing only. Existing gallery guest switches remain off. Design extras do not override the prior prompt or data/API contracts. No albums, event associations, originals/EXIF UI, RAW/HEIC, paid plans or moderation queue. Actual wedding storage allowance replaces prototype 5 GB figures.
+
+Keep Cloudinary per existing architecture; read-only credential check passed. Current provider documentation explicitly says presets cannot impose a per-preset size limit, superseding assumptions that a signed preset enforces 20 MB. Enforce application quota reservation and authoritative actual-byte validation; reject/clean oversized or late provider uploads. Do not activate uploads until reconciliation and protected delivery are implemented and verified. Provider-adapter tests are not evidence of a completed gallery.
+
+
 ## October 26 — Private household sharing and RSVP increment
 
 Implement the eleven supplied Stitch screens using the existing burgundy/ivory brand. Prototype passcodes, concierge, meal/adult-child/accommodation/seating controls, automatic messages and live-sync claims do not expand scope. Guests need no account/OTP. One household response/count applies to all eligible invited events; attending includes the representative, and maybe/not-attending are zero. Keep soft deadline semantics and archived read-only access.

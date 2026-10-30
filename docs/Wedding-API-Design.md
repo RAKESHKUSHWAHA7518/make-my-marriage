@@ -1,5 +1,13 @@
 # Wedding Management — Detailed API Design
 
+## October 30 — Implemented family media subset
+
+Six catalog operations are now implemented (49/106 including prior increments): GET /gallery, POST /media/intents, GET /media/intents/{intentId}, POST /media/intents/{intentId}/complete, GET /media/{assetId}/content and POST W/assets/{assetId}/remove. Organizer cookie, verified current family membership and exact same-wedding references are mandatory. Guest access, gallery settings/share/rotate and asset metadata PATCH are not implemented. API prefix is /api/v1.
+
+GET /gallery accepts optional descending ObjectId cursor, returns {data:{photos:[{id,filename,version,bytes,width,height}],nextCursor,count,archived,storage:{usedBytes,reservedBytes,limitBytes}},requestId}, 24 photos/page, ready gallery purpose only. POST intents requires Idempotency-Key and strict {purpose:"gallery",filename,contentType,sizeBytes}; sizeBytes is a positive integer string <=20000000, JPEG/PNG/WebP only. It returns id,state,expiresAt,maxBytes and constrained upload method/url/fields. Existing keys must bind exactly the same parsed input. GET own intent returns id/state/expiry/assetId, never signing secrets. Complete accepts strict {} and independently queries the provider; returns ready:true/assetId with 200 or ready:false with 202 while awaiting the file. Browser providerResult is intentionally not accepted in this subset. Application expiry is 15 minutes; signature timestamp remains fixed on replay. Terminal or expired intents return UPLOAD_EXPIRED, actual oversize/invalid resources PHOTO_REJECTED, over-quota STORAGE_FULL; archive is WEDDING_ARCHIVED, stale removal VERSION_CONFLICT.
+
+MediaQuery permits thumbnail/gallery only, never original; streams authorized JPEG with a 4 MB cap, private/no-store/no-referrer/nosniff, no provider URL redirect. Remove requires expectedVersion and returns 202 state delete_pending; a matching completed retry does not add another audit. Deletion cleanup controls quota release, not the UI response. All browser writes require trusted Origin and X-MMM-CSRF:1, with durable user rate limits. Family media writes are disabled for archived weddings; read access remains. No implicit migrations or fake success.
+
 ## Private household invitations — October 26 implementation update
 
 Eight additional catalog operations are implemented: invitation-link POST and rotate POST; access exchange/logout POST; guest site/events/RSVP GET and RSVP PUT (eight operations total: two organizer + two access + four guest). This brings the implemented catalog to 43/106; older counts are historical. Migration 006 is applied; 007 was applied after explicit approval. Family RSVP editing, gallery exchange, imports and sending are still planned.

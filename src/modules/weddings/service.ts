@@ -340,7 +340,7 @@ export async function createWedding(
             storage: {
               usedBytes: Long.ZERO,
               reservedBytes: Long.ZERO,
-              limitBytes: Long.ZERO,
+              limitBytes: Long.fromNumber(1_000_000_000),
             },
             privateWebsite: {},
             publicPage: {

@@ -1,5 +1,17 @@
 # Make My Marriage
 
+## Family gallery — October 30 increment
+
+Release handoff (user deferred Vercel setup): confirm production domain/plan, configure server secrets, deploy, activate the authenticated scheduler, verify successful ticks and monitor cleanup backlog/failures. Hobby cron runs at most daily and cannot supply the intended every-few-minutes cadence; use a suitable plan or external scheduler. Never put CRON_SECRET in a URL, browser code or Git. Isolated browser upload/view and service removal/cleanup passed; production runtime and scheduling are not yet verified.
+
+/wedding/gallery now supports real family-only photo uploads, saved thumbnails/viewer, pagination, quota and removal with durable provider cleanup. The illustrative UI is at /wedding/gallery/preview. JPEG/PNG/WebP only; 20 MB per photo and 20 per queue. Active ADMIN/MANAGER members may manage media; archive is read-only. Guest sharing/QR/uploads and original downloads are not enabled.
+
+Migration 008 was applied with explicit approval, including the selected 1 GB (decimal) original-file allowance for zero-quota weddings; existing nonzero limits were preserved. New weddings start at 1 GB. Do not rerun broad migrations against production as a test. Cloudinary cloud name/key/secret are server configuration; the secret never reaches the browser. Provider transformation/delivery costs are separate from application original-byte quota.
+
+Operational gate: reliably schedule the existing authenticated GET /api/internal/jobs/tick using Authorization: Bearer <CRON_SECRET>, typically every few minutes on a scheduler/plan that supports that cadence. Media cleanup runs alongside account mail. This repository does not configure a Vercel cron and no external scheduler was verified. Monitor non-2xx results and failed counts; each invocation is bounded and may leave more due work. npm run media:process performs one mutating cleanup pass against the configured environment; use it only as an authorized operator, never for production QA. Until confirmed cleanup runs, removed photos are inaccessible but their used-byte storage remains occupied. Expired/rejected upload targets continue to be reconciled for late arrivals.
+
+Run npm run test:media only with an explicitly isolated loopback MongoDB replica set on 127.0.0.1:27190 (tests refuse the configured Atlas URI and generate/drop asserted random test databases). Run npm run test:gallery-ui for network-free selection/render/retry checks, and npm run media:check for a read-only credential ping. See docs/Wedding-Implementation-Status.md for evidence and open manual/deployed-runtime gates.
+
 A wedding planning application for couples and families. One Next.js/TypeScript modular monolith, one Vercel application deployment, and one MongoDB Atlas application database per environment.
 
 ## Current state

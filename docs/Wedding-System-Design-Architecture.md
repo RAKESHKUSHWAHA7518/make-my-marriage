@@ -1,5 +1,11 @@
 # Wedding Management Platform — System Design Architecture
 
+## October 30 — Family gallery delivery
+
+Family media routes, quota transactions, signed direct Cloudinary uploads, protected derivative streams and durable cleanup are implemented within the existing Next.js Node deployment. Preview UI moved to /wedding/gallery/preview; live route uses saved records. Migration 008 and 1 GB default/zero-quota initialization were explicitly approved and applied. No guest gallery/public publishing/original download endpoints are enabled.
+
+Use the existing authorized jobs tick for concurrent mail/media reconciliation; no permanent server or separate deployment. Scheduler cadence/monitoring is a release prerequisite and is not configured automatically by this source change. Media processing is bounded, retryable and retains cleanup tombstones; it does not guarantee instant provider deletion or signature revocation. Protected derivative streams cap output at 4 MB and do not expose upstream bearer URLs. Validate Vercel streaming/bandwidth/duration under deployed conditions before claiming production readiness. One tiny synthetic provider round trip passed locally and was cleaned up; that is not a platform load test.
+
 ## Private invitations delivery — October 26, 2026
 
 The household invitation/RSVP increment stays inside the existing Next.js Node modular monolith and Vercel deployment. Route handlers delegate to modules/guest-access; MongoDB holds capability/session state and household RSVP, with explicit migration 007. No provider, worker, new deployment or automatic email/WhatsApp sending is introduced. Migration 007 was subsequently applied with explicit approval; no production application records were created.

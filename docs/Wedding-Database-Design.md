@@ -1,5 +1,11 @@
 # Wedding Management — MongoDB Database Design
 
+## October 30 — Family media activation
+
+Explicit migration 008 defines the first implemented gallery-only assets and uploadIntents schemas: strict validators, seven indexes (media_operation, media_target, media_reconcile, media_provider, media_intent, media_gallery, media_cleanup). Broader attachment/public/guest purposes remain future schema extensions. With user approval, 008 was applied to shared production; existing zero quotas become the selected 1 GB allowance when usage fits, existing nonzero limits remain. New wedding allowance is now 1,000,000,000 bytes. No media or QA rows were created during activation.
+
+Upload operation hash is unique per actor user and binds immutable requestHash. Reserves declared bytes under wedding/user/member fences, then independent provider verification precedes transactional actual-byte settlement + ready asset + audit. Actual size beyond the reservation requires available quota for the difference. Removal first makes media unreadable and retains bytes in usedBytes until provider-confirmed deletion; concurrent cleanup settles at most once. Cleanup state/run time lives on the intent/asset itself rather than creating a second jobs representation in this subset. Expired reservations become rejected and retain operational tombstones; no TTL deletion while cleanup or late-arrival reconciliation may be needed. Gallery pagination uses descending ObjectId (creation-ordered for this service), bounded to 24 per page and always wedding/purpose/ready scoped. Gallery visibility does not yet grant guest authority.
+
 ## Household capability implementation — October 26, 2026
 
 Migration 006 has been applied with explicit approval (supersedes the dated pending-006 note below). New explicit migration 007 defines capabilityLinks and capabilitySessions: strict validators, three indexes each, including unique token hashes, one active grant per household and session TTL. This makes 17 migration-defined collections; the larger design inventory remains a future catalog. 007 was tested in disposable databases, then applied to shared production with explicit approval; its validators/indexes were verified and record counts stayed unchanged.

@@ -9,7 +9,7 @@ export const workspaceSections = [
   { key: "invitations", label: "Invitations", href: "/wedding/plan/invitations", icon: "mail", planned: true, description: "Prepare guest invitation designs, email invitations and manual WhatsApp sharing." },
   { key: "announcements", label: "Announcements", href: "/wedding/plan/announcements", icon: "announcement", planned: true, description: "Keep your planning family informed with shared updates." },
   { key: "website", label: "Website", href: "/wedding/plan/website", icon: "globe", planned: true, description: "Prepare private guest content and explicitly choose what to publish publicly." },
-  { key: "photos", label: "Photos", href: "/wedding/plan/photos", icon: "photo", planned: true, description: "Share memories through a gallery link and QR code when gallery access is enabled." },
+  { key: "photos", label: "Gallery", href: "/wedding/gallery", icon: "photo", planned: false, description: "Share memories through a gallery link and QR code when gallery access is enabled." },
   { key: "family", label: "Family & access", href: "/wedding/family", icon: "shield", planned: false, description: "See your planning family. Administrators manage invitations and access." },
   { key: "details", label: "Wedding details", href: "/wedding/details", icon: "heart", planned: false, description: "View saved details. Administrators can edit them." },
   { key: "settings", label: "Settings", href: "/wedding/plan/settings", icon: "settings", planned: true, description: "More wedding settings, including livestream links and gallery controls, will follow." },

@@ -1,0 +1,2 @@
+"use client";
+export default function GalleryError({retry}:{retry:()=>void}){return <main className="workspace-main"><section className="workspace-panel gallery-empty"><h1>Gallery temporarily unavailable</h1><p>The gallery may not be activated yet, or its connection is unavailable. Your saved photos have not been changed.</p><button className="button button-primary" onClick={retry}>Retry loading</button><p><a href="/wedding">Back to workspace</a></p></section></main>;}

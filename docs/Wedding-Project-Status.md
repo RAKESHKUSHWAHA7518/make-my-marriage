@@ -1,10 +1,18 @@
 # Make My Marriage — Project Status
 
-**Last updated:** October 26, 2026 (Asia/Kolkata).
+**Last updated:** October 30, 2026 (Asia/Kolkata).
 
 This is our ongoing progress log for major features. Update it whenever a major feature is built or materially changed. Detailed checks, implementation files and technical gates belong in [Implementation Status](Wedding-Implementation-Status.md). Requirements and approved decisions remain governed by the existing product, architecture, database and API documents and the [Decision Record](Wedding-Decision-Record.md).
 
 ## Current progress
+
+**Family gallery isolated QA follow-up — October 30:** Disposable ADMIN browser upload/completion, protected thumbnail/viewer and mobile layouts passed. Real isolated service removal/provider cleanup returned storage to zero; browser refresh confirmed the empty gallery. Eight gallery tests passed again. Test resources were removed; no production QA writes. This supersedes the earlier complete-browser/mobile limitation below for these covered journeys. Full design-state/accessibility/fault-injection and deployed-runtime checks remain open. User deferred Vercel setup; deployment and monitored cleanup scheduling remain release gates. See [detailed evidence](Wedding-Implementation-Status.md#family-gallery-integration--october-30-2026).
+
+**Family gallery integration — October 30:** Connected real upload intents, Cloudinary verification, protected thumbnails/viewer, saved pagination, 1 GB quota accounting and confirmed removal/cleanup. User approved 1 GB per wedding and migration 008; two validators/seven indexes and preserved nonzero quotas verified in shared production without media/account fixtures. Seventeen media tests, eight UI/retry checks and twelve wedding regressions passed in isolation; tiny synthetic provider upload/delivery/deletion passed. Live MANAGER empty-gallery and upload-panel read-only checks passed; complete browser/mobile, deployment and scheduler validation remain gates. Implemented, not user-accepted or deployed; see [integration evidence](Wedding-Implementation-Status.md#family-gallery-integration--october-30-2026).
+
+**Family gallery UI preview — October 29:** Built the named Stitch-based gallery presentations and local interactions at /wedding/gallery with workspace navigation. Includes empty/grid, upload queue/validation, illustrative progress/results, viewer/removal dialogs and failure/archive states. Clearly labelled preview only; no photos are uploaded, saved or deleted. Types/lint and three UI checks passed. Backend integration and browser visual verification remain open; see [UI evidence](Wedding-Implementation-Status.md#family-gallery-ui-preview--october-29-2026).
+
+**Family gallery started — October 29:** Located eleven named Stitch screens and resolved prototype scope conflicts. Implemented the server-only Cloudinary provider foundation and read-only connection check; four synthetic adapter tests and real credential ping passed. No actual upload, gallery UI/API, quota/reconciliation or media migration is complete. Gallery remains IN PROGRESS; no production records/media were changed. See [foundation evidence and remaining work](Wedding-Implementation-Status.md#family-gallery--provider-foundation-started-october-29-2026).
 
 **Review and commit checkpoint — October 26, 2026:** User requested a final code check and commit of the household invitation/RSVP increment on dev. Reviewed authorization, privacy projection, session isolation, rotation, optimistic context/version checks and uncertain-save retries against the documented scope. Fresh TypeScript, zero-warning lint and seven network-free form regressions passed. Independent isolated QA evidence is linked below; exact parity of all eleven design states and deployed HTTPS/fault-injection checks remain open. This checkpoint does not authorize a push or deployment. Unrelated local MCP configuration is excluded.
 
