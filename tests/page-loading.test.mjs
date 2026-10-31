@@ -6,8 +6,8 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 const require = createRequire(import.meta.url), React = require("react"), { renderToStaticMarkup } = require("react-dom/server");
 
-test("all eight route fallbacks show readable loading status without fabricated private data", () => {
-  for (const route of ["wedding", "wedding/expenses", "wedding/tasks", "wedding/guests", "wedding/events", "wedding/gallery", "wedding/events/[eventId]/edit", "guest"]) {
+test("all ten route fallbacks show readable loading status without fabricated private data", () => {
+  for (const route of ["wedding", "wedding/expenses", "wedding/vendors", "wedding/vendors/discover", "wedding/tasks", "wedding/guests", "wedding/events", "wedding/gallery", "wedding/events/[eventId]/edit", "guest"]) {
     const Screen = require(`../src/app/${route}/loading.tsx`).default;
     const html = renderToStaticMarkup(React.createElement(Screen));
     assert.match(html, /role="status"/); assert.match(html, /aria-hidden="true"/);

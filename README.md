@@ -1,5 +1,23 @@
 # Make My Marriage
 
+## Save discovered vendors — October 31 increment
+
+From a discovered business's details, Save to wedding opens the supplied Stitch 11/12 flow: read-only attributed Google information plus independent private label/contact/notes/event fields. Saved records retain only the place ID and planning fields. Missing label uses the application text “Saved Google business”; Google names/addresses/ratings are never copied into private fields. Source filters, explicit live-detail loading, editing/removal and existing/removed record links are connected. Saving a known reference/private details works without a provider call; search/live display still needs configured Places credentials and public policies.
+
+Migration 013 extends only vendors validation and adds one partial unique weddingId/googlePlaceId index, including removed history. After isolated tests, the user explicitly approved only migration 013; applied and verified in configured shared production October 31. Strict source rules/unique partial index verified, prior indexes preserved, collection names and record counts unchanged, vendor/wedding fingerprints unchanged. No sample records or provider calls. Do not run broad db:migrate. npm run test:saved-vendors requires the exact vendorsqa loopback URI and uses disposable databases/mocked providers; no .env fallback. Expense linking remains the next separate increment. See project/implementation status for evidence and activation gates.
+
+## Google Places discovery — October 31 increment
+
+/wedding/vendors/discover supports explicit category/city search and public business details. No GPS, automatic queries, provider-content storage, discovered-vendor saving or expense linking. No new dependency/migration. Existing manual contacts work independently.
+
+Activation needs server-only GOOGLE_PLACES_API_KEY (Places API New, restricted key/billing quotas), GOOGLE_PLACES_TERMS_URL and GOOGLE_PLACES_PRIVACY_URL pointing to your published app policies incorporating Google's terms/privacy. Missing configuration disables discovery with manual-entry fallback. Fixed rating/phone/website fields incur Enterprise SKUs; no photos/review text/embedded map. Official Google Maps attribution asset is unmodified. npm run test:discovery uses mocked Google responses and the exact vendorsqa loopback replica, never current production-connected defaults. See implementation status for evidence/activation gates.
+
+## Manual Vendor Management — October 31 increment
+
+/wedding/vendors supports manual contacts, categories, private notes, event associations, search/filters, pagination, editing and retained removal history. Active verified ADMIN/MANAGER manage; archive is read-only. Google Places discovery/saving and expense-vendor linking remain later increments.
+
+Migration 012 creates only vendors with strict validation and four indexes. It was tested in isolation, then only migration 012 was applied to shared production on October 31 with explicit user approval. Strict validation and all four index definitions were verified; existing record counts, vendor count and a fingerprint of wedding records remained unchanged. No sample records were created. Do not run broad db:migrate or create test contacts in the current production-connected app. npm run test:vendors requires the exact dedicated localhost URI mongodb://127.0.0.1:27193/?replicaSet=vendorsqa and generates/drops asserted disposable test databases; no .env fallback. See project/implementation records for design evidence and remaining activation gates.
+
 ## Expense Tracking — October 31 increment
 
 /wedding/expenses supports private actual-spending list/add/details/edit/removal, category/event/date filters, pagination and saved dashboard totals/budget comparisons. Verified active ADMIN/MANAGER manage; archive is read-only. Money uses exact minor units and wedding currency; recording any expense permanently locks currency, including after removal. Vendor linking and receipt uploads remain future increments.

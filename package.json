@@ -34,7 +34,10 @@
     "test:gallery-sharing-ui": "node --import tsx --test tests/gallery-sharing.test.mjs",
     "test:guest-uploads": "node --conditions=react-server --import tsx --test tests/guest-uploads.test.ts tests/guest-upload-panel.test.mjs",
     "test:expenses": "node --conditions=react-server --import tsx --test tests/expenses.test.ts tests/expense-form.test.mjs",
-    "test:loading": "node --import tsx --test tests/page-loading.test.mjs"
+    "test:loading": "node --import tsx --test tests/page-loading.test.mjs",
+    "test:vendors": "node --conditions=react-server --import tsx --test tests/vendors.test.ts tests/vendor-form.test.mjs",
+    "test:discovery": "node --conditions=react-server --import tsx --test tests/places-provider.test.ts tests/vendor-discovery.test.ts tests/vendor-discovery-ui.test.mjs",
+    "test:saved-vendors": "node --conditions=react-server --import tsx --test tests/saved-google-vendors.test.ts tests/vendor-form.test.mjs tests/saved-place-details.test.mjs"
   },
   "dependencies": {
     "argon2": "0.45.1",

@@ -17,6 +17,8 @@ import { migrateGallery } from "../src/infrastructure/mongodb/migrations/008-gal
 import { migrateGalleryAccess } from "../src/infrastructure/mongodb/migrations/009-gallery-access";
 import { migrateGuestUploads } from "../src/infrastructure/mongodb/migrations/010-guest-uploads";
 import { migrateExpenses } from "../src/infrastructure/mongodb/migrations/011-expenses";
+import { migrateVendors } from "../src/infrastructure/mongodb/migrations/012-vendors";
+import { migrateGoogleVendors } from "../src/infrastructure/mongodb/migrations/013-google-vendors";
 
 async function main() {
   try {
@@ -31,8 +33,10 @@ async function main() {
     await migrateGalleryAccess(await getDatabase());
     await migrateGuestUploads(await getDatabase());
     await migrateExpenses(await getDatabase());
+    await migrateVendors(await getDatabase());
+    await migrateGoogleVendors(await getDatabase());
     console.log(
-      "Migrations 001–011 applied: account, wedding, invitations, events, tasks, households, gallery and expense validators/indexes ready.",
+      "Migrations 001–013 applied: account, wedding, invitations, events, tasks, households, gallery, expense and vendor validators/indexes ready.",
     );
   } catch {
     console.error(

@@ -1,5 +1,21 @@
 # Wedding Management — MongoDB Database Design
 
+## October 31 — Saved Google reference extension (migration 013 applied)
+
+013 modifies only vendors strict/error validator: MANUAL forbids googlePlaceId; GOOGLE_PLACES requires a bounded place ID, with common category/event/status/version/retry/ownership fields. Common stored name remains required; absent optional Google private label normalizes to application-generated “Saved Google business”, preserving name pagination without storing a provider name. Optional contact/notes are independently entered; no display-name/address/rating/photo/provider-payload fields. Source/place ID immutable through application PATCH.
+
+Adds vendors_google_place unique {weddingId:1,googlePlaceId:1}, partial {googlePlaceId:{$type:'string'}}, across active and removed history. No TTL/restore/backfill; manual records/four existing indexes preserved. Same wedding fence and stable operation identities serialize saves; scoped duplicates return existing history rather than recreate it. Provider content remains transient; lists do not auto-fetch it. After isolated repeatability/conditional/duplicate tests, the user explicitly approved only migration 013. Applied/verified in shared production October 31: strict source rules and exact partial unique index, previous indexes/counts preserved, full vendor/wedding fingerprints unchanged. No sample records. No expense changes/new collection.
+
+## October 31 — Discovery search/details boundary
+
+No new collection/schema/index/migration. Provider display data stays transient without database/local-storage caching. Existing rateLimits records only HMAC-derived actor/wedding signals, action/window/count/expiry; no location/query/provider payload. Signed cursors carry continuation token/scope digest/expiry; no persistent directory. vendors stays MANUAL-only under applied migration 012. Saving Google references and partial unique place index require their own future approved increment/migration.
+
+## October 31 — Manual vendor persistence
+
+Explicit migration 012 creates vendors with strict/error, additionalProperties:false validation. Implements section 9 manual contact/event/status/version fields plus createdBy, timestamps/schemaVersion and immutable operationKey/requestHash for retained creation deduplication after retry receipt expiry. Current source is MANUAL only; Google fields/conditional rules require the discovery increment's future migration. Contacts are organizer-authored; no provider data copied. Initial categories match the eight UI choices. Event IDs are unique/bounded at100; empty means wedding-wide. Removed references remain historical.
+
+Four indexes: vendors_operation unique {weddingId,operationKey}; vendors_list {weddingId,status,name,_id}; vendors_category {weddingId,status,category,name}; vendors_events {weddingId,eventIds,status}. No TTL or name/phone uniqueness; intentional similar contacts are not merged. Atomic wedding/member/user fences, vendor version, activity and idempotency receipt protect writes. Soft removal never mutates expenses or amounts. Adds the vendors collection (twenty-first in target inventory); no other collection/backfill/provider operation. After isolated tests, user explicitly approved only migration 012; applied/verified in production October 31. Existing record counts/wedding fingerprint unchanged; no samples.
+
 ## October 31 — Expense persistence implementation
 
 Explicit migration 011 installs the expenses strict/error validator and four named indexes: expenses_operation unique {weddingId,operationKey}; expenses_date {weddingId,deletedAt,expenseDate:-1,_id:-1}; expenses_category {weddingId,category,deletedAt,expenseDate:-1}; expenses_event {weddingId,eventId,deletedAt,expenseDate:-1}. No TTL or ready-record purge. It creates no expense/sample records. User explicitly approved only migration 011; applied/verified in shared production October 31: strict/error validator, four exact indexes (including unique operation key), preserved prior indexes, unchanged existing application/expense counts and unchanged wedding currency/budget/gallery/storage fingerprints.

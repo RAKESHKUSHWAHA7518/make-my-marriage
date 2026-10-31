@@ -10,6 +10,7 @@ import "./invitation.css";
 import "./events.css";
 import "./tasks.css";
 import "./expenses.css";
+import "./vendors.css";
 import { SessionSync } from "@/components/auth/session-sync";
 
 export const runtime = "nodejs";

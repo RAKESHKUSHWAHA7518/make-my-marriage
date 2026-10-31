@@ -1,0 +1,128 @@
+.vendors-page h1 { color: #802b3a; overflow-wrap: anywhere; }
+.planning-discovery-top { display:flex; flex-wrap:wrap; justify-content:space-between; gap:16px; margin-bottom:28px; font-size:14px; }
+.planning-discovery-top a { display:flex; align-items:center; min-height:44px; color:#802b3a; }
+.planning-discovery-label { display:flex; align-items:center; gap:8px; background:#faedf0; color:#705b63; border-radius:20px; padding:10px 16px; font-size:13px; }
+.planning-discovery-search { padding:28px; margin:28px 0; }
+.planning-discovery-search fieldset { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto; align-items:end; gap:20px; border:0; padding:0; margin:0; min-width:0; }
+.planning-discovery-search label { display:grid; grid-template-columns:1fr auto; gap:12px; font-size:14px; font-weight:600; min-width:0; }
+.planning-discovery-search label > input,.planning-discovery-search label > select,.planning-discovery-search label > small { grid-column:1/-1; }
+.planning-discovery-search input,.planning-discovery-search select { width:100%; min-width:0; min-height:50px; padding:14px; border:1px solid #ddc8ce; border-radius:6px; background:#fff3f6; font:inherit; color:#372b2e; }
+.planning-discovery-search small { color:#a12537; }
+.planning-discovery-search [aria-invalid=true] { border-color:#a12537; }
+.planning-discovery-search-footer { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; margin-top:20px; }
+.planning-discovery-search-footer p { display:flex; align-items:center; gap:8px; color:#705b63; font-size:12px; }
+.planning-discovery-search-footer svg { flex-shrink:0; }
+.planning-discovery-layout { display:grid; grid-template-columns:minmax(0,2.2fr) minmax(230px,1fr); gap:28px; align-items:start; margin-top:24px; }
+.planning-discovery-layout > div { min-width:0; }
+.planning-discovery-sidebar { display:grid; gap:24px; }
+.planning-discovery-sidebar .button { margin-top:16px; white-space:normal; text-align:center; }
+.planning-discovery-results-heading { padding:24px 28px; margin-bottom:20px; }
+.planning-discovery-results-heading h2 { font:500 25px/1.5 var(--font-heading),serif; margin:0 0 6px; }
+.planning-discovery-results-heading p { font-size:13px; color:#705b63; overflow-wrap:anywhere; }
+.planning-discovery-results { display:grid; gap:20px; }
+.planning-discovery-card { padding:28px; min-width:0; overflow-wrap:anywhere; }
+.planning-discovery-place-heading { display:flex; gap:18px; align-items:start; }
+.planning-discovery-place-heading > div { min-width:0; }
+.planning-discovery-place-heading h2 { font:500 26px/1.4 var(--font-heading),serif; color:#372b2e; margin:14px 0; }
+.planning-discovery-icon { width:58px; height:58px; border-radius:10px; display:grid; place-items:center; flex-shrink:0; background:#fff0f4; color:#802b3a; }
+.planning-discovery-card .planning-vendor-category { display:inline-block; }
+.planning-discovery-address { display:flex; gap:10px; align-items:start; font-size:14px; line-height:1.8; color:#705b63; }
+.planning-discovery-address svg { flex-shrink:0; margin-top:2px; }
+.planning-discovery-rating { font-size:13px; color:#705b63; margin:16px 0; }
+.planning-discovery-rating > span { background:#faedf0; color:#802b3a; padding:6px 10px; border-radius:6px; display:inline-block; }
+.planning-discovery-attribution { display:flex; flex-wrap:wrap; align-items:center; gap:8px; border-top:1px solid #f2e3e8; margin:16px 0; padding:12px 0; font-size:12px; color:#5e5e5e; }
+.planning-discovery-attribution img { height:18px; width:auto; max-width:none; padding:0; margin:10px 10px 5px; }
+.planning-discovery-attribution a { min-height:44px; display:flex; align-items:center; text-decoration:underline; }
+.planning-discovery-contacts { display:grid; gap:16px; margin:24px 0; }
+.planning-discovery-contacts > div { padding:20px; border-radius:8px; background:#fff3f6; }
+.planning-discovery-contacts dt { color:#705b63; font-size:12px; margin-bottom:8px; }
+.planning-discovery-contacts dd { margin:0; font-size:15px; line-height:1.8; }
+.planning-discovery-contacts a { color:#802b3a; text-decoration:underline; min-height:44px; display:inline-flex; align-items:center; }
+.planning-discovery-initial { padding:48px 28px; text-align:center; color:#705b63; }
+.planning-discovery-initial > svg { margin:0 auto 20px; width:36px; height:36px; color:#802b3a; }
+.planning-discovery-initial h2 { font:500 27px/1.5 var(--font-heading),serif; color:#802b3a; margin-bottom:16px; }
+.planning-discovery-initial p { font-size:14px; line-height:1.8; }
+.planning-discovery-failure { padding:28px; margin:24px 0; border-color:#d9a9b5; }
+.planning-discovery-failure h2 { font:500 25px/1.5 var(--font-heading),serif; }
+.planning-discovery-failure p { margin:16px 0; line-height:1.8; }
+.planning-discovery-pending { padding:24px; border-radius:8px; background:#faedf0; color:#802b3a; margin:24px 0; }
+.planning-discovery-policies { display:flex; flex-wrap:wrap; gap:24px; margin-top:28px; font-size:13px; }
+.planning-discovery-policies a { display:flex; align-items:center; min-height:44px; text-decoration:underline; }
+.planning-discovery-next,.planning-discovery-back { margin:20px 0; }
+.planning-discovery-save-form { margin-top:28px; }
+.planning-discovery-save-form > h2 { font:500 26px/1.5 var(--font-heading),serif; color:#802b3a; margin-bottom:20px; }
+.planning-discovery-save-form .planning-vendor-form { max-width:none; }
+.planning-discovery-detail > button { margin:16px 0; }
+.vendors-page :focus-visible { outline:2px solid #802b3a; outline-offset:4px; }
+@media(max-width:1050px) { .planning-discovery-layout { grid-template-columns:1fr; } .planning-discovery-sidebar { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:700px) { .planning-discovery-search { padding:22px; } .planning-discovery-search fieldset { grid-template-columns:1fr; gap:24px; } .planning-discovery-search-footer { align-items:start; } .planning-discovery-search-footer p { align-items:start; line-height:1.8; } .planning-discovery-sidebar { grid-template-columns:1fr; } .planning-discovery-card { padding:22px; } .planning-discovery-place-heading h2 { font-size:24px; } .planning-discovery-icon { width:44px; height:44px; } .planning-discovery-results .button { width:100%; } }
+.planning-vendor-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; padding: 24px; margin: 28px 0; }
+.planning-vendor-filters label { flex: 1 1 150px; }
+.planning-vendor-filters label:first-child { flex: 2 1 240px; }
+.planning-vendor-form label,.planning-vendor-filters label { display: grid; gap: 10px; min-width: 0; color: #372b2e; font-size: 14px; font-weight: 600; }
+.planning-vendor-form input:not([type=checkbox]),.planning-vendor-form textarea,.planning-vendor-form select,.planning-vendor-filters input,.planning-vendor-filters select { width: 100%; min-width: 0; min-height: 48px; padding: 14px; border: 1px solid #ddc8ce; border-radius: 6px; color: #372b2e; background: #fff3f6; font: inherit; }
+.planning-vendor-form :focus-visible,.planning-vendor-filters :focus-visible { outline: 2px solid #802b3a; outline-offset: 3px; }
+.planning-vendor-form textarea { resize: vertical; }
+.planning-vendor-form b { color: #802b3a; }
+.planning-vendor-form :disabled { opacity: .7; }
+.planning-vendor-form [aria-invalid=true] { border-color: #a12537; }
+.planning-vendor-editor-layout { display: grid; grid-template-columns: minmax(0,2.3fr) minmax(240px,1fr); gap: 32px; align-items: start; margin-top: 28px; }
+.planning-vendor-form { padding: clamp(20px,3vw,40px); max-width: 940px; min-width: 0; }
+.planning-vendor-form > fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.planning-vendor-form-section { padding-bottom: 28px; margin-bottom: 28px; border-bottom: 1px solid #f2e3e8; }
+.planning-vendor-form-section h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font: 500 26px var(--font-heading),serif; margin: 0 0 28px; }
+.planning-vendor-form-section h2 > span { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: #f9e9ed; color: #802b3a; display: grid; place-items: center; font: 600 13px var(--font-body),sans-serif; }
+.planning-vendor-form-section h2 small { margin-left: auto; color: #796468; font: 500 11px var(--font-body),sans-serif; text-transform: uppercase; }
+.planning-vendor-form-section > label { margin-bottom: 24px; }
+.planning-vendor-form-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 22px; margin: 24px 0; }
+.planning-vendor-event-options { display: flex; flex-wrap: wrap; gap: 10px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.planning-vendor-event-options legend { font-weight: 600; font-size: 14px; margin-bottom: 16px; }
+.planning-vendor-event-options label { display: flex; flex: 1 1 130px; align-items: center; min-height: 48px; gap: 10px; padding: 14px; border-radius: 8px; border: 1px solid #eedce2; background: #fff3f6; font-weight: 500; cursor: pointer; overflow-wrap: anywhere; }
+.planning-vendor-event-options label:has(input:checked) { border-color: #802b3a; background: #f8e9ee; }
+.planning-vendor-event-options input { accent-color: #802b3a; width: 18px; height: 18px; flex-shrink: 0; }
+.planning-vendor-helper { color: #705b63; font-size: 12px; line-height: 1.8; }
+.planning-vendor-advice { padding: 28px; border-radius: 12px; background: #fcf0f3; color: #705b63; font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+.planning-vendor-advice h2 { font: 500 23px/1.5 var(--font-heading),serif; color: #802b3a; }
+.planning-vendor-advice dd { margin: 4px 0 16px; color: #372b2e; }
+.planning-vendor-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+.planning-vendor-list { border: 1px solid #eedce2; border-radius: 10px; overflow: hidden; }
+.planning-vendor-table-heading,.planning-vendor-row { display: grid; grid-template-columns: 1.35fr .8fr .7fr 1fr 1.1fr .8fr; align-items: center; gap: 16px; padding: 24px; overflow-wrap: anywhere; font-size: 13px; }
+.planning-vendor-table-heading { background: #fff0f4; color: #705b63; text-transform: uppercase; font-size: 11px; }
+.planning-vendor-row { background: #fff; border-top: 1px solid #f3e5e9; }
+.planning-vendor-row h2 { font: 500 20px/1.5 var(--font-heading),serif; margin: 0; }
+.planning-vendor-row h2 a { color: #372b2e; }
+.planning-vendor-row small { display: block; font: 400 12px/1.7 var(--font-body),sans-serif; color: #705b63; margin-top: 4px; }
+.planning-vendor-category,.planning-vendor-source { padding: 6px 10px; border-radius: 8px; background: #faedf0; color: #802b3a; font-size: 12px; justify-self: start; }
+.planning-vendor-source { background: #f4f0f1; color: #655458; }
+.planning-vendor-event-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.planning-vendor-event-tags span { padding: 5px 10px; border-radius: 6px; background: #fff0f4; font-size: 12px; }
+.planning-vendor-view-link { display: flex; align-items: center; min-height: 44px; color: #802b3a; font-weight: 600; }
+.planning-vendor-planning-note { padding: 24px; border-radius: 10px; background: #fcf0f3; font-size: 13px; line-height: 1.8; margin-top: 28px; }
+.planning-vendor-pagination { display: flex; gap: 12px; margin: 24px 0; }
+.planning-vendor-detail-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; padding: 32px; margin: 24px 0; }
+.planning-vendor-detail-heading h1 { font-size: clamp(28px,3.5vw,42px); margin: 18px 0 12px; }
+.planning-vendor-detail-heading > div:first-child { flex: 1; min-width: 0; }
+.planning-vendor-detail-heading p { font-size: 14px; color: #705b63; }
+.planning-vendor-detail-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.planning-vendor-detail-heading .planning-vendor-form-actions { margin: 0; }
+.planning-vendor-detail-layout { display: grid; grid-template-columns: minmax(0,2.2fr) minmax(220px,1fr); gap: 24px; align-items: start; }
+.planning-vendor-detail-section { padding: 28px; margin-bottom: 24px; min-width: 0; }
+.planning-vendor-detail-section h2 { display: flex; align-items: center; gap: 12px; font: 500 25px/1.5 var(--font-heading),serif; margin: 0 0 22px; }
+.planning-vendor-detail-section h2 svg { width: 24px; height: 24px; color: #802b3a; flex-shrink: 0; }
+.planning-vendor-contact-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.planning-vendor-contact-grid > div { padding: 20px; border-radius: 8px; background: #fff2f5; }
+.planning-vendor-contact-grid dt { font-size: 11px; color: #705b63; margin-bottom: 12px; text-transform: uppercase; }
+.planning-vendor-contact-grid dd { margin: 0; font-size: 15px; line-height: 1.8; overflow-wrap: anywhere; white-space: pre-wrap; }
+.planning-vendor-contact-grid a { color: #802b3a; text-decoration: underline; }
+.planning-vendor-notes { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.9; padding: 20px; background: #fff2f5; border-radius: 8px; }
+@media(max-width:1050px) { .planning-vendor-editor-layout,.planning-vendor-detail-layout { grid-template-columns: 1fr; } .planning-vendor-editor-layout .planning-vendor-advice { display: none; } }
+@media(max-width:700px) {
+  .planning-vendor-filters { padding: 18px; gap: 12px; } .planning-vendor-filters label { flex-basis: 42%; } .planning-vendor-filters label:first-child { flex-basis: 100%; }
+  .planning-vendor-list { border: 0; overflow: visible; display: grid; gap: 14px; } .planning-vendor-table-heading { display: none; }
+  .planning-vendor-row { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 14px; border: 1px solid #eedce2; border-radius: 10px; padding: 20px; }
+  .planning-vendor-row h2 { grid-column: 1/-1; grid-row: 2; font-size: 23px; } .planning-vendor-category { grid-column: 1; grid-row: 1; } .planning-vendor-source { grid-column: 2; grid-row: 1; justify-self: end; }
+  .planning-vendor-row-contact { grid-column: 1/-1; } .planning-vendor-event-tags { grid-column: 1/-1; } .planning-vendor-view-link { grid-column: 1/-1; justify-self: end; }
+  .planning-vendor-form-columns,.planning-vendor-contact-grid { grid-template-columns: 1fr; } .planning-vendor-form-actions > * { flex: 1; }
+  .planning-vendor-detail-heading { padding: 24px; } .planning-vendor-detail-heading .planning-vendor-form-actions { width: 100%; } .planning-vendor-detail-section { padding: 20px; }
+  .planning-vendor-form-section h2 { font-size: 22px; } .planning-vendor-form-section h2 small { flex-basis: 100%; margin-left: 42px; }
+}
