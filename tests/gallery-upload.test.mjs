@@ -5,13 +5,15 @@ import { createRequire } from "node:module";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
 const require=createRequire(import.meta.url),selection=require("../src/components/gallery/file-selection.ts");
+
+
 function harness(results){
   const states=[],refs=[],requests=[],uploads=[];let s=0,r=0,serial=0;
   const initial={photos:[],count:0,nextCursor:null,archived:false,storage:{usedBytes:"0",reservedBytes:"0",limitBytes:"1000000000"}};
   const React={createElement:(type,props,...children)=>({type,props:{...props,children}}),useState(value){const i=s++;if(!(i in states))states[i]=value;return[states[i],v=>{states[i]=typeof v==="function"?v(states[i]):v;}];},useRef(value){return refs[r++]??(refs[r-1]={current:value});},useEffect(){}};
   class Xhr{status=200;upload={};open(method,url){this.url=url;}send(){uploads.push(this.url);this.onload();}}
   const context={React,exports:{},Error,AbortSignal,URL:{createObjectURL:()=>"blob:local-test",revokeObjectURL(){}},crypto:{randomUUID:()=>`immutable-upload-key-${++serial}`},FormData:class{append(){}},XMLHttpRequest:Xhr,
-    require(id){if(id==="react")return React;if(id==="next/image"||id==="next/link")return"img";if(id==="next/navigation")return{useRouter:()=>({refresh(){},push(){}})};if(id.includes("file-selection"))return selection;return{useUnsavedNavigation(){}};},
+    require(id){if(id==="./upload-transport"){const transportContext={...context,exports:{}};runInNewContext(ts.transpileModule(readFileSync("src/components/gallery/upload-transport.ts","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,transportContext);return transportContext.exports;}if(id==="react")return React;if(id==="next/image"||id==="next/link")return"img";if(id==="next/navigation")return{useRouter:()=>({refresh(){},push(){}})};if(id.includes("file-selection"))return selection;return{useUnsavedNavigation(){}};},
     async fetch(url,options){requests.push({url,...options});if(options.method==="GET")return{ok:true,status:200,json:async()=>({data:initial})};const next=results.shift();if(next instanceof Error)throw next;return{ok:next.status<300,status:next.status,json:async()=>next.body};}
   };
   runInNewContext(ts.transpileModule(readFileSync("src/components/gallery/gallery.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,context);

@@ -16,6 +16,7 @@ export default async function PlannedWorkspacePage({ params }: { params: Promise
   if (section === "guests") redirect("/wedding/guests");
   if (section === "tasks") redirect("/wedding/tasks");
   if (section === "events") redirect("/wedding/events");
+  if (section === "expenses") redirect("/wedding/expenses");
   const item = workspaceSections.find((entry) => entry.key === section && entry.planned);
   if (!item) notFound();
   const user = await weddingUser();

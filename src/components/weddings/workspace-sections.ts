@@ -5,7 +5,7 @@ export const workspaceSections = [
   { key: "guests", label: "Guests & RSVP", href: "/wedding/guests", icon: "people", planned: false, description: "Organize invitation groups and their celebrations. RSVP responses follow separately." },
   { key: "tasks", label: "Tasks", href: "/wedding/tasks", icon: "checklist", planned: false, description: "Share checklists, assign responsibilities and follow up on the details." },
   { key: "vendors", label: "Vendors", href: "/wedding/plan/vendors", icon: "store", planned: true, description: "Keep vendor contacts and notes together, with Google Places discovery to follow." },
-  { key: "expenses", label: "Expenses", href: "/wedding/plan/expenses", icon: "wallet", planned: true, description: "Record actual expenses and receipts in your wedding currency." },
+  { key: "expenses", label: "Expenses", href: "/wedding/expenses", icon: "wallet", planned: false, description: "Record actual spending in your wedding currency." },
   { key: "invitations", label: "Invitations", href: "/wedding/plan/invitations", icon: "mail", planned: true, description: "Prepare guest invitation designs, email invitations and manual WhatsApp sharing." },
   { key: "announcements", label: "Announcements", href: "/wedding/plan/announcements", icon: "announcement", planned: true, description: "Keep your planning family informed with shared updates." },
   { key: "website", label: "Website", href: "/wedding/plan/website", icon: "globe", planned: true, description: "Prepare private guest content and explicitly choose what to publish publicly." },

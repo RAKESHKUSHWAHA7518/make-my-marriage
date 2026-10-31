@@ -1,1 +1,2 @@
-export default function GuestLoading() { return <main className="workspace-main" role="status" aria-busy="true"><span className="sr-only">Loading saved guest groups…</span><div aria-hidden="true" className="workspace-panel wedding-loading"><div className="wedding-skeleton wedding-skeleton-title" /><div className="wedding-skeleton wedding-skeleton-notice" />{[0, 1, 2].map(i => <div key={i} className="wedding-skeleton wedding-skeleton-notice" />)}</div></main>; }
+import { PageLoading } from "@/components/page-loading";
+export default function Loading() { return <PageLoading key="wedding/guests" title="Guests & RSVP" description="Loading your saved guest groups…" variant="list" />; }

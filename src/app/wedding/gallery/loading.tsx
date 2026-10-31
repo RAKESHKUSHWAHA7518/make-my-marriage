@@ -1,1 +1,2 @@
-export default function Loading(){return <main className="workspace-main" aria-busy="true"><h1>Loading your wedding gallery…</h1><section className="gallery-grid" aria-label="Loading photos">{[0,1,2,3].map(i=><div className="gallery-skeleton" key={i}/>)}</section></main>;}
+import { PageLoading } from "@/components/page-loading";
+export default function Loading() { return <PageLoading key="wedding/gallery" title="Wedding gallery" description="Loading your wedding gallery…" variant="photos" />; }

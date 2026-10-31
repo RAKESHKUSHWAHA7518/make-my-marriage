@@ -10,6 +10,7 @@ import { listEvents, type EventView } from "@/modules/events/service";
 import { taskSummary, type TaskSummary } from "@/modules/tasks/service";
 import { rsvpTotals, type RsvpTotals } from "@/modules/households/service";
 import { AccountError } from "@/modules/identity/security";
+import { expenseSummary, type ExpenseSummary } from "@/modules/expenses/service";
 import {
   WorkspaceShell,
   WeddingGate,
@@ -42,6 +43,8 @@ export default async function WeddingPage({
   }
   let tasks: TaskSummary | null = null;
   let responses: RsvpTotals | null = null;
+  let expenses: ExpenseSummary | null = null;
+  try { expenses = await expenseSummary(user, wedding.id); } catch { /* Unavailable spending must never appear as zero. */ }
   try { tasks = await taskSummary(user, wedding.id); } catch { /* Task failures must not replace the rest of the workspace. */ }
   try { responses = await rsvpTotals(user, wedding.id); } catch { /* A response failure must not become misleading zero counts. */ }
   const date = wedding.weddingDate
@@ -59,7 +62,7 @@ export default async function WeddingPage({
     >
       <main className="workspace-main">
         {updated && <p className="wedding-notice wedding-success" role="status">Wedding details updated.</p>}
-        <WorkspaceDashboard responses={responses} tasks={tasks} events={events} eventsUnavailable={eventsUnavailable} summary={{
+        <WorkspaceDashboard expenses={expenses} responses={responses} tasks={tasks} events={events} eventsUnavailable={eventsUnavailable} summary={{
           title: wedding.title,
           couple: wedding.couple.brideName + " & " + wedding.couple.groomName,
           date,

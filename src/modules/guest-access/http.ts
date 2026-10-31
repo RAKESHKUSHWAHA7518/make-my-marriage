@@ -6,11 +6,18 @@ import { AccountError, origin, digest } from "@/modules/identity/security";
 import { body, trustedMutation } from "@/modules/identity/http";
 import { rateLimit } from "@/modules/identity/service";
 import { exchangeSchema } from "./schema";
+import { handleGalleryAccess } from "@/modules/media/gallery-http";
 import { exchangeHousehold, guestSessionSeconds, guestSite, invitationUnavailable, logoutHousehold, saveGuestRsvp } from "./service";
 export const householdCookieName = () => origin().startsWith("https:") ? "__Host-mmm_household" : "mmm_household";
 const options = () => ({ httpOnly: true, secure: origin().startsWith("https:"), sameSite: "lax" as const, path: "/", maxAge: guestSessionSeconds });
 export const guestPrivateHeaders = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", "X-Robots-Tag": "noindex, nofollow, noarchive" };
 export async function handleGuest(request: NextRequest, action: "exchange" | "logout" | "site" | "events" | "rsvp" | "save-rsvp") {
+  if (action === "exchange" || action === "logout") {
+    try {
+      const input = await body(request.clone() as NextRequest);
+      if (input && typeof input === "object" && "kind" in input && input.kind === "gallery") return handleGalleryAccess(request, action);
+    } catch { /* Existing handler returns the normal bounded validation error. */ }
+  }
   const requestId = randomUUID(), headers = { ...guestPrivateHeaders, "X-Request-Id": requestId };
   try {
     const raw = request.cookies.get(householdCookieName())?.value;

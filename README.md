@@ -1,5 +1,23 @@
 # Make My Marriage
 
+## Expense Tracking — October 31 increment
+
+/wedding/expenses supports private actual-spending list/add/details/edit/removal, category/event/date filters, pagination and saved dashboard totals/budget comparisons. Verified active ADMIN/MANAGER manage; archive is read-only. Money uses exact minor units and wedding currency; recording any expense permanently locks currency, including after removal. Vendor linking and receipt uploads remain future increments.
+
+Migration 011 creates only the expenses validator/four indexes; it was tested in isolation, then only migration 011 was applied to shared production on October 31 with explicit user approval. Strict validation/four indexes were verified; existing record counts and wedding currency/budget/gallery/storage values were unchanged. No test records were created. Existing local configuration points to production: do not run broad db:migrate or create test expenses there. Run npm run test:expenses only with MONGODB_URI explicitly pointing to the dedicated loopback replica mongodb://127.0.0.1:27192/?replicaSet=expensesqa. Tests assert that server and generate/drop their own random databases; no .env fallback. See project/implementation records for design references, verification and activation gates.
+
+## Guest photo uploads — October 30 increment
+
+Guest upload controls and account-free selection/progress/retry/results are implemented from the seven supplied Stitch references. Active ADMIN/MANAGER explicitly enable uploads on Gallery sharing after enabling viewing. Shared-link visitors and eligible household visitors upload only gallery photos; current permissions are rechecked before saving. Archive blocks unfinished uploads. JPEG/PNG/WebP, 20 MB/photo, twenty-file queue; no guest removal or original download. Family/guest transfers share retry/verification/quota/cleanup behavior.
+
+Migration 010 extends uploadIntents guest actors and adds one partial unique index. It creates no photos/sessions and enables no wedding; tested locally, then applied only migration 010 to shared production with explicit approval. Strict actor/grant validator, unique partial guest index and preserved existing indexes verified; record counts, gallery permissions/tokens and storage counters remained unchanged. Do not run broad db:migrate against the shared production environment. test:guest-uploads requires an explicitly isolated loopback replica set on port 27190 named gallerysharing; it uses disposable databases/mocked provider and network-free UI checks. Project/implementation records contain verification and remaining activation/release gates. Deployment and scheduled cleanup remain deferred.
+
+## Shared gallery viewing — October 30 increment
+
+Implemented /wedding/gallery/sharing: enable/disable, private link/local QR and ADMIN-only replacement. Guests exchange /gallery#token=… to independent-cookie /shared-gallery without an account. Eligible household invitations also open the enabled gallery. Guest uploads/original downloads stay disabled. Active ADMIN/MANAGER manage settings; archived disable/rotation requires ADMIN. Disabling sharing preserves the private family gallery.
+
+Migration 009 extends capabilitySessions and adds one index; it creates no sessions and enables no galleries. Applied only migration 009 to shared production after explicit user approval; strict validator, conditional grants, new/preserved indexes, unchanged record counts and unchanged gallery settings verified. Do not run broad db:migrate against the shared production environment without approval. test:gallery-access requires the dedicated loopback replica set on port 27190 named gallerysharing; test:gallery-sharing-ui is network-free. See progress/evidence records for remaining QA/activation gates. Deployment and scheduled cleanup remain deferred.
+
 ## Family gallery — October 30 increment
 
 Release handoff (user deferred Vercel setup): confirm production domain/plan, configure server secrets, deploy, activate the authenticated scheduler, verify successful ticks and monitor cleanup backlog/failures. Hobby cron runs at most daily and cannot supply the intended every-few-minutes cadence; use a suitable plan or external scheduler. Never put CRON_SECRET in a URL, browser code or Git. Isolated browser upload/view and service removal/cleanup passed; production runtime and scheduling are not yet verified.

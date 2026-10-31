@@ -29,7 +29,12 @@
     "media:check": "node --conditions=react-server --import tsx scripts/check-media.ts",
     "test:media": "node --conditions=react-server --import tsx --test tests/media-provider.test.ts tests/media.test.ts",
     "test:gallery-ui": "node --import tsx --test tests/gallery-ui.test.tsx tests/gallery-upload.test.mjs",
-    "media:process": "node --conditions=react-server --import tsx scripts/process-media.ts"
+    "media:process": "node --conditions=react-server --import tsx scripts/process-media.ts",
+    "test:gallery-access": "node --conditions=react-server --import tsx --test tests/gallery-access.test.ts",
+    "test:gallery-sharing-ui": "node --import tsx --test tests/gallery-sharing.test.mjs",
+    "test:guest-uploads": "node --conditions=react-server --import tsx --test tests/guest-uploads.test.ts tests/guest-upload-panel.test.mjs",
+    "test:expenses": "node --conditions=react-server --import tsx --test tests/expenses.test.ts tests/expense-form.test.mjs",
+    "test:loading": "node --import tsx --test tests/page-loading.test.mjs"
   },
   "dependencies": {
     "argon2": "0.45.1",

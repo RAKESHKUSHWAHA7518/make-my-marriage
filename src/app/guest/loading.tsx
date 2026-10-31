@@ -1,1 +1,2 @@
-export default function GuestLoading(){return <section className="invitation-panel invitation-empty" role="status" aria-busy="true"><h1>Loading your invitation…</h1><div className="wedding-skeleton event-skeleton" aria-hidden="true"/></section>;}
+import { PageLoading } from "@/components/page-loading";
+export default function Loading() { return <PageLoading key="guest" title="Your invitation" description="Loading your private invitation…" variant="cards" guest />; }

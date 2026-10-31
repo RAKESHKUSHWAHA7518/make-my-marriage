@@ -8,6 +8,9 @@ import type { TaskSummary } from "@/modules/tasks/service";
 import { TaskDashboard } from "@/components/tasks/task-dashboard";
 import { RsvpSummary } from "@/components/invitation/rsvp-summary";
 import type { RsvpTotals } from "@/modules/households/service";
+import { expenseMoney } from "@/modules/expenses/schema";
+import { ExpenseDashboard } from "@/components/expenses/expense-display";
+import type { ExpenseSummary } from "@/modules/expenses/service";
 
 type Summary = {
   title: string;
@@ -22,10 +25,11 @@ type Summary = {
   archived: boolean;
 };
 
-export function WorkspaceDashboard({ summary, sample = false, countdown, events = [], eventsUnavailable = false, tasks = null, responses = null }: {
+export function WorkspaceDashboard({ summary, sample = false, countdown, events = [], eventsUnavailable = false, tasks = null, responses = null, expenses = null }: {
   summary: Summary;
   tasks?: TaskSummary | null;
   responses?: RsvpTotals | null;
+  expenses?: ExpenseSummary | null;
   sample?: boolean;
   countdown?: ReactNode;
   events?: EventView[];
@@ -52,14 +56,15 @@ export function WorkspaceDashboard({ summary, sample = false, countdown, events 
         {metrics.map((metric) => (
           <article className="workspace-metric" key={metric.title}>
             <div><span>{!sample && metric.key === "guests" ? metric.icon === "mail" ? "Household replies" : "Attending people" : metric.title}</span><WeddingIcon name={metric.icon} /></div>
-            <strong className={sample ? "" : "workspace-metric-soon"}>{sample ? metric.value : metric.key === "guests" ? responses ? metric.icon === "mail" ? `${Object.values(responses.counts).reduce((a,b)=>a+b,0)-responses.counts.pending} / ${Object.values(responses.counts).reduce((a,b)=>a+b,0)}` : responses.attendingPeople.toLocaleString("en-IN") : "Unavailable" : metric.key === "tasks" ? tasks ? String(tasks.counts.done) : "Unavailable" : "Coming soon"}</strong>
-            <p>{sample ? metric.detail : metric.key === "guests" ? responses ? metric.icon === "mail" ? "Households with a saved response" : "Counted once per active household with eligible invitations" : "RSVP information could not be loaded." : metric.key === "tasks" ? tasks ? `${tasks.total} saved tasks · ${tasks.overdue} overdue` : "Task data could not be loaded." : "Available when this planning feature is built."}</p>
-            {sample ? <small>Sample data</small> : <Link href={metric.key === "guests" ? "/wedding/guests" : metric.key === "tasks" ? "/wedding/tasks" : `/wedding/plan/${metric.key}`}>{metric.key === "guests" ? "View guest groups" : metric.key === "tasks" ? "View tasks" : "See what’s planned"} <span aria-hidden="true">→</span></Link>}
+            <strong className={sample ? "" : "workspace-metric-soon"}>{sample ? metric.value : metric.key === "guests" ? responses ? metric.icon === "mail" ? `${Object.values(responses.counts).reduce((a,b)=>a+b,0)-responses.counts.pending} / ${Object.values(responses.counts).reduce((a,b)=>a+b,0)}` : responses.attendingPeople.toLocaleString("en-IN") : "Unavailable" : metric.key === "tasks" ? tasks ? String(tasks.counts.done) : "Unavailable" : expenses ? expenseMoney(expenses.totalSpentMinor, expenses.currency) : "Unavailable"}</strong>
+            <p>{sample ? metric.detail : metric.key === "guests" ? responses ? metric.icon === "mail" ? "Households with a saved response" : "Counted once per active household with eligible invitations" : "RSVP information could not be loaded." : metric.key === "tasks" ? tasks ? `${tasks.total} saved tasks · ${tasks.overdue} overdue` : "Task data could not be loaded." : expenses ? `${expenses.expenseCount} saved expenses` : "Spending information could not be loaded."}</p>
+            {sample ? <small>Sample data</small> : <Link href={metric.key === "guests" ? "/wedding/guests" : metric.key === "tasks" ? "/wedding/tasks" : "/wedding/expenses"}>{metric.key === "guests" ? "View guest groups" : metric.key === "tasks" ? "View tasks" : "View expenses"} <span aria-hidden="true">→</span></Link>}
           </article>
         ))}
       </section>
       {!sample && <RsvpSummary totals={responses} />}
       {!sample && <TaskDashboard summary={tasks} timezone={summary.timezone} archived={summary.archived} />}
+      {!sample && <ExpenseDashboard summary={expenses} />}
       {!sample && <section className="workspace-quick-links" aria-label="Available actions">
         <strong><WeddingIcon name="spark" /> Your workspace</strong>
         <div>

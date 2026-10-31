@@ -1,5 +1,19 @@
 # Wedding Management Platform — System Design Architecture
 
+## October 31 — Expense Tracking delivery
+
+Expense pages, components and six thin route operations use modules/expenses within the existing Next.js Node deployment. Server Components call services directly. Client code imports validation/types only; database and authentication logic remain server-only. No provider or dependency added. Family-only active verified ADMIN/MANAGER writes use exact money conversion, same-wedding reference validation, shared wedding lifecycle/currency fence, optimistic versions and atomic activity/idempotency records. Retained per-expense operation identity prevents duplicate creation beyond retry-receipt TTL. Removed entries stay in history and continue locking currency; read-only archive and guest isolation are enforced.
+
+Dashboard and expense list derive actual spending from saved non-deleted expenses with BigInt arithmetic. Unfiltered summaries compare the optional overall budget; filtered summaries suppress that comparison. Failures never become invented zero totals. Receipts/vendor associations remain separate planned increments. Migration 011 was tested in isolated loopback replicas; the user subsequently authorized only 011, which was applied/verified in shared production October 31 without application-record or wedding currency/budget/gallery/storage changes. No permanent worker, external integration, public financial data or deployment change.
+
+## October 30 — Guest photo upload delivery
+
+Guest upload settings, UI and thin media routes stay inside the existing Next.js Node modular monolith. Shared/household cookies derive scoped upload actors; current grant/session/wedding fences are rechecked after Cloudinary verification before the existing quota/asset transaction. Reuse family direct signed transfer, protected derivative delivery and durable cleanup; shared browser transport preserves immutable uncertain/429 retries. No separate provider, worker, deployment or guest account/photographer role. Migration 010 extends an existing validator/index only; it was explicitly approved, applied to shared production and verified without application-record, gallery-setting/token or storage-counter changes. Actual synthetic guest browser upload and isolated revocation/quota tests passed; deployment, monitored scheduled cleanup and production runtime remain separate deferred gates.
+
+## October 30 — Shared gallery viewing delivery
+
+Sharing settings and account-free gallery reads use existing Next.js Node handlers/modules/media within the same deployment. Reuse protected Cloudinary derivatives, current grant checks and no-store/no-referrer headers; guest DTOs have no provider IDs/URLs or planning data. QR is generated locally, without an external QR service. /gallery#token=… exchanges to a separate HttpOnly cookie and clean /shared-gallery; eligible household viewing uses independent current invitation authority. Token replacement invalidates old shared sessions on their next authorization. Guest uploads, public publishing and originals remain deferred. Migration 009 extends the existing session schema/index only; it was explicitly approved and applied/verified in shared production without changing application records or gallery settings. Deployment and cleanup scheduling remain user-deferred. Earlier family-only scope notes below are superseded for implemented guest viewing.
+
 ## October 30 — Family gallery delivery
 
 Family media routes, quota transactions, signed direct Cloudinary uploads, protected derivative streams and durable cleanup are implemented within the existing Next.js Node deployment. Preview UI moved to /wedding/gallery/preview; live route uses saved records. Migration 008 and 1 GB default/zero-quota initialization were explicitly approved and applied. No guest gallery/public publishing/original download endpoints are enabled.

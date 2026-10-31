@@ -28,6 +28,7 @@ const revision = (wedding: Document, household: Document, events: Document[]) =>
 function safeMap(value: unknown) { try { const url = new URL(String(value)); return url.protocol === "https:" && !url.username && !url.password ? url.href : undefined; } catch { return undefined; } }
 function siteView(wedding: Document, household: Document, events: Document[]) {
   return {
+    galleryAvailable: wedding.gallery.isEnabled === true && events.length > 0,
     couple: { brideName: wedding.couple.brideName as string, groomName: wedding.couple.groomName as string }, timezone: wedding.timezone as string,
     household: { name: household.displayName as string, representativeName: household.representative.name as string },
     events: events.map((e) => ({ id: e._id.toString(), name: e.name as string, startsAt: e.startsAt.toISOString() as string, endsAt: e.endsAt?.toISOString() as string | undefined, venue: { name: e.venue.name as string, address: e.venue.address as string, mapUrl: safeMap(e.venue.mapUrl) }, description: e.description as string | undefined, dressCode: e.dressCode as string | undefined })),
@@ -94,6 +95,27 @@ async function resolve(raw: string | undefined, session?: ClientSession) {
 }
 export async function guestSite(raw: string | undefined): Promise<GuestSite> {
   await guestAccessReady(); const { household, wedding } = await resolve(raw); return siteView(wedding, household, await eligible(wedding._id, household));
+}
+/** Household authority is independent of the shared gallery token. */
+export async function householdGalleryWedding(raw: string | undefined) {
+  await guestAccessReady();
+  const { household, wedding } = await resolve(raw);
+  if (!(await eligible(wedding._id, household)).length) throw invitationUnavailable();
+  return wedding;
+}
+export async function householdGalleryGrant(raw: string, session?: ClientSession, mutate = false) {
+  await guestAccessReady();
+  let grant = await resolve(raw, session);
+  if (mutate) {
+    const db = await getDatabase(), now = new Date();
+    if (!await db.collection("capabilitySessions").findOneAndUpdate({ _id: grant.grantSession._id, kind: "household", expiresAt: { $gt: now }, revokedAt: { $exists: false } }, { $set: { lastSeenAt: now } }, { session })) throw invitationUnavailable();
+    if (!await db.collection("capabilityLinks").findOneAndUpdate({ _id: grant.link._id, version: grant.link.version, ...live(now) }, { $set: { updatedAt: now } }, { session })) throw invitationUnavailable();
+    // Household removal/reassignment must conflict with upload finalization.
+    if (!await db.collection("households").findOneAndUpdate({ _id: grant.household._id, status: "active", version: grant.household.version }, { $set: { updatedAt: now } }, { session })) throw invitationUnavailable();
+    grant = await resolve(raw, session);
+  }
+  if (!(await eligible(grant.wedding._id, grant.household, session)).length) throw invitationUnavailable();
+  return grant;
 }
 export async function logoutHousehold(raw: string | undefined) {
   if (raw && secretPattern.test(raw)) await (await getDatabase()).collection("capabilitySessions").updateOne({ tokenHash: digest(raw), kind: "household" }, { $set: { revokedAt: new Date(), updatedAt: new Date() } });
