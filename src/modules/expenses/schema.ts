@@ -9,18 +9,18 @@ const fields = z.strictObject({
   title: z.string().trim().min(1, "Enter an expense title.").max(200),
   amountMinor: z.string().regex(/^[1-9]\d{0,18}$/, "Enter a positive amount.").refine(v => /^[1-9]\d{0,18}$/.test(v) && BigInt(v) <= MAX_MONEY, "Amount is too large."),
   currency: z.enum(currencies), expenseDate: instant, category: z.enum(expenseCategories),
-  eventId: objectId.optional(), notes: z.string().trim().max(10000).optional(),
+  eventId: objectId.optional(), vendorId: objectId.optional(), notes: z.string().trim().max(10000).optional(),
   // Receipts are deliberately empty until the family-only receipt workflow exists.
   receiptAssetIds: z.array(objectId).max(0).default([]),
 });
 export const createExpenseSchema = fields;
 export const patchExpenseSchema = fields.omit({ receiptAssetIds: true }).partial().extend({
   receiptAssetIds: z.array(objectId).max(0).optional(),
-  eventId: objectId.nullable().optional(), notes: z.string().trim().max(10000).nullable().optional(), expectedVersion: z.number().int().positive(),
+  eventId: objectId.nullable().optional(), vendorId: objectId.nullable().optional(), notes: z.string().trim().max(10000).nullable().optional(), expectedVersion: z.number().int().positive(),
 }).refine(v => Object.keys(v).some(k => k !== "expectedVersion"), "Supply at least one change.");
 export const removeExpenseSchema = z.strictObject({ expectedVersion: z.number().int().positive() });
 const queryFields = z.strictObject({
-  category: z.enum(expenseCategories).optional(), eventId: z.union([objectId, z.literal("none")]).optional(),
+  category: z.enum(expenseCategories).optional(), eventId: z.union([objectId, z.literal("none")]).optional(), vendorId: z.union([objectId, z.literal("none")]).optional(),
   from: instant.optional(), to: instant.optional(), limit: z.coerce.number().int().min(1).max(50).default(25), cursor: z.string().max(2500).optional(),
 });
 const validRange = (v: { from?: string; to?: string }) => !v.from || !v.to || Date.parse(v.from) <= Date.parse(v.to);

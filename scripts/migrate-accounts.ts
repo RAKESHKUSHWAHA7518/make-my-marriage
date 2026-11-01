@@ -19,6 +19,10 @@ import { migrateGuestUploads } from "../src/infrastructure/mongodb/migrations/01
 import { migrateExpenses } from "../src/infrastructure/mongodb/migrations/011-expenses";
 import { migrateVendors } from "../src/infrastructure/mongodb/migrations/012-vendors";
 import { migrateGoogleVendors } from "../src/infrastructure/mongodb/migrations/013-google-vendors";
+import { migrateExpenseVendors } from "../src/infrastructure/mongodb/migrations/014-expense-vendors";
+import { migrateWebsiteDrafts } from "../src/infrastructure/mongodb/migrations/015-website-drafts";
+import { migrateWebsitePublication } from "../src/infrastructure/mongodb/migrations/016-website-publication";
+import { migrateAnnouncements } from "../src/infrastructure/mongodb/migrations/017-announcements";
 
 async function main() {
   try {
@@ -35,8 +39,12 @@ async function main() {
     await migrateExpenses(await getDatabase());
     await migrateVendors(await getDatabase());
     await migrateGoogleVendors(await getDatabase());
+    await migrateExpenseVendors(await getDatabase());
+    await migrateWebsiteDrafts(await getDatabase());
+    await migrateWebsitePublication(await getDatabase());
+    await migrateAnnouncements(await getDatabase());
     console.log(
-      "Migrations 001–013 applied: account, wedding, invitations, events, tasks, households, gallery, expense and vendor validators/indexes ready.",
+      "Migrations 001–017 applied: account, wedding, invitations, events, tasks, households, gallery, expense, vendor, website and announcement validators/indexes ready.",
     );
   } catch {
     console.error(

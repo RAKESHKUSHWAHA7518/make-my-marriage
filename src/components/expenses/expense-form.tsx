@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useUnsavedNavigation } from "@/components/weddings/use-unsaved-navigation";
 import { localEventInstant, eventLocalFields } from "@/modules/events/schema";
 import { createExpenseSchema, expenseCategories, expenseCategoryLabels, expenseAmount, expenseInputAmount } from "@/modules/expenses/schema";
-import type { ExpenseView } from "@/modules/expenses/service";
+import type { ExpenseVendorChoice, ExpenseView } from "@/modules/expenses/service";
+import { ExpenseVendorPicker } from "./vendor-picker";
 
-export function ExpenseForm({ weddingId, currency, timezone, events, initial }: { weddingId: string; currency: string; timezone: string; events: { id: string; name: string }[]; initial?: ExpenseView }) {
+export function ExpenseForm({ weddingId, currency, timezone, events, initial, vendors = [], defaultVendorId, vendorLinksEnabled = false }: { weddingId: string; currency: string; timezone: string; events: { id: string; name: string }[]; initial?: ExpenseView; vendors?: ExpenseVendorChoice[]; defaultVendorId?: string; vendorLinksEnabled?: boolean }) {
   const router = useRouter(), back = initial ? `/wedding/expenses/${initial.id}` : "/wedding/expenses";
   const form = useRef<HTMLFormElement>(null), dialog = useRef<HTMLDialogElement>(null);
   const locked = useRef(false), leaving = useRef(false), reloadRequested = useRef(false), destination = useRef(back);
@@ -15,9 +16,11 @@ export function ExpenseForm({ weddingId, currency, timezone, events, initial }: 
   const [dirty, setDirty] = useState(false), [pending, setPending] = useState(false), [uncertain, setUncertain] = useState(false), [blocked, setBlocked] = useState(false);
   const [error, setError] = useState(""), [fields, setFields] = useState<Record<string, string>>({});
   const [signedOut, setSignedOut] = useState(false);
+  const [vendorId, setVendorId] = useState(initial?.vendorId ?? defaultVendorId ?? "");
   const savedDate = initial ? eventLocalFields(initial.expenseDate, timezone) : undefined;
   useUnsavedNavigation({ dirty, pending, leaving, destination, reloadRequested, dialog });
-  const attrs = (name: string) => ({ "aria-invalid": !!fields[name], "aria-describedby": fields[name] ? `expense-error-${name}` : undefined });
+  const labels: Record<string, string> = { title: "Expense title", category: "Expense category", amountMinor: "Amount", notes: "Private notes", eventId: "Related event" };
+  const attrs = (name: string) => ({ "aria-label": labels[name], "aria-invalid": !!fields[name], "aria-describedby": fields[name] ? `expense-error-${name}` : undefined });
   const fieldError = (name: string) => fields[name] ? <small className="event-field-error" id={`expense-error-${name}`}>{fields[name]}</small> : null;
   function focusError() { requestAnimationFrame(() => form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()); }
 
@@ -30,11 +33,11 @@ export function ExpenseForm({ weddingId, currency, timezone, events, initial }: 
       let amountMinor = "", expenseDate = "";
       try { amountMinor = expenseAmount(value("amount")); } catch (e) { errors.amountMinor = (e as Error).message; }
       try { expenseDate = initial && value("date") === savedDate?.date && value("time") === savedDate?.time ? initial.expenseDate : localEventInstant(value("date"), value("time"), timezone); } catch (e) { errors.expenseDate = (e as Error).message; }
-      const input = { title: value("title"), amountMinor, currency, expenseDate, category: value("category"), eventId: value("eventId") || undefined, notes: value("notes") || undefined };
+      const input = { title: value("title"), amountMinor, currency, expenseDate, category: value("category"), eventId: value("eventId") || undefined, vendorId: vendorId || undefined, notes: value("notes") || undefined };
       const parsed = createExpenseSchema.safeParse(input);
       if (!parsed.success) for (const issue of parsed.error.issues) if (!errors[issue.path.join(".")]) errors[issue.path.join(".")] = issue.message;
       if (Object.keys(errors).length || !parsed.success) { setFields(errors); setError("Please check the highlighted fields."); focusError(); return; }
-      submission.current = { key: crypto.randomUUID(), input: initial ? { ...parsed.data, expectedVersion: initial.version, eventId: input.eventId ?? null, notes: input.notes ?? null } : parsed.data };
+      submission.current = { key: crypto.randomUUID(), input: initial ? { ...parsed.data, expectedVersion: initial.version, eventId: input.eventId ?? null, vendorId: input.vendorId ?? null, notes: input.notes ?? null } : parsed.data };
       setDirty(true);
     }
     const saved = submission.current; locked.current = true; setPending(true);
@@ -43,7 +46,7 @@ export function ExpenseForm({ weddingId, currency, timezone, events, initial }: 
       const result = await response.json();
       if (response.ok && /^[a-f0-9]{24}$/.test(result.data?.id) && (!initial || result.data.id === initial.id)) {
         leaving.current = true; setDirty(false); setUncertain(false);
-        router.replace(result.data.deletedAt ? "/wedding/expenses" : `/wedding/expenses/${result.data.id}`); router.refresh(); return;
+        window.location.replace(result.data.deletedAt ? "/wedding/expenses" : `/wedding/expenses/${result.data.id}`); return;
       }
       // A 429 can occur before the server reconciles an earlier committed save.
       if (response.ok || response.status === 429 || response.status >= 500) throw Error();
@@ -54,6 +57,7 @@ export function ExpenseForm({ weddingId, currency, timezone, events, initial }: 
       const errors: Record<string, string> = {};
       for (const issue of result.error?.fields ?? []) errors[issue.path] = issue.message;
       if (result.error?.code === "EVENT_UNAVAILABLE") errors.eventId = result.error.message;
+      if (result.error?.code === "VENDOR_UNAVAILABLE") errors.vendorId = result.error.message;
       setFields(errors); focusError();
     } catch {
       setUncertain(true); setError("We couldn’t confirm whether your expense was saved. Retry to check and finish this save. Your original entries are preserved. If rate-limited, wait before retrying.");
@@ -75,6 +79,7 @@ export function ExpenseForm({ weddingId, currency, timezone, events, initial }: 
           <p className="expense-helper">Wedding time zone: {timezone}. Times use this time zone.</p>
           <label><span>Related event <small>(Optional)</small></span><select name="eventId" defaultValue={initial?.eventId ?? ""} {...attrs("eventId")}><option value="">Wedding-wide</option>{initial?.eventId && !events.some(e => e.id === initial.eventId) && <option value={initial.eventId}>{initial.event?.name ?? "Previous event"} · Unavailable</option>}{events.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select>{fieldError("eventId")}</label>
           <p className="expense-helper">Choose an event, or leave this as wedding-wide. Record a shared expense only once.</p>
+          <ExpenseVendorPicker vendors={vendors} value={vendorId} enabled={vendorLinksEnabled} historical={initial} error={fields.vendorId} onChange={value => { setVendorId(value); setDirty(true); setFields({ ...fields, vendorId: "" }); }} />
         </section>
         <section className="workspace-panel expense-form-section"><h2><span>3</span>Private notes</h2><label><span>Notes <small>(Optional)</small></span><textarea name="notes" rows={5} maxLength={10000} defaultValue={initial?.notes ?? ""} placeholder="Add details for your planning family…" {...attrs("notes")} />{fieldError("notes")}</label><p className="expense-helper">Visible only to your wedding’s planning family.</p></section>
       </fieldset>

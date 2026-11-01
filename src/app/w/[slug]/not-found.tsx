@@ -1,0 +1,1 @@
+export default function UnavailableWebsite() { return <main className="public-website-state"><span className="wedding-kicker">Make My Marriage</span><h1>This wedding website is unavailable</h1><p>Please check the address or contact the family who shared it.</p></main>; }

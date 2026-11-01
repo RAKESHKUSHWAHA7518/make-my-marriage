@@ -1,0 +1,1 @@
+export default function Loading() { return <main className="public-website-state" role="status" aria-live="polite"><span className="wedding-kicker">Make My Marriage</span><h1>Loading wedding website…</h1></main>; }
