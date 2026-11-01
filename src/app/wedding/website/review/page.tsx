@@ -1,0 +1,13 @@
+import Link from "next/link";
+import { eventWorkspace } from "@/modules/events/page-session";
+import { publicationReview } from "@/modules/website/publication";
+import { origin } from "@/modules/identity/security";
+import { WorkspaceShell } from "@/components/weddings/workspace-shell";
+import { WebsitePreviewContent } from "@/components/website/website-preview";
+import { PublicationAction } from "@/components/website/publication-action";
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Review website publication | Make My Marriage", robots: { index: false, follow: false } };
+export default async function ReviewPage() {
+  const { user, wedding } = await eventWorkspace(), review = await publicationReview(user, wedding.id), disabled = !review.enabled || !review.valid || wedding.state !== "active";
+  return <WorkspaceShell name={user.displayName} role={wedding.role} weddingTitle={wedding.title} activePage="website"><main className="workspace-main website-page"><Link className="button button-secondary" href="/wedding/website/preview">← Back to preview</Link><header className="event-page-heading"><div><span className="wedding-kicker">Your website · Publish review</span><h1>Review before publishing</h1><p>Anyone with your website address will be able to see the information below. Review every detail carefully.</p></div></header><section className="website-address"><strong>Public address after publishing</strong><code>{origin()}/w/{review.slug}</code><p>Only your saved draft is included. Unsaved editor changes are not published.</p></section>{!review.enabled && <p className="wedding-notice">Website publishing is awaiting activation. Your private draft and preview remain available.</p>}{!review.valid && <p className="wedding-notice">Some selected information is unavailable. Return to the editor and review your selections.</p>}{wedding.state !== "active" && <p className="wedding-notice">This wedding is archived. It cannot be published again.</p>}<div className="website-editor-layout"><div><WebsitePreviewContent preview={review.preview} /><PublicationAction weddingId={wedding.id} action="publish" payload={{ expectedDraftVersion: review.draftVersion, expectedPublishedRevision: review.publishedRevision, expectedReviewHash: review.reviewHash }} disabled={disabled} /></div><aside className="workspace-panel website-privacy"><h2>What becomes public</h2><p>Only the names, welcome, optional date and cover, selected event details and contact information shown here.</p><p>Your guest list, RSVP responses, budget, expenses, vendor notes and gallery access stay private.</p><p>If this content changes before you publish, you’ll be asked to review it again.</p></aside></div></main></WorkspaceShell>;
+}

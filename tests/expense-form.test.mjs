@@ -6,18 +6,18 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 const require = createRequire(import.meta.url);
 const schema = require("../src/modules/expenses/schema.ts"), dates = require("../src/modules/events/schema.ts");
-function harness(responses, mode = "create") {
+function harness(responses, mode = "create", props = {}) {
   const refs = [], states = [], requests = [], destinations = []; let r = 0, s = 0, serial = 0;
   const initial = mode === "create" ? undefined : { id: "a".repeat(24), title: "Saved", amountMinor: "155", currency: "INR", category: "venue", version: 3, expenseDate: "2027-02-12T04:30:22Z" };
   const values = { title: "Venue advance", amount: "5000.50", category: "venue", date: "2027-02-12", time: "10:00", eventId: "", notes: "" };
   const React = { createElement: (type, props, ...children) => ({ type, props: { ...props, children } }), useRef: value => refs[r++] ?? (refs[r - 1] = { current: value }), useState(value) { const i = s++; if (!(i in states)) states[i] = value; return [states[i], v => { states[i] = v; }]; } };
-  const context = { React, exports: {}, Error, AbortSignal, requestAnimationFrame() {}, crypto: { randomUUID: () => `immutable-expense-key-${++serial}` }, FormData: class { get(name) { return values[name] ?? ""; } },
-    require(id) { return id.includes("use-unsaved-navigation") ? { useUnsavedNavigation() {} } : id === "react" ? React : id === "next/navigation" ? { useRouter: () => ({ replace: path => destinations.push(path), refresh() {} }) } : id === "next/link" ? "a" : id.includes("expenses/schema") ? schema : dates; },
+  const context = { React, exports: {}, Error, AbortSignal, window: { location: { replace: path => destinations.push(path) } }, requestAnimationFrame() {}, crypto: { randomUUID: () => `immutable-expense-key-${++serial}` }, FormData: class { get(name) { return values[name] ?? ""; } },
+    require(id) { return id.includes("vendor-picker") ? { ExpenseVendorPicker: "vendor-picker" } : id.includes("use-unsaved-navigation") ? { useUnsavedNavigation() {} } : id === "react" ? React : id === "next/navigation" ? { useRouter: () => ({ replace: path => destinations.push(path), refresh() {} }) } : id === "next/link" ? "a" : id.includes("expenses/schema") ? schema : dates; },
     async fetch(url, options) { requests.push({ url, ...options }); const next = responses.shift(); if (next instanceof Error) throw next; return { ok: next.status < 300, status: next.status, json: async () => next.body }; },
   };
   const remove = mode === "remove", component = remove ? "RemoveExpense" : "ExpenseForm";
   runInNewContext(ts.transpileModule(readFileSync(`src/components/expenses/${remove ? "remove-expense" : "expense-form"}.tsx`, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React } }).outputText, context);
-  function render() { r = 0; s = 0; return context.exports[component](remove ? { weddingId: "b".repeat(24), expense: initial } : { weddingId: "b".repeat(24), timezone: "Asia/Kolkata", currency: "INR", initial, events: [] }); }
+  function render() { r = 0; s = 0; return context.exports[component](remove ? { weddingId: "b".repeat(24), expense: initial } : { weddingId: "b".repeat(24), timezone: "Asia/Kolkata", currency: "INR", initial, events: [], ...props }); }
   function find(node, predicate) { if (!node || typeof node !== "object") return null; if (predicate(node)) return node; for (const child of node.props?.children?.flat(Infinity) ?? []) { const found = find(child, predicate); if (found) return found; } return null; }
   function submit() { const node = render(); return remove ? find(node, n => n.type === "button" && n.props.className === "button button-primary").props.onClick() : find(node, n => n.type === "form").props.onSubmit({ preventDefault() {}, currentTarget: {} }); }
   return { render, submit, find, values, requests, destinations, initial };
@@ -44,4 +44,31 @@ test("failed validation permits correction with a fresh key", async () => {
 });
 test("removal retains its version/key through lost response and rate limits", async () => {
   const h = harness([Error("lost"), { status: 429, body: {} }, { status: 200, body: { data: { id: "a".repeat(24), deletedAt: "2027-01-01" } } }], "remove"); for (let i = 0; i < 3; i++) await h.submit(); assert.equal(h.requests.length, 3); assert(h.requests.every(r => r.body === h.requests[0].body && r.headers["Idempotency-Key"] === h.requests[0].headers["Idempotency-Key"])); assert.equal(JSON.parse(h.requests[0].body).expectedVersion, 3);
+});
+
+test("vendor preselection sets only the association and retains it through lost/429 retries", async () => {
+  const vendorId = "c".repeat(24), h = harness([Error("lost"), { status: 429, body: {} }, { status: 201, body: { data: { id: "a".repeat(24) } } }], "create", { defaultVendorId: vendorId, vendorLinksEnabled: true });
+  const tree = h.render();
+  assert.equal(h.find(tree, n => n.type === "vendor-picker").props.value, vendorId);
+  for (const field of ["title", "category", "amount", "eventId"]) assert.equal(h.find(tree, n => n.props?.name === field).props.defaultValue, "");
+  await h.submit(); await h.submit(); await h.submit();
+  const saved = JSON.parse(h.requests[0].body); assert.equal(saved.vendorId, vendorId); assert.equal(saved.category, "venue"); assert.equal(saved.amountMinor, "500050"); assert(!saved.eventId);
+  assert(h.requests.every(r => r.body === h.requests[0].body && r.headers["Idempotency-Key"] === h.requests[0].headers["Idempotency-Key"]));
+});
+
+test("changing/clearing a vendor preserves other fields and edit sends an explicit null", async () => {
+  const h = harness([{ status: 200, body: { data: { id: "a".repeat(24) } } }], "edit", { defaultVendorId: "c".repeat(24), vendorLinksEnabled: true });
+  const previous = { ...h.values };
+  h.find(h.render(), n => n.type === "vendor-picker").props.onChange("d".repeat(24));
+  assert.equal(h.find(h.render(), n => n.type === "vendor-picker").props.value, "d".repeat(24));
+  h.find(h.render(), n => n.type === "vendor-picker").props.onChange("");
+  assert.deepEqual(h.values, previous); await h.submit();
+  const saved = JSON.parse(h.requests[0].body); assert.equal(saved.vendorId, null); assert.equal(saved.amountMinor, "500050"); assert.equal(saved.category, "venue");
+});
+
+test("a definitively unavailable vendor allows correction with a fresh key", async () => {
+  const h = harness([{ status: 422, body: { error: { code: "VENDOR_UNAVAILABLE", message: "Select an active vendor" } } }, { status: 201, body: { data: { id: "a".repeat(24) } } }], "create", { defaultVendorId: "c".repeat(24), vendorLinksEnabled: true });
+  await h.submit(); assert.equal(h.find(h.render(), n => n.type === "vendor-picker").props.error, "Select an active vendor");
+  h.find(h.render(), n => n.type === "vendor-picker").props.onChange(""); await h.submit();
+  assert(!JSON.parse(h.requests[1].body).vendorId); assert.notEqual(h.requests[0].headers["Idempotency-Key"], h.requests[1].headers["Idempotency-Key"]);
 });

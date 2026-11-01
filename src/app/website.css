@@ -1,0 +1,68 @@
+.website-page { padding-bottom:48px; }
+.website-management-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin-top:30px; }
+.website-management-grid .button { margin-top:24px; }
+.website-publish-consent { padding:26px; margin:26px 0; }
+.website-visibility { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:22px; margin-top:40px; }
+.website-unpublish { max-width:800px; margin:40px auto; padding:clamp(22px,4vw,48px); border:1px solid #efdee3; background:white; border-radius:16px; }
+.website-unpublish h1 { font:500 clamp(30px,4vw,46px)/1.3 var(--font-heading),serif; margin:24px 0; }
+.website-unpublish p { line-height:1.9; }
+.public-wedding { max-width:1440px; margin:auto; background:#fffdf9; }
+.public-wedding-nav { padding:22px clamp(20px,4vw,70px); display:flex; justify-content:space-between; gap:22px; align-items:center; flex-wrap:wrap; border-bottom:1px solid #efdee3; }
+.public-wedding-nav > div { display:flex; flex-wrap:wrap; gap:20px; }
+.public-wedding-nav > div a { padding:12px 0; font-size:14px; color:#802b3a; min-height:44px; }
+.public-wedding .website-preview { border:0; border-radius:0; box-shadow:none; }
+.public-wedding .website-preview-hero { padding:clamp(60px,10vw,140px) 24px; }
+.public-wedding .website-preview h1 { font-size:clamp(38px,6vw,76px); }
+.website-celebration .website-event-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:22px; }
+.website-celebration .website-preview-event { margin-top:24px; min-width:0; }
+.website-event-time { color:#802b3a; font-size:12px; font-weight:600; }
+.website-event-venue { background:#fff1f5; padding:18px; margin-top:24px; border-radius:7px; font-size:13px; }
+.website-event-venue p + p { margin-top:15px; }
+.public-website-state { max-width:720px; margin:15vh auto; padding:30px; text-align:center; }
+.public-website-state h1 { font:500 clamp(28px,4vw,42px)/1.4 var(--font-heading),serif; color:#802b3a; margin:25px 0; }
+.public-website-state p { line-height:1.9; margin-bottom:24px; }
+@media(max-width:600px) { .website-management-grid { grid-template-columns:1fr; } .website-publish-consent { padding:18px; } .public-wedding-nav .brand small { display:none; } .public-wedding-nav .brand strong { font-size:16px; } }
+.website-page h1 { color:#802b3a; overflow-wrap:anywhere; }
+.website-status { padding:10px 18px; border-radius:24px; background:#f8e9ee; color:#802b3a; font-size:13px; }
+.website-address { padding:24px; margin:24px 0 32px; border:1px solid #efdee3; border-radius:10px; background:#fff1f5; display:flex; gap:16px; flex-wrap:wrap; align-items:center; overflow-wrap:anywhere; }
+.website-address code { font-size:14px; padding:10px; background:white; border-radius:6px; overflow-wrap:anywhere; min-width:0; }
+.website-address p { margin:0; flex-basis:100%; font-size:13px; line-height:1.8; }
+.website-editor-layout { display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:28px; align-items:start; }
+.website-form { min-width:0; }
+.website-form fieldset { border:0; margin:0; padding:0; min-width:0; }
+.website-section { padding:28px; margin-bottom:24px; min-width:0; }
+.website-section h2 { font:500 24px/1.5 var(--font-heading),serif; margin-bottom:24px; display:flex; gap:14px; align-items:center; }
+.website-section h2 > span { font:600 12px var(--font-body),sans-serif; color:#802b3a; }
+.website-form label:not(.website-event) { display:grid; gap:10px; font-size:14px; font-weight:600; margin:18px 0; }
+.website-form input:not([type=checkbox]),.website-form select,.website-form textarea { width:100%; min-width:0; min-height:48px; border:1px solid #dfcbd1; border-radius:6px; padding:14px; background:#fff5f7; color:#372b2e; font:inherit; }
+.website-form textarea { resize:vertical; }
+.website-form :focus-visible,.website-page a:focus-visible { outline:2px solid #802b3a; outline-offset:3px; }
+.website-form :disabled { opacity:.65; cursor:not-allowed; }
+.website-hint { padding:16px; background:#fff1f5; color:#70545d; border-radius:6px; font-size:13px; line-height:1.9; }
+.website-helper,.website-save-status { font-size:13px; line-height:1.8; color:#705b63; }
+.website-save-status { margin:0 0 20px; }
+.website-event { display:flex; gap:14px; align-items:flex-start; padding:16px; margin:12px 0; background:#fff1f5; border:1px solid #efdee3; border-radius:8px; cursor:pointer; font-size:14px; line-height:1.7; }
+.website-event input { accent-color:#802b3a; width:22px; height:22px; flex-shrink:0; margin-top:4px; }
+.website-event span { min-width:0; overflow-wrap:anywhere; }
+.website-event small { display:block; font-size:12px; color:#705b63; margin-top:8px; }
+.website-actions { display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-top:22px; }
+.website-actions p { flex-basis:100%; font-size:12px; line-height:1.8; color:#705b63; }
+.website-privacy { padding:24px; background:#fff1f5; }
+.website-privacy h2 { font:500 23px/1.5 var(--font-heading),serif; }
+.website-privacy p { margin-top:16px; line-height:1.9; }
+.website-preview-banner { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:18px; background:#f8e6ed; border-radius:10px; padding:22px; margin-bottom:28px; }
+.website-preview-banner p { font-size:13px; line-height:1.8; margin-top:8px; }
+.website-preview { overflow:hidden; border-radius:12px; background:#fff9fa; border:1px solid #efdee3; box-shadow:0 6px 20px #802b3a08; }
+.website-preview h1 { font:500 clamp(30px,3.5vw,55px)/1.25 var(--font-heading),serif; margin:22px 0; }
+.website-preview h2 { font:500 clamp(25px,2.6vw,36px)/1.4 var(--font-heading),serif; color:#802b3a; margin-bottom:22px; }
+.website-preview h3 { font:500 24px/1.5 var(--font-heading),serif; margin:16px 0; }
+.website-preview p { line-height:1.9; white-space:pre-wrap; overflow-wrap:anywhere; }
+.website-preview-hero { text-align:center; padding:75px 30px; background:#fff0f4; }
+.website-preview-cover { width:100%; height:auto; max-height:600px; object-fit:cover; }
+.website-preview-welcome,.website-preview-contact { padding:65px 8%; text-align:center; }
+.website-preview-events { padding:55px 6%; background:#fff0f4; text-align:center; }
+.website-preview-event { text-align:left; padding:28px; background:white; border:1px solid #efdee3; border-radius:10px; margin-top:24px; }
+.website-preview-contact .website-actions { justify-content:center; }
+.website-preview footer { padding:26px; text-align:center; font-size:12px; border-top:1px solid #efdee3; }
+@media(max-width:1050px) { .website-editor-layout { grid-template-columns:minmax(0,1fr); } .website-privacy { order:-1; } }
+@media(max-width:600px) { .website-section { padding:20px; } .website-section h2 { font-size:22px; } .website-address { padding:18px; } .website-actions .button { flex:1 1 140px; } .website-preview-hero { padding:50px 20px; } .website-preview-event { padding:20px; } .website-preview-events,.website-preview-welcome,.website-preview-contact { padding:40px 20px; } }

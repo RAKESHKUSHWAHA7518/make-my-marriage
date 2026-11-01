@@ -1,0 +1,12 @@
+import Link from "next/link";
+import { eventWorkspace } from "@/modules/events/page-session";
+import { listAnnouncements } from "@/modules/announcements/service";
+import { WorkspaceShell } from "@/components/weddings/workspace-shell";
+import { AnnouncementFeed } from "@/components/announcements/announcement-feed";
+import { AnnouncementRefresh } from "@/components/announcements/announcement-refresh";
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Family announcements | Make My Marriage", robots: { index: false, follow: false } };
+export default async function AnnouncementsPage() {
+  const { user, wedding } = await eventWorkspace(), initial = await listAnnouncements(user, wedding.id), readOnly = wedding.state !== "active";
+  return <WorkspaceShell name={user.displayName} role={wedding.role} weddingTitle={wedding.title} activePage="announcements"><main className="workspace-main announcement-page"><header className="event-page-heading"><div><span className="wedding-kicker">Internal planning updates</span><h1>Family announcements</h1><p>Keep your planning family informed.</p></div>{!readOnly && <Link href="/wedding/announcements/new" className="button button-primary">+ New announcement</Link>}</header><section className="announcement-privacy"><strong>Private to your planning family</strong><p>Announcements stay inside your family workspace. They are never automatically shown on your public website or guest invitations.</p></section>{readOnly && <p className="wedding-notice">This wedding is archived. Announcements are read-only.</p>}<div className="announcement-layout"><div>{!initial.data.length ? <section className="workspace-panel workspace-empty"><h2>Keep everyone in the loop</h2><p>Share your first update with your planning family.</p>{!readOnly && <Link href="/wedding/announcements/new" className="button button-primary">New announcement</Link>}</section> : <AnnouncementFeed key={initial.data.map(i => `${i.id}:${i.version}`).join(",")} initial={initial} weddingId={wedding.id} timezone={wedding.timezone} readOnly={readOnly} />}<AnnouncementRefresh /></div><aside className="workspace-panel announcement-guidance"><h2>A shared family space</h2><p>ADMIN and MANAGER members can create, edit, pin and remove announcements while your wedding is active.</p><p>The original author stays attached when another member edits a post.</p><p>Pinned updates appear first. Other posts are ordered newest first.</p></aside></div></main></WorkspaceShell>;
+}

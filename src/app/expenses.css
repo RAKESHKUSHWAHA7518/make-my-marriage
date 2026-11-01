@@ -1,5 +1,17 @@
 .expenses-page { padding-bottom: 40px; }
 .expenses-page h1 { color: #802b3a; overflow-wrap: anywhere; }
+.expense-vendor-picker { margin-top:24px; padding:22px; border-radius:10px; background:#fff1f5; border:1px solid #eedce2; }
+.expense-vendor-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; font-size:14px; }
+.expense-vendor-heading small { font-weight:400; }
+.expense-vendor-selected { display:grid; gap:8px; padding:18px; background:white; border:1px solid #e7ccd4; border-radius:8px; margin-bottom:18px; overflow-wrap:anywhere; }
+.expense-vendor-selected strong { color:#802b3a; }
+.expense-vendor-selected span { font-size:12px; color:#705b63; }
+.expense-vendor-picker > label { margin:18px 0; }
+.expense-linked-vendor { display:block; font-size:12px; margin-top:8px; color:#705b63; line-height:1.7; overflow-wrap:anywhere; }
+.expense-linked-vendor a { color:#802b3a; text-decoration:underline; }
+.expense-linked-vendor small { display:block; }
+.workspace-panel .vendor-recorded-spending { font:600 32px/1.5 var(--font-heading),serif; color:#802b3a; overflow-wrap:anywhere; padding:18px; background:#fff1f5; border-radius:8px; margin-bottom:14px; }
+@media(max-width:700px) { .expense-row-title { grid-column:1; grid-row:1; } .expense-vendor-picker { padding:16px; } }
 .expense-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; margin: 28px 0; }
 .expense-metrics-filtered { grid-template-columns: repeat(2,minmax(0,1fr)); }
 .expense-metrics article { min-width: 0; padding: 24px; border-radius: 10px; background: #fff; border: 1px solid #f0e1e4; box-shadow: 0 2px 5px #802b3a04; }

@@ -1,0 +1,3 @@
+"use client";
+import Link from "next/link";
+export default function WebsiteError({ retry }: { retry: () => void }) { return <main className="workspace-main"><section className="workspace-panel event-empty"><h1>Your website draft is temporarily unavailable</h1><p>Your saved draft and publication status have not been changed.</p><div className="website-actions"><button className="button button-primary" onClick={retry}>Retry</button><Link className="button button-secondary" href="/wedding/website">Back to editor</Link><Link className="button button-secondary" href="/wedding">Back to workspace</Link></div></section></main>; }

@@ -11,6 +11,8 @@ import type { RsvpTotals } from "@/modules/households/service";
 import { expenseMoney } from "@/modules/expenses/schema";
 import { ExpenseDashboard } from "@/components/expenses/expense-display";
 import type { ExpenseSummary } from "@/modules/expenses/service";
+import type { AnnouncementSummary } from "@/modules/announcements/service";
+import { AnnouncementDashboard } from "@/components/announcements/announcement-display";
 
 type Summary = {
   title: string;
@@ -25,11 +27,12 @@ type Summary = {
   archived: boolean;
 };
 
-export function WorkspaceDashboard({ summary, sample = false, countdown, events = [], eventsUnavailable = false, tasks = null, responses = null, expenses = null }: {
+export function WorkspaceDashboard({ summary, sample = false, countdown, events = [], eventsUnavailable = false, tasks = null, responses = null, expenses = null, announcements = null }: {
   summary: Summary;
   tasks?: TaskSummary | null;
   responses?: RsvpTotals | null;
   expenses?: ExpenseSummary | null;
+  announcements?: AnnouncementSummary | null;
   sample?: boolean;
   countdown?: ReactNode;
   events?: EventView[];
@@ -65,6 +68,7 @@ export function WorkspaceDashboard({ summary, sample = false, countdown, events 
       {!sample && <RsvpSummary totals={responses} />}
       {!sample && <TaskDashboard summary={tasks} timezone={summary.timezone} archived={summary.archived} />}
       {!sample && <ExpenseDashboard summary={expenses} />}
+      {!sample && <AnnouncementDashboard items={announcements} timezone={summary.timezone} archived={summary.archived} />}
       {!sample && <section className="workspace-quick-links" aria-label="Available actions">
         <strong><WeddingIcon name="spark" /> Your workspace</strong>
         <div>

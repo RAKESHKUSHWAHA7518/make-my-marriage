@@ -1,5 +1,29 @@
 # Make My Marriage
 
+## Family Announcements — November 1 increment
+
+/wedding/announcements supports private pinned-first updates, create/edit, pin/unpin and confirmed retained removal. Both active ADMIN/MANAGER roles edit shared announcements; original authors are preserved. Archived weddings are read-only. Dashboard shows up to three actual updates with direct full-post links; unavailable data never appears as an empty feed. No messages, public publication, comments or read receipts.
+
+After explicit user approval, only migration 017 was applied/verified in shared production November 1. Strict announcement validation and announcements_feed/announcements_operation indexes are ready. Unrelated validators/indexes/collection counts and wedding/asset/announcement counts/BSON fingerprints are unchanged; no application/sample records or provider calls. Announcements are activated for this code; browser/deployed verification and user acceptance remain. Do not run broad db:migrate. test:announcements asserts exactly mongodb://127.0.0.1:27195/?replicaSet=announcementsqa and generates/drops its own disposable databases, with no .env fallback. test:announcement-ui is network-free. See project/implementation evidence.
+
+## Wedding Website publishing — November 1 increment
+
+Implemented Stitch Website 05–09: /wedding/website/review, /manage and /unpublish, plus public /w/{slug}. Explicit consent publishes a reviewed snapshot; draft edits stay private. Public reads suppress cancelled/removed events. Unpublish revokes subsequent page/cover access while retaining the draft. Selected covers are separate authenticated, metadata-stripped JPEG copies with bounded delivery, quota reservation and durable cleanup; the private original is never publicly authorized.
+
+After explicit user approval, only migration 016 was applied and verified in shared production on November 1. Publication/public-copy validators and all three exact partial unique indexes are ready; remaining wedding/gallery validation, unrelated indexes and wedding/asset counts/fingerprints are unchanged. No application/sample records changed and no website was published. Publishing is activated for this code. Do not run broad db:migrate against production. Scheduler activation remains user-deferred; cover cleanup depends on it too. Browser, live Cloudinary and deployed-runtime verification remain pending. See project/implementation evidence. Requested local commit was blocked by rejected Git-write permission; no commit/push/deployment completed.
+
+## Wedding Website private draft and preview — November 1 increment
+
+/wedding/website now supports explicit draft saves for display names, plain-text welcome, optional date/cover, selected scheduled/completed events and independently entered public contact. /wedding/website/preview is organizer-only and shows only selected eligible information; it grants no guest, gallery or public access. Both family roles can edit active weddings; archives remain read-only. Saving never publishes or changes an existing published snapshot. Website navigation and the legacy planning URL are connected.
+
+After isolated testing and explicit user approval, only migration 015 was applied/verified in shared production on November 1. It extends only weddings.publicPage.draft validation. Existing records passed preflight; strict/error validation, remaining validator and all wedding indexes were verified, with wedding count/fingerprint unchanged. No application/sample records changed. Draft saving is now activated for this code. Do not run the broad migration runner against production-connected defaults. Publish/review/unpublish, anonymous website and sanitized public-cover delivery are the next separate increment. See project/implementation evidence.
+
+## Saved vendors connected to expenses — October 31 increment
+
+Expense add/edit now has an optional searchable saved-vendor selector. Expense details/list link to the private vendor profile; list/summary support vendor and unlinked filters. Vendor profiles show actual recorded spending and shortcuts to filtered expenses or a new expense with only the vendor preselected. Manual and saved Google references work without a provider call or key. Removed vendors retain expense history and cannot be selected for new associations; clearing/changing the link does not alter money/category/event fields.
+
+After explicit user approval, only migration 014 was applied and verified in shared production on October 31: the exact nonunique expenses_vendor index exists, prior indexes/validation and expense/vendor/wedding counts/fingerprints remain unchanged. No application records or samples created. Migration 011 already permits vendorId. Do not run broad db:migrate on the shared production database. User acceptance and deployment verification remain; see project/implementation records.
+
 ## Save discovered vendors — October 31 increment
 
 From a discovered business's details, Save to wedding opens the supplied Stitch 11/12 flow: read-only attributed Google information plus independent private label/contact/notes/event fields. Saved records retain only the place ID and planning fields. Missing label uses the application text “Saved Google business”; Google names/addresses/ratings are never copied into private fields. Source filters, explicit live-detail loading, editing/removal and existing/removed record links are connected. Saving a known reference/private details works without a provider call; search/live display still needs configured Places credentials and public policies.

@@ -133,6 +133,14 @@ export async function reconcileMedia() {
       await db.collection("uploadIntents").updateOne({ _id: row._id, state: { $in: ["rejected", "expired"] } }, { $set: { nextCheckAt: new Date(Date.now()+86400000), updatedAt: new Date() } }); processed++;
     } catch { failed++; await db.collection("uploadIntents").updateOne({ _id: row._id }, { $set: { nextCheckAt: new Date(Date.now()+300000) } }); }
   }
+  const expiredCovers = await db.collection("assets").find({ purpose: "public_copy", state: "preparing", expiresAt: { $lte: new Date() } }).sort({ nextCheckAt: 1 }).limit(3).toArray();
+  for (const row of expiredCovers) {
+    await db.client.withSession(session => session.withTransaction(async () => {
+      // Fence first, just as publication does; never race a committed ready cover.
+      await db.collection("weddings").updateOne({ _id: row.weddingId }, { $inc: { writeFence: Long.ONE } }, { session });
+      await db.collection("assets").updateOne({ _id: row._id, state: "preparing", expiresAt: { $lte: new Date() } }, { $set: { state: "delete_pending", nextCheckAt: new Date() }, $inc: { version: 1 } }, { session });
+    }));
+  }
   const assets = await db.collection("assets").find({ state: { $in: ["delete_pending", "deleted"] }, nextCheckAt: { $lte: new Date() } }).sort({ nextCheckAt: 1 }).limit(3).toArray();
   for (const row of assets) {
     if (Date.now() > deadline) break;
@@ -141,7 +149,10 @@ export async function reconcileMedia() {
       await db.client.withSession(session => session.withTransaction(async () => {
         const current = await db.collection("assets").findOne({ _id: row._id, state: { $in: ["delete_pending", "deleted"] } }, { session }); if (!current) return;
         if (current.state === "deleted") { await db.collection("assets").updateOne({ _id: current._id, state: "deleted" }, { $set: { nextCheckAt: new Date(Date.now()+86400000) } }, { session }); return; }
-        const changed = await db.collection("weddings").updateOne({ _id: row.weddingId, "storage.usedBytes": { $gte: current.bytes } }, { $inc: { writeFence: Long.ONE, "storage.usedBytes": Long.fromValue(current.bytes).negate() } }, { session });
+        const reserved = current.purpose === "public_copy" && Long.fromValue(current.reservedBytes ?? Long.ZERO).greaterThan(Long.ZERO);
+        const amount = reserved ? current.reservedBytes : current.bytes;
+        const counter = reserved ? "storage.reservedBytes" : "storage.usedBytes";
+        const changed = await db.collection("weddings").updateOne({ _id: row.weddingId, [counter]: { $gte: amount } }, { $inc: { writeFence: Long.ONE, [counter]: Long.fromValue(amount).negate() } }, { session });
         if (!changed.modifiedCount) throw Error("Storage reconciliation required");
         await db.collection("assets").updateOne({ _id: row._id, state: "delete_pending" }, { $set: { state: "deleted", deletedAt: new Date(), nextCheckAt: new Date(Date.now()+86400000), updatedAt: new Date() } }, { session });
       }, { writeConcern: { w: "majority" } })); processed++;

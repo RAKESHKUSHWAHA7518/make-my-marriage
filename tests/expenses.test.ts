@@ -20,7 +20,7 @@ test("money validation and display are exact without floats", () => {
   assert.equal(expenseAmount("5000.50"), "500050"); assert.equal(expenseInputAmount("9223372036854775807"), "92233720368547758.07");
   assert.equal(expenseMoney("-101", "INR"), "−₹1.01");
   for (const amount of ["0", "-1", "1.001", "1,000", "NaN", "1e5", "92233720368547758.08"]) assert.throws(() => expenseAmount(amount));
-  for (const extra of [{ vendorId: new ObjectId().toString() }, { receiptAssetIds: [new ObjectId().toString()] }, { paid: true }, { amountMinor: "1.5" }, { amountMinor: "0" }, { amountMinor: 100 }]) assert.equal(createExpenseSchema.safeParse({ title: "Test", amountMinor: "100", currency: "INR", expenseDate: "2027-01-01T00:00:00Z", category: "other", ...extra }).success, false);
+  for (const extra of [{ vendorId: "invalid" }, { receiptAssetIds: [new ObjectId().toString()] }, { paid: true }, { amountMinor: "1.5" }, { amountMinor: "0" }, { amountMinor: 100 }]) assert.equal(createExpenseSchema.safeParse({ title: "Test", amountMinor: "100", currency: "INR", expenseDate: "2027-01-01T00:00:00Z", category: "other", ...extra }).success, false);
   assert.equal(patchExpenseSchema.safeParse({ expectedVersion: 1 }).success, false);
 });
 
