@@ -90,3 +90,5 @@ Current tooling follow-up: TypeScript 6.0.2 is pinned because the lint parser re
 6. [UI Guidelines](docs/Wedding-UI-Guidelines.md) and [Development Plan](docs/Wedding-Development-Plan.md).
 
 Of 105 designed API operations, eight auth operations plus the account-scoped job tick and Resend webhook now exist; the remaining 95 and broader worker/provider use cases are future scope. See the status document before choosing the next task. Update it with each implementation's files, checks, limitations and outstanding work. Commit, push and deploy are separate actions.
+
+Any many more features are comeing soon
