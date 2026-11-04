@@ -1,5 +1,15 @@
 # Wedding Management Platform — System Design Architecture
 
+## November 4 activation — task checklists
+
+User explicitly approved only migration 018; applied and verified in shared production November 4. Strict checklist validation, unique embedded item IDs and the exact unique partial tasks_operation index are ready. Unrelated collection validators/options/indexes and collection counts are preserved; task and wedding BSON fingerprints are unchanged. No application/sample records, provider calls or broader migration runner. Checklists are activated for this code; user acceptance and deployed verification remain separate. This supersedes the original pending-activation notes below. No commit, push or deployment performed.
+
+## November 4 implementation — task checklists
+
+The existing tasks module owns checklist validation, DTO projection, optimistic updates and retry reconciliation. Next.js server pages read authenticated task details/activation state; small controlled client components provide optional creation rows, confirmed completion saves and a focused checklist editor. Existing Node route handlers and single MongoDB task document are reused, with no dependency, provider, service deployment or background server added. Private access and read-only archive boundaries remain unchanged.
+
+Checklist completion is independent of parent task status and dashboard task totals. Version conflicts protect concurrent general/status/checklist edits. Unknown/429 client retries retain the immutable request; durable create identity prevents duplicates after receipt expiry. Detail checkbox saves avoid automatic refresh that would discard a dirty sibling status form; explicit refresh retrieves authoritative remaining details. Separately approved migration 018 is required for activation and has only been exercised in an isolated loopback replica. Production database/test mutations remain prohibited without scoped authorization.
+
 ## November 1 implementation — private family announcements
 
 Activation follow-up: only migration 017 applied/verified in shared production November 1 after explicit approval. Validator/indexes ready, unrelated metadata and existing record counts/fingerprints unchanged. Announcements activated for this code; no sample/application records, provider calls or notifications. Browser/deployed/manual acceptance remains pending; supersedes initial activation-pending notes below.

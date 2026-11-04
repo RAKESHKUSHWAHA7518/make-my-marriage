@@ -1,4 +1,3 @@
-import "../scripts/load-env";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
@@ -19,13 +18,14 @@ import type { User } from "../src/modules/identity/service";
 
 test("task boundary validation and overdue semantics", () => {
   assert.equal(createTaskSchema.parse({ title: " Task " }).priority, "normal");
-  for (const input of [{ title: "" }, { title: "Task", status: "deleted" }, { title: "Task", weddingId: new ObjectId().toString() }, { title: "Task", checklist: [] }, { title: "Task", dueAt: "not-a-date" }]) assert.equal(createTaskSchema.safeParse(input).success, false);
+  for (const input of [{ title: "" }, { title: "Task", status: "deleted" }, { title: "Task", weddingId: new ObjectId().toString() }, { title: "Task", checklist: [{ text: "Missing identity", done: false }] }, { title: "Task", dueAt: "not-a-date" }]) assert.equal(createTaskSchema.safeParse(input).success, false);
   for (const status of ["done", "cancelled"]) assert.equal(taskOverdue({ dueAt: "2020-01-01T00:00:00Z", status }, new Date()), false);
   assert.equal(taskOverdue({ status: "todo" }, new Date()), false);
   assert.equal(taskOverdue({ dueAt: "2020-01-01T00:00:00Z", status: "in_progress" }, new Date()), true);
 });
 
 test("task management in a guarded isolated database", async (t) => {
+  assert.equal(process.env.MONGODB_URI, "mongodb://127.0.0.1:27196/?replicaSet=checklistsqa");
   const previous = process.env.MONGODB_DB_NAME, name = `mmm_tasks_test_${randomBytes(8).toString("hex")}`;
   process.env.MONGODB_DB_NAME = name;
   process.env.APP_ORIGIN = "http://localhost:3001";

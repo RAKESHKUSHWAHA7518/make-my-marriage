@@ -4,11 +4,12 @@ import { useUnsavedNavigation } from "@/components/weddings/use-unsaved-navigati
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import { localEventInstant, eventLocalFields } from "@/modules/events/schema";
-import { createTaskSchema, patchTaskSchema, taskStatuses, taskPriorities, taskStatusLabels, taskPriorityLabels } from "@/modules/tasks/schema";
+import { createTaskSchema, patchTaskSchema, taskStatuses, taskPriorities, taskStatusLabels, taskPriorityLabels, type ChecklistItem } from "@/modules/tasks/schema";
+import { ChecklistRows } from "./checklist-rows";
 import type { TaskView, TaskChoices } from "@/modules/tasks/service";
 import { WeddingIcon } from "@/components/weddings/wedding-icon";
 
-export function TaskForm({ weddingId, timezone, initial, choices, statusOnly = false }: { weddingId: string; timezone: string; initial?: TaskView; choices: TaskChoices; statusOnly?: boolean }) {
+export function TaskForm({ weddingId, timezone, initial, choices, statusOnly = false, checklistsEnabled = false }: { weddingId: string; timezone: string; initial?: TaskView; choices: TaskChoices; statusOnly?: boolean; checklistsEnabled?: boolean }) {
   const back = initial ? `/wedding/tasks/${initial.id}` : "/wedding/tasks";
   const due = initial?.dueAt ? eventLocalFields(initial.dueAt, timezone) : undefined;
   const reloadRequested = useRef(false);
@@ -25,6 +26,8 @@ export function TaskForm({ weddingId, timezone, initial, choices, statusOnly = f
   const [blocked, setBlocked] = useState(false);
   const [error, setError] = useState("");
   const [fields, setFields] = useState<Record<string, string>>({});
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const checklistDirty = useRef(false);
 
   useUnsavedNavigation({ dirty, pending, leaving, destination, reloadRequested, dialog: discardDialog });
 
@@ -50,7 +53,7 @@ export function TaskForm({ weddingId, timezone, initial, choices, statusOnly = f
         if (value("eventId") && !choices.events.some((e) => e.id === value("eventId"))) errors.eventId = "Select an available event or choose Whole wedding.";
       }
       if (Object.keys(errors).length) { setFields(errors); setError("Please check the highlighted fields."); focusError(); return; }
-      const input = statusOnly ? { status: value("status"), expectedVersion: initial!.version } : { title: value("title"), description: value("description") || undefined, status: value("status"), priority: value("priority"), eventId: value("eventId") || undefined, assigneeUserId: value("assigneeUserId") || undefined, dueAt };
+      const input = statusOnly ? { status: value("status"), expectedVersion: initial!.version } : { title: value("title"), description: value("description") || undefined, status: value("status"), priority: value("priority"), eventId: value("eventId") || undefined, assigneeUserId: value("assigneeUserId") || undefined, dueAt, ...(!initial && checklistsEnabled ? { checklist } : {}) };
       const parsed = statusOnly ? patchTaskSchema.safeParse(input) : createTaskSchema.safeParse(input);
       if (!parsed.success) { for (const issue of parsed.error.issues) errors[issue.path.join(".")] = issue.message; setFields(errors); setError("Please check the highlighted fields."); focusError(); return; }
       submission.current = { key: crypto.randomUUID(), input: statusOnly ? parsed.data : initial ? { ...parsed.data, expectedVersion: initial.version, description: value("description") || null, eventId: value("eventId") || null, assigneeUserId: value("assigneeUserId") || null, dueAt: dueAt ?? null } : parsed.data };
@@ -85,7 +88,7 @@ export function TaskForm({ weddingId, timezone, initial, choices, statusOnly = f
   return <>
     <form ref={formRef} className="event-form task-form workspace-panel" noValidate onSubmit={save} onChange={() => {
       const controls = Array.from(formRef.current?.elements ?? []);
-      setDirty(controls.some((control) => control instanceof HTMLInputElement ? control.type === "radio" ? control.checked !== control.defaultChecked : control.value !== control.defaultValue : control instanceof HTMLSelectElement ? Array.from(control.options).some((option) => option.selected !== option.defaultSelected) : control instanceof HTMLTextAreaElement && control.value !== control.defaultValue));
+      setDirty(checklistDirty.current || controls.some((control) => control instanceof HTMLInputElement ? control.type === "radio" ? control.checked !== control.defaultChecked : control.value !== control.defaultValue : control instanceof HTMLSelectElement ? Array.from(control.options).some((option) => option.selected !== option.defaultSelected) : control instanceof HTMLTextAreaElement && control.value !== control.defaultValue));
       setFields({});
     }}>
       {error && <div className="event-form-error" role="alert"><strong>{error}</strong>{uncertain && <Link href={back}>{initial ? "Check task details →" : "Check task list →"}</Link>}{blocked && <><p>Reload the latest details before continuing. Your entries will stay visible until you confirm.</p><button type="button" className="button button-secondary" onClick={() => { reloadRequested.current = true; discardDialog.current?.showModal(); }}>Reload latest details</button></>}</div>}
@@ -103,6 +106,7 @@ export function TaskForm({ weddingId, timezone, initial, choices, statusOnly = f
           </div>
           <div className="task-form-columns"><label>Due date <small>(Optional)</small><input type="date" name="dueDate" defaultValue={due?.date ?? ""} min="1000-01-01" max="9999-12-31" {...attrs("dueAt")} /></label><label>Due time <small>(Optional)</small><input type="time" name="dueTime" defaultValue={due?.time ?? ""} {...attrs("dueAt")} /></label></div>{errorFor("dueAt")}
           <p className="task-helper">Times are shown in {timezone}. Changing an event date won’t change this task’s deadline. Leave both fields blank if no deadline is set.</p>
+          {!initial && checklistsEnabled && <ChecklistRows items={checklist} fields={fields} onChange={items => { setChecklist(items); checklistDirty.current = true; setDirty(true); }} disabled={pending || uncertain || blocked} />}
         </>}
       </fieldset>
       <footer className="event-form-footer"><p><WeddingIcon name="lock" />{statusOnly ? "Cancelled tasks remain available in planning history." : "Only your wedding’s planning family can view this task."}</p><div className="event-form-actions">{!statusOnly && <Link href={back} className="button button-secondary" aria-disabled={pending}>Cancel</Link>}<button className="button button-primary" type="submit" disabled={pending || blocked || (!!initial && !dirty && !uncertain)}>{pending ? statusOnly ? "Updating status…" : initial ? "Saving changes…" : "Creating task…" : uncertain ? "Retry saving" : statusOnly ? "Update status" : initial ? "Save changes" : "Create task"}</button></div></footer>

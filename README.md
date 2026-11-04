@@ -1,5 +1,11 @@
 # Make My Marriage
 
+## Task checklists — November 4 increment
+
+Tasks now support optional embedded checklists at creation, focused editing, confirmed completion saves and compact list progress. Task status remains an independent decision. Both active family roles can edit; archives are read-only. After explicit user approval, only migration 018 was applied and verified in shared production November 4. Checklist validation and the unique partial operation index are ready; existing task/wedding records, collection counts and unrelated metadata are unchanged. Checklists are activated for this code; user acceptance and deployed verification remain. See [implementation evidence](docs/Wedding-Implementation-Status.md#task-checklists--november-4-2026) and [current project status](docs/Wedding-Project-Status.md).
+
+`npm run test:tasks` and `npm run test:checklists` require `MONGODB_URI=mongodb://127.0.0.1:27196/?replicaSet=checklistsqa` with an explicitly isolated local replica. They create/drop only their own randomly named test databases. Never point test suites or the broad migration runner at the production-connected defaults.
+
 ## Family Announcements — November 1 increment
 
 /wedding/announcements supports private pinned-first updates, create/edit, pin/unpin and confirmed retained removal. Both active ADMIN/MANAGER roles edit shared announcements; original authors are preserved. Archived weddings are read-only. Dashboard shows up to three actual updates with direct full-post links; unavailable data never appears as an empty feed. No messages, public publication, comments or read receipts.

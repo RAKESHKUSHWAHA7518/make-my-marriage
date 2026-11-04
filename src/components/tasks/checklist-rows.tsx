@@ -1,0 +1,12 @@
+"use client";
+import type { ChecklistItem } from "@/modules/tasks/schema";
+export function ChecklistRows({ items, onChange, fields = {}, completion = false, disabled = false }: { items: ChecklistItem[]; onChange: (items: ChecklistItem[]) => void; fields?: Record<string, string>; completion?: boolean; disabled?: boolean }) {
+  return <section className="task-checklist-rows"><div className="task-checklist-heading"><h2>Checklist</h2><span className="task-badge">{items.length} of 100 items</span></div><p className="task-helper">Break this task into smaller steps.</p>{!items.length && <p className="task-checklist-empty">No checklist items yet.</p>}
+    {items.map((item, index) => <div className="task-checklist-edit-row" key={item.id}>
+      {completion && <input type="checkbox" checked={item.done} disabled={disabled} aria-label={`Mark checklist item ${index + 1} complete`} onChange={e => onChange(items.map(i => i.id === item.id ? { ...i, done: e.target.checked } : i))} />}
+      <label htmlFor={`checklist-text-${item.id}`}><span>Checklist item {index + 1}</span><input id={`checklist-text-${item.id}`} type="text" value={item.text} maxLength={500} disabled={disabled} aria-invalid={!!fields[`checklist.${index}.text`]} aria-describedby={fields[`checklist.${index}.text`] ? `checklist-error-${item.id}` : undefined} placeholder="e.g. Confirm setup time" onChange={e => onChange(items.map(i => i.id === item.id ? { ...i, text: e.target.value } : i))} />{fields[`checklist.${index}.text`] && <small id={`checklist-error-${item.id}`} className="event-field-error">{fields[`checklist.${index}.text`]}</small>}</label>
+      <button type="button" className="button button-secondary task-checklist-remove" disabled={disabled} aria-label={`Remove checklist item ${index + 1}`} onClick={() => onChange(items.filter(i => i.id !== item.id))}>Remove</button>
+    </div>)}
+    {fields.checklist && <p role="alert" className="event-field-error">{fields.checklist}</p>}<button type="button" className="button button-secondary" disabled={disabled || items.length >= 100} onClick={() => { if (items.length < 100) onChange([...items, { id: crypto.randomUUID(), text: "", done: false }]); }}>{items.length ? "+ Add another item" : "+ Add checklist item"}</button><p className="task-helper">{items.length >= 100 ? "You can add up to 100 checklist items." : completion ? "Removed items take effect only after you save. Editing wording keeps its completion state." : "New items start incomplete and save with this task."}</p>
+  </section>;
+}

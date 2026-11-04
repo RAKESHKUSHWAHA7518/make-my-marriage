@@ -1,5 +1,17 @@
 # Wedding Management — Detailed API Design
 
+## November 4 activation — task checklists
+
+User explicitly approved only migration 018; applied and verified in shared production November 4. Strict checklist validation, unique embedded item IDs and the exact unique partial tasks_operation index are ready. Unrelated collection validators/options/indexes and collection counts are preserved; task and wedding BSON fingerprints are unchanged. No application/sample records, provider calls or broader migration runner. Checklists are activated for this code; user acceptance and deployed verification remain separate. This supersedes the original pending-activation notes below. No commit, push or deployment performed.
+
+## November 4 implementation — task checklists
+
+This extends the October 25 task subset below. Existing task POST and PATCH accept optional `checklist: [{id,text,done}]`; detail/list DTOs return the saved array. No extra endpoint. Maximum 100 items; IDs are unique within task and match `[A-Za-z0-9_-]{1,64}`, text is trimmed plain text of 1–500 characters, done is boolean; unknown item fields rejected. Omission preserves content on PATCH and initializes [] on creation; [] explicitly clears. PATCH requires the whole-task expectedVersion. Both mutations retain required Idempotency-Key; changed requests conflict, unknown/429 retries retain the original request. New tasks also retain hashed creation identity for reconciliation after receipt expiry; internal identity fields are never returned.
+
+Only verified active same-wedding ADMIN/MANAGER sessions can read/write; archived reads work and new writes fail. Checklist-only PATCH preserves historical unavailable references; edits to other task fields retain existing reference validation. Checklist completion never derives task status/completedAt or dashboard totals. Task create/update request bodies are bounded at 384 KiB to support the documented full Unicode checklist plus description; other endpoints retain their limits. Existing origin/CSRF/rate/privacy controls apply.
+
+Activation requires separately approved migration 018. Explicit checklist writes fail with 503 CHECKLISTS_NOT_READY before activation; ordinary task creation/editing still works. No production migration was performed for this increment. Attachments, templates and comments remain outside this increment.
+
 ## November 1 implementation — family announcements
 
 Activation follow-up: user-approved migration 017 applied/verified in shared production November 1. Announcement endpoints are activated for this code. No application/sample data or notifications created; existing counts/fingerprints unchanged. Browser/deployed/manual acceptance remains pending. Supersedes the initial pending-migration note below.

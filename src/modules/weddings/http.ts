@@ -131,7 +131,7 @@ export async function handleWedding(
       action === "household-link" || action === "rotate-household-link"
         ? await invitationLink(user,id!,inviteId!,action === "rotate-household-link" ? { payload: await body(request), key: request.headers.get("idempotency-key") } : undefined)
         : action === "create-task" || action === "update-task"
-        ? await saveTask(user, id!, action === "update-task" ? inviteId! : null, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
+        ? await saveTask(user, id!, action === "update-task" ? inviteId! : null, await body(request, 393216), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
         : action === "update-event"
         ? await updateEvent(user, id!, inviteId!, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
         : action === "create-event"

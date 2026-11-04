@@ -1,5 +1,15 @@
 # Wedding Management — MongoDB Database Design
 
+## November 4 activation — migration 018
+
+User explicitly approved only migration 018; applied and verified in shared production November 4. Strict checklist validation, unique embedded item IDs and the exact unique partial tasks_operation index are ready. Unrelated collection validators/options/indexes and collection counts are preserved; task and wedding BSON fingerprints are unchanged. No application/sample records, provider calls or broader migration runner. Checklists are activated for this code; user acceptance and deployed verification remain separate. This supersedes the original pending-activation notes below. No commit, push or deployment performed.
+
+## November 4 implementation — embedded task checklists
+
+Prepared migration 018 tightens only tasks.checklist: required bounded array (maximum 100), strict id/text/done objects, unique stable IDs per task enforced by a collection expression, nonblank text 1–500 characters and boolean completion. Runtime trims text, enforces matching bounds and keeps item IDs/done when wording changes. Explicit [] clears; omission preserves. No task status/completedAt cascade. Whole-task version, transactional wedding/actor/membership fences, audit and retry receipt apply to changes.
+
+Two optional internal SHA-256 fields operationKey/createRequestHash on newly created tasks retain creation identity after temporary receipt expiry. Unique partial tasks_operation index on {weddingId:1,operationKey:1} applies only to rows with a string operationKey. Existing tasks require no identity backfill. Migration preflights existing rows, refuses incompatible data/unknown existing expressions, retains other task fields/indexes, and creates no records or collections. It has passed isolated migration/repeat/preservation checks but is NOT approved/applied to production. Application checklist controls stay disabled until activation; ordinary task functionality remains available.
+
 ## November 1 implementation — family announcements
 
 Activation follow-up: only user-approved migration 017 applied/verified in shared production November 1. Strict/error schema and exact feed/unique-operation indexes ready. Unrelated validation/indexes/collection counts and wedding/asset/announcement BSON fingerprints preserved. No application/sample records or backfill. Supersedes the prepared/pending notes below.

@@ -10,7 +10,7 @@ export function TaskDue({ task, timezone, now }: { task: TaskView; timezone: str
 }
 export function TaskRows({ tasks, timezone, now }: { tasks: TaskView[]; timezone: string; now: Date }) {
   return <div className="task-list"><div className="task-row task-table-heading" aria-hidden="true"><span>Task</span><span>Status</span><span>Priority</span><span>Assignee</span><span>Due date</span><span>Related event</span></div>{tasks.map((task) => <article className={`task-row task-row-${task.status}`} key={task.id}>
-    <h2><Link href={`/wedding/tasks/${task.id}`}>{task.title} <span aria-hidden="true">→</span></Link></h2>
+    <h2><Link href={`/wedding/tasks/${task.id}`}>{task.title} <span aria-hidden="true">→</span></Link>{!!task.checklist.length && <small className="task-checklist-summary">Checklist: {task.checklist.filter(i => i.done).length} of {task.checklist.length} completed</small>}</h2>
     <span className="task-badge">{taskStatusLabels[task.status]}</span><span className="task-badge">{taskPriorityLabels[task.priority]}</span>
     <span>{task.assignee?.name ?? "Unassigned"}{task.assignee && !task.assignee.active && <small> · Inactive</small>}</span>
     <TaskDue task={task} timezone={timezone} now={now} /><span>{task.event?.name ?? "Whole wedding"}{task.event && !task.event.available && <small> · Unavailable</small>}</span>

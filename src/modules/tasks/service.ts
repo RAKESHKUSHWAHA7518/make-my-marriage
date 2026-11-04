@@ -5,19 +5,24 @@ import { getDatabase } from "@/infrastructure/mongodb/client";
 import { AccountError, digest } from "@/modules/identity/security";
 import type { User } from "@/modules/identity/service";
 import { membershipFor } from "@/modules/weddings/service";
-import { createTaskSchema, patchTaskSchema, taskStatuses, taskPriorities } from "./schema";
+import { createTaskSchema, patchTaskSchema, taskStatuses, taskPriorities, checklistSchema, type ChecklistItem } from "./schema";
 
-export type TaskView = { id: string; title: string; description?: string; status: (typeof taskStatuses)[number]; priority: (typeof taskPriorities)[number]; version: number; dueAt?: string; completedAt?: string; createdAt: string; updatedAt: string; assigneeUserId?: string; eventId?: string; assignee?: { name: string; active: boolean }; event?: { name: string; available: boolean } };
+export type TaskView = { id: string; title: string; description?: string; status: (typeof taskStatuses)[number]; priority: (typeof taskPriorities)[number]; version: number; checklist: ChecklistItem[]; dueAt?: string; completedAt?: string; createdAt: string; updatedAt: string; assigneeUserId?: string; eventId?: string; assignee?: { name: string; active: boolean }; event?: { name: string; available: boolean } };
 export type TaskChoices = { members: { id: string; name: string; role: string }[]; events: { id: string; name: string; status: string }[] };
 export type TaskSummary = { total: number; counts: Record<(typeof taskStatuses)[number], number>; overdue: number; upcoming: TaskView[]; assigned: TaskView[] };
 async function access(user: User, weddingId: string) {
   const member = await membershipFor(user);
   if (!member || member.status !== "active" || member.weddingId.toString() !== weddingId || !["ADMIN", "MANAGER"].includes(member.role)) throw new AccountError(404, "NOT_FOUND", "Task unavailable.");
+  if (!await (await getDatabase()).collection("users").findOne({ _id: user._id, status: "active", credentialVersion: user.credentialVersion, emailVerifiedAt: { $type: "date" } })) throw new AccountError(401, "UNAUTHENTICATED", "Please sign in with a verified account.");
   return member;
 }
 export async function tasksReady() {
   const db = await getDatabase();
   if (!await db.listCollections({ name: "tasks" }).hasNext() || !(await db.collection("tasks").indexes()).some((i) => i.name === "tasks_created")) throw new AccountError(503, "TASKS_UNAVAILABLE", "Tasks are temporarily unavailable.");
+}
+export async function taskChecklistsEnabled() {
+  const db = await getDatabase(), info = await db.listCollections({ name: "tasks" }, { nameOnly: false }).next();
+  return !!(info?.options?.validator?.$jsonSchema?.properties?.checklist?.items?.properties?.done && info.options.validator.$expr && (await db.collection("tasks").indexes()).some(i => i.name === "tasks_operation" && i.unique));
 }
 async function views(rows: Document[], weddingId: ObjectId): Promise<TaskView[]> {
   const db = await getDatabase();
@@ -28,7 +33,7 @@ async function views(rows: Document[], weddingId: ObjectId): Promise<TaskView[]>
   ]);
   return rows.map((r) => {
     const member = members.find((m) => m.userId.equals(r.assigneeUserId)), event = events.find((e) => e._id.equals(r.eventId));
-    return { id: r._id.toString(), title: r.title, description: r.description, status: r.status, priority: r.priority, version: r.version, dueAt: r.dueAt?.toISOString(), completedAt: r.completedAt?.toISOString(), createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
+    return { id: r._id.toString(), title: r.title, description: r.description, status: r.status, priority: r.priority, version: r.version, checklist: checklistSchema.parse(r.checklist), dueAt: r.dueAt?.toISOString(), completedAt: r.completedAt?.toISOString(), createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(),
       ...(r.assigneeUserId ? { assigneeUserId: r.assigneeUserId.toString(), assignee: { name: member?.name ?? "Unavailable member", active: member?.status === "active" && member?.userStatus === "active" } } : {}),
       ...(r.eventId ? { eventId: r.eventId.toString(), event: { name: event?.name ?? "Unavailable event", available: !!event && event.status !== "removed" } } : {}) };
   });
@@ -86,13 +91,15 @@ export async function saveTask(user: User, weddingId: string, id: string | null,
   const input = id ? patchTaskSchema.parse(payload) : createTaskSchema.parse(payload), member = await access(user, weddingId);
   if (id && !/^[a-f0-9]{24}$/.test(id)) throw new AccountError(404, "NOT_FOUND", "Task unavailable.");
   await tasksReady(); const db = await getDatabase();
+  const checklistsEnabled = await taskChecklistsEnabled();
+  if (input.checklist !== undefined && !checklistsEnabled) throw new AccountError(503, "CHECKLISTS_NOT_READY", "Checklist changes are awaiting activation.");
   if (!(await db.collection("idempotencyKeys").indexes()).some((i) => i.unique && Object.keys(i.key).join() === "scopeKey,keyHash")) throw Error("Idempotency migration required");
-  const scopeKey = `user:${user._id}:wedding:${weddingId}:tasks:${id ?? "create"}`, keyHash = digest(key), requestHash = digest(JSON.stringify(input));
+  const scopeKey = `user:${user._id}:wedding:${weddingId}:tasks:${id ?? "create"}`, keyHash = digest(key), requestHash = digest(JSON.stringify(input)), operationKey = digest(`${user._id}:${key}`);
   const row = await db.client.withSession((session) => session.withTransaction(async () => {
     const now = new Date();
     const wedding = await db.collection("weddings").findOneAndUpdate({ _id: member.weddingId }, { $inc: { writeFence: Long.ONE } }, { session, returnDocument: "after" });
     if (!wedding) throw new AccountError(404, "NOT_FOUND", "Task unavailable.");
-    const actor = await db.collection("users").findOneAndUpdate({ _id: user._id, status: "active", credentialVersion: user.credentialVersion }, { $set: { updatedAt: now } }, { session, returnDocument: "after" });
+    const actor = await db.collection("users").findOneAndUpdate({ _id: user._id, status: "active", credentialVersion: user.credentialVersion, emailVerifiedAt: { $type: "date" } }, { $set: { updatedAt: now } }, { session, returnDocument: "after" });
     if (!actor) throw new AccountError(401, "UNAUTHENTICATED", "Please sign in again.");
     const current = await db.collection("memberships").findOneAndUpdate({ _id: member._id, userId: user._id, weddingId: wedding._id, status: "active", role: { $in: ["ADMIN", "MANAGER"] } }, { $set: { updatedAt: now } }, { session, returnDocument: "after" });
     if (!current) throw new AccountError(404, "NOT_FOUND", "Task unavailable.");
@@ -102,22 +109,28 @@ export async function saveTask(user: User, weddingId: string, id: string | null,
       const saved = await db.collection("tasks").findOne({ _id: previous.resourceId, weddingId: wedding._id }, { session });
       if (!saved) throw new AccountError(404, "NOT_FOUND", "Task unavailable."); return saved;
     }
+    if (!id && checklistsEnabled) {
+      const created = await db.collection("tasks").findOne({ weddingId: wedding._id, operationKey }, { session });
+      if (created) { if (created.createRequestHash !== requestHash) throw new AccountError(409, "IDEMPOTENCY_CONFLICT", "This save key was used for different changes."); return created; }
+    }
     if (wedding.state !== "active") throw new AccountError(409, "WEDDING_ARCHIVED", "This wedding is archived. Tasks are read-only.");
     if (timezone && timezone !== wedding.timezone) throw new AccountError(409, "WEDDING_TIMEZONE_CHANGED", "Your wedding’s time zone changed. Reload this task and review its deadline before saving.");
     const old = id ? await db.collection("tasks").findOne({ _id: new ObjectId(id), weddingId: wedding._id }, { session }) : null;
     if (id && !old) throw new AccountError(404, "NOT_FOUND", "Task unavailable.");
     if (old && old.version !== (input as z.infer<typeof patchTaskSchema>).expectedVersion) throw Object.assign(new AccountError(409, "VERSION_CONFLICT", "This task changed while you were editing. Reload the latest details before saving."), { currentVersion: old.version });
-    const source: Document = old ? { title: old.title, description: old.description, status: old.status, priority: old.priority, eventId: old.eventId?.toString(), assigneeUserId: old.assigneeUserId?.toString(), dueAt: old.dueAt?.toISOString(), ...input } : { ...input };
+    const source: Document = old ? { title: old.title, description: old.description, status: old.status, priority: old.priority, eventId: old.eventId?.toString(), assigneeUserId: old.assigneeUserId?.toString(), dueAt: old.dueAt?.toISOString(), checklist: old.checklist, ...input } : { ...input };
     delete source.expectedVersion;
     for (const field of ["description", "eventId", "assigneeUserId", "dueAt"]) if (source[field] === null) delete source[field];
     const value = createTaskSchema.parse(source);
-    if (value.eventId && !await db.collection("events").findOne({ _id: new ObjectId(value.eventId), weddingId: wedding._id, status: { $ne: "removed" } }, { session })) throw new AccountError(422, "EVENT_UNAVAILABLE", "The related event is unavailable. Select another event or choose Whole wedding.");
-    if (value.assigneeUserId) {
+    const checklistOnly = !!old && input.checklist !== undefined && Object.keys(input).every(k => ["checklist", "expectedVersion"].includes(k));
+    if (value.eventId && !checklistOnly && !await db.collection("events").findOne({ _id: new ObjectId(value.eventId), weddingId: wedding._id, status: { $ne: "removed" } }, { session })) throw new AccountError(422, "EVENT_UNAVAILABLE", "The related event is unavailable. Select another event or choose Whole wedding.");
+    if (value.assigneeUserId && !checklistOnly) {
       const target = await db.collection("memberships").findOne({ userId: new ObjectId(value.assigneeUserId), weddingId: wedding._id, status: "active", role: { $in: ["ADMIN", "MANAGER"] } }, { session });
       const person = target && await db.collection("users").findOne({ _id: target.userId, status: "active" }, { session });
       if (!person) throw new AccountError(422, "ASSIGNEE_UNAVAILABLE", "The assigned member is unavailable. Select an active member or choose Unassigned.");
     }
     const changes: Document = { title: value.title, status: value.status, priority: value.priority, updatedAt: now }, unset: Document = {};
+    if (input.checklist !== undefined) changes.checklist = value.checklist;
     for (const field of ["description", "eventId", "assigneeUserId", "dueAt"] as const) if (value[field] === undefined) unset[field] = ""; else changes[field] = field === "dueAt" ? new Date(value[field]!) : ["eventId", "assigneeUserId"].includes(field) ? new ObjectId(value[field]) : value[field];
     if (value.status === "done") changes.completedAt = old?.status === "done" && old.completedAt ? old.completedAt : now; else unset.completedAt = "";
     let saved: Document;
@@ -125,7 +138,7 @@ export async function saveTask(user: User, weddingId: string, id: string | null,
       const updated = await db.collection("tasks").findOneAndUpdate({ _id: old._id, weddingId: wedding._id, version: old.version }, { $set: changes, $unset: unset, $inc: { version: 1 } }, { session, returnDocument: "after" });
       if (!updated) throw new AccountError(409, "VERSION_CONFLICT", "Reload the latest task details."); saved = updated;
     } else {
-      saved = { ...changes, _id: new ObjectId(), weddingId: wedding._id, createdBy: user._id, checklist: [], attachmentAssetIds: [], version: 1, schemaVersion: 1, createdAt: now }; await db.collection("tasks").insertOne(saved, { session });
+      saved = { ...changes, _id: new ObjectId(), weddingId: wedding._id, createdBy: user._id, checklist: value.checklist ?? [], attachmentAssetIds: [], ...(checklistsEnabled ? { operationKey, createRequestHash: requestHash } : {}), version: 1, schemaVersion: 1, createdAt: now }; await db.collection("tasks").insertOne(saved, { session });
     }
     await db.collection("activity").insertOne({ weddingId: wedding._id, actor: { type: "user", userId: user._id }, action: old ? "task.updated" : "task.created", entityType: "task", entityId: saved._id, summary: old ? "Wedding task updated" : "Wedding task created", ...(old ? { beforeVersion: old.version } : {}), afterVersion: saved.version, occurredAt: now, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
     await db.collection("idempotencyKeys").insertOne({ scopeKey, keyHash, requestHash, state: "completed", resourceType: "task", resourceId: saved._id, responseCode: old ? 200 : 201, expiresAt: new Date(now.getTime() + 7 * 86400000), schemaVersion: 1, createdAt: now, updatedAt: now }, { session });

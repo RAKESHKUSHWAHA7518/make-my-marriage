@@ -23,6 +23,7 @@ import { migrateExpenseVendors } from "../src/infrastructure/mongodb/migrations/
 import { migrateWebsiteDrafts } from "../src/infrastructure/mongodb/migrations/015-website-drafts";
 import { migrateWebsitePublication } from "../src/infrastructure/mongodb/migrations/016-website-publication";
 import { migrateAnnouncements } from "../src/infrastructure/mongodb/migrations/017-announcements";
+import { migrateTaskChecklists } from "../src/infrastructure/mongodb/migrations/018-task-checklists";
 
 async function main() {
   try {
@@ -43,8 +44,9 @@ async function main() {
     await migrateWebsiteDrafts(await getDatabase());
     await migrateWebsitePublication(await getDatabase());
     await migrateAnnouncements(await getDatabase());
+    await migrateTaskChecklists(await getDatabase());
     console.log(
-      "Migrations 001–017 applied: account, wedding, invitations, events, tasks, households, gallery, expense, vendor, website and announcement validators/indexes ready.",
+      "Migrations 001–018 applied: account, wedding, invitations, events, tasks/checklists, households, gallery, expense, vendor, website and announcement validators/indexes ready.",
     );
   } catch {
     console.error(

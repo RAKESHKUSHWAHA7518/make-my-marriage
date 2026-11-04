@@ -1,5 +1,19 @@
 # Make My Marriage — Approved Decision Record
 
+## November 4 — Checklist activation follow-up
+
+User explicitly approved only migration 018; applied and verified in shared production November 4. Strict checklist validation, unique embedded item IDs and the exact unique partial tasks_operation index are ready. Unrelated collection validators/options/indexes and collection counts are preserved; task and wedding BSON fingerprints are unchanged. No application/sample records, provider calls or broader migration runner. Checklists are activated for this code; user acceptance and deployed verification remain separate. This supersedes the original pending-activation notes below. No commit, push or deployment performed.
+
+## November 4 — Task checklists
+
+User authorized implementation after preparing designs. Reviewed all nine named MMM V1 Task Checklists HTML exports/screenshots in Stitch project 1860855833908619349: 01 d980550473d54cbe8e8337b69d3eb74a; 02 89acfbf33cd6423bad9d3ec23f426217; 03 c6b3fcdb33bd4a5b8d59ed68a5c07204; 04 9954a16a37684904b39f1396013ecd71; 05 4b39995898b549799f6d25028c82d545; 06 9beb8a83355e4d96b9eb1c4f3016d3c5; 07 5705ce9d07ec430fa450c7563dcc37e1; 08 e5ae7686e86f4688a6f253d29dd7b869; 09 7702139d23b548d9b019093d55926afd. Preserve existing brand/navigation, burgundy headings, white/blush checklist cards, progress and responsive forms. Important-state prototypes map to actual validation, pending, uncertain retry, conflict and archived states.
+
+API/Database take precedence over prototype labels: statuses remain todo/in_progress/done/cancelled; priorities low/normal/high. Items are only stable id/text/done, at most 100, with a documented technical text bound of 500 trimmed characters. Both verified active family roles edit; archive is read-only. Completing all items never completes the parent task or alters dashboard task totals. No per-item assignees/deadlines/descriptions, drag ordering, templates, comments, reminders, autosaved drafts or provider/sync claims. Omit prototype concierge/vendor/photo widgets and technical annotations.
+
+Reuse existing task POST/PATCH and embedded checklist; no collection, dependency or service added. Omitted checklist preserves existing content; [] explicitly clears it. Checklist-only edits may retain unavailable historical event/assignee references without granting new associations. Whole-task optimistic versions prevent concurrent status/detail/checklist loss. Detail checkbox saves update only confirmed checklist state/version; explicit refresh avoids discarding a dirty sibling status form, whose stale save is rejected. Retain immutable input/key on unknown/429 outcomes. New durable create identity prevents duplicate creation after temporary receipt expiry.
+
+Migration 018 is prepared and isolated-tested ONLY: tighten existing checklist validation/unique embedded IDs, allow two optional server-only retry fields and add one unique partial task operation index. Preflight legacy rows; no backfill/application records. Production approval/application is still pending. Do not run the broad migration runner against production-connected defaults. User acceptance and deployed checks are separate from implementation verification; no commit/push/deployment requested this turn.
+
 ## November 1 — Private family announcements increment
 
 Activation follow-up: user explicitly approved only migration 017. Applied/verified in shared production November 1: strict announcement validator and both exact indexes, preservation of unrelated validators/indexes/collection counts and unchanged wedding/asset/announcement BSON fingerprints. No samples/application data/provider calls/notifications. Announcements activated for this code; remaining browser/deployed acceptance gates are separate. Supersedes the initial pending-activation decision below.
