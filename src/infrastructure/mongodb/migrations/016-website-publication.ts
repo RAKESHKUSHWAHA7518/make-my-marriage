@@ -13,13 +13,14 @@ export async function migrateWebsitePublication(db: Db) {
     coupleNames: { bsonType: "string", minLength: 1, maxLength: 403 }, intro: { bsonType: "string", maxLength: 10000 }, date: { bsonType: "string", pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }, timezone: text, contact,
     publicCoverAssetId: oid, events: { bsonType: "array", maxItems: 100, items: { bsonType: "object", additionalProperties: false, required: ["eventId", "title", "startsAt", "venue"], properties: { eventId: oid, title: text, startsAt: date, endsAt: date, venue: { bsonType: "object", additionalProperties: false, required: ["name", "address"], properties: { name: text, address: text } }, description: { bsonType: "string", maxLength: 10000 }, dressCode: text } } },
   } };
-  // Preserve the original gallery validator verbatim as its own branch.
-  const gallery = existing.$or ? existing.$or[0] : existing;
+  // Preserve every existing purpose branch, including later invitation validation.
   const copy = { $jsonSchema: { bsonType: "object", required: ["weddingId", "purpose", "visibility", "state", "publicId", "sourceAssetId", "operationKey", "reservedBytes", "expiresAt", "nextCheckAt", "version", "schemaVersion", "createdAt", "updatedAt"], oneOf: [ { properties: { state: { enum: ["ready"] } }, required: ["provider", "providerAssetId", "providerVersion", "resourceType", "format", "bytes", "width", "height"] }, { properties: { state: { enum: ["preparing", "delete_pending", "deleted"] } } } ], properties: {
     weddingId: oid, purpose: { enum: ["public_copy"] }, visibility: { enum: ["public_page"] }, state: { enum: ["preparing", "ready", "delete_pending", "deleted"] }, sourceAssetId: oid, operationKey: text, publicId: { bsonType: "string", pattern: "^mmm/[a-f0-9]{24}/website/[a-f0-9]{32}$" }, reservedBytes: { bsonType: "long", minimum: 0 }, expiresAt: date, nextCheckAt: date, version: integer, schemaVersion: { enum: [1] }, createdAt: date, updatedAt: date, deletedAt: date,
     provider: { enum: ["cloudinary"] }, providerAssetId: text, providerVersion: integer, resourceType: { enum: ["image"] }, format: { enum: ["jpg"] }, bytes: { bsonType: "long", minimum: 1 }, width: integer, height: integer,
   } } };
-  const assets = { $or: [gallery, copy] };
+  const assets = existing.$or
+    ? { ...existing, $or: existing.$or.some((branch: { $jsonSchema?: { properties?: { purpose?: { enum?: string[] } } } }) => branch.$jsonSchema?.properties?.purpose?.enum?.includes("public_copy")) ? existing.$or : [...existing.$or, copy] }
+    : { $or: [existing, copy] };
   for (const [name, validator] of [["weddings", weddings], ["assets", assets]] as const) {
     if (await db.collection(name).findOne({ $nor: [validator] }, { projection: { _id: 1 } })) throw Error("Existing records require review before publication activation.");
   }

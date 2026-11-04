@@ -6,7 +6,7 @@ export const workspaceSections = [
   { key: "tasks", label: "Tasks", href: "/wedding/tasks", icon: "checklist", planned: false, description: "Share checklists, assign responsibilities and follow up on the details." },
   { key: "vendors", label: "Vendors", href: "/wedding/vendors", icon: "store", planned: false, description: "Keep manual vendor contacts, notes and event associations together. Google Places discovery follows separately." },
   { key: "expenses", label: "Expenses", href: "/wedding/expenses", icon: "wallet", planned: false, description: "Record actual spending in your wedding currency." },
-  { key: "invitations", label: "Invitations", href: "/wedding/plan/invitations", icon: "mail", planned: true, description: "Prepare guest invitation designs, email invitations and manual WhatsApp sharing." },
+  { key: "invitations", label: "Invitations", href: "/wedding/invitations", icon: "mail", planned: false, description: "Create private invitation drafts from templates or uploaded images." },
   { key: "announcements", label: "Announcements", href: "/wedding/announcements", icon: "announcement", planned: false, description: "Keep your planning family informed with private shared updates." },
   { key: "website", label: "Website", href: "/wedding/website", icon: "globe", planned: false, description: "Prepare your private website draft and preview. Explicit publication follows separately." },
   { key: "photos", label: "Gallery", href: "/wedding/gallery", icon: "photo", planned: false, description: "Share memories through a gallery link and QR code when gallery access is enabled." },

@@ -1,0 +1,12 @@
+import { z } from "zod";
+export const designId = z.string().regex(/^[a-f0-9]{24}$/);
+export const designEvents = z.array(designId).max(100).refine(ids => new Set(ids).size === ids.length, "Choose each event once.");
+export const templates = [{ key: "elegant", name: "Elegant Typography", description: "Centered serif lettering and delicate rules." }, { key: "modern", name: "Modern Minimal", description: "Editorial alignment and generous white space." }, { key: "soft", name: "Soft Celebration Accents", description: "Subtle blush accents and a gentle frame." }] as const;
+export const palettes = { burgundy: { name: "Burgundy & blush", background: "#802b3a", text: "#fffdf9", accent: "#f7dce3" }, ivory: { name: "Classic ivory", background: "#fffdf9", text: "#40242c", accent: "#802b3a" }, sage: { name: "Deep sage", background: "#204536", text: "#fffdf9", accent: "#d2e5d8" }, rose: { name: "Midnight rose", background: "#30262b", text: "#fffdf9", accent: "#f5bdca" } } as const;
+export const templateDraft = z.strictObject({ templateKey: z.enum(["elegant", "modern", "soft"]), textFields: z.strictObject({ heading: z.string().trim().min(1).max(200), coupleNames: z.string().trim().min(1).max(403), message: z.string().trim().min(1).max(10000), closing: z.string().trim().max(1000) }), assetIds: z.array(designId).max(0), layout: z.strictObject({ palette: z.enum(["burgundy", "ivory", "sage", "rose"]), font: z.enum(["playfair", "classic", "modern"]) }) });
+export const imageDraft = z.strictObject({ assetIds: z.array(designId).length(1, "Upload and verify an invitation image before saving.") });
+export const draftSchema = z.union([templateDraft, imageDraft]);
+const fields = { name: z.string().trim().min(1, "Enter a design name.").max(200), eventIds: designEvents, draft: draftSchema };
+export const createDesignSchema = z.strictObject({ ...fields, mode: z.enum(["template", "uploaded_image"]) }).superRefine((v, ctx) => { const result = (v.mode === "template" ? templateDraft : imageDraft).safeParse(v.draft); if (!result.success) for (const i of result.error.issues) ctx.addIssue({ code: "custom", path: ["draft", ...i.path], message: i.message }); });
+export const patchDesignSchema = z.strictObject({ name: fields.name.optional(), eventIds: fields.eventIds.optional(), draft: fields.draft.optional(), expectedVersion: z.number().int().positive() }).refine(v => Object.keys(v).some(k => k !== "expectedVersion"), "Provide draft changes.");
+export type DesignInput = z.infer<typeof createDesignSchema>;

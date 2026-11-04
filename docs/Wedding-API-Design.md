@@ -1,5 +1,42 @@
 # Wedding Management — Detailed API Design
 
+## November 4 activation — invitation publication (020)
+
+User explicitly approved only migration 020. Applied and verified in shared production on November 4, 2026: all three strict/error validators and three exact designVersions indexes are ready. Previous indexes and unrelated collection metadata are preserved. Existing record counts and BSON fingerprints are unchanged across all prior collections; designVersions was created empty (zero records). No application/sample records, publication, household assignment, provider calls or broader migration runner. Database activation is complete for the updated code; browser visual/download, real-provider, deployed verification and deferred cleanup scheduling remain separate gates. This supersedes earlier pending-020 notes below. No commit, push or deployment performed.
+
+## November 4 implementation — invitation publication and card selection
+
+This supersedes the earlier draft-only limitations below. Existing operations 85–86 are implemented: POST W/designs/{designId}/publish and GET W/designs/{designId}/versions. Publish requires Idempotency-Key and strict {expectedVersion,expectedPublishedVersionId:ObjectId|null,expectedReviewHash:64hex}; review guards are additive to the original expectedVersion contract. No renderAssetId is accepted in this browser-export subset. Response remains {designVersionId,designId,revision,eventIds}. Current verified ADMIN/MANAGER, wedding/user/member fences, archive checks, activity and durable operation identity apply. Identical retries reconcile the original immutable version even after temporary receipts expire; changed key payload conflicts. Review/source/latest-reference drift returns 409 VERSION_CONFLICT, unavailable scope/image returns 422 DESIGN_NOT_READY. No publish sends or assigns anything.
+
+Supporting additions (existing catalogue IDs remain stable):
+
+| Method | Route | Contract |
+|---|---|---|
+| GET | W/designs/{designId}/review | Saved candidate content/events, availability and all three publish guard values |
+| GET | W/households/{householdId}/invitation-card | Eligible versions, selectedId, household name/version, nextCursor |
+| POST | W/households/{householdId}/invitation-card | Strict {designVersionId:ObjectId|null,expectedVersion}, Idempotency-Key; {saved:true} |
+| GET | /api/v1/guest/card?version={versionId}[&image=1] | Current selected household card DTO, or bounded sanitized JPEG; household cookie only |
+
+Version and choice pages are bounded to 12, with signed cursors scoped to actor/wedding/design or household/version. Choice pagination rejects household changes; each save independently rechecks eligibility. Version lists return current event labels/availability separately from fixed card content. Family DTOs expose no provider identity/retry hashes. Selection increments household.version while preserving RSVP and links; stale selection returns VERSION_CONFLICT and inaccessible cards CARD_INELIGIBLE. Null explicitly clears artwork. Existing selections never follow latestPublishedVersionId automatically.
+
+Guest card reads recheck active household/session/link, selected version and all represented scheduled/completed invited events. Empty scope still requires an eligible event. Guest DTO omits asset IDs, internal names/history, provider URLs and author/retry information; image URLs bind the displayed version to prevent a changed household/session from fetching another card into a stale preview. Image fetches are bounded to 4 MB, JPEG-only, timeout/no redirects and reauthorized after transfer. Gallery cookies alone grant no card access. Invalid access is neutral 404; all responses private/no-store/no-referrer/noindex. Organizer browser downloads use existing authenticated media; there is no download or render-upload API added.
+
+Mutation JSON is limited to 4 KiB with trusted Origin/CSRF and persistent per-user limits; 429/unknown outcomes retain exact client submission/key. Read operations reject unexpected/duplicate queries. Migration 020 activation is required and has not been applied to production. Manual WhatsApp and guest email delivery remain separate increments.
+
+## November 4 activation — invitation drafts
+
+User explicitly approved only migration 019; applied and verified in shared production November 4. Strict designs/assets/uploadIntents validation and all three exact indexes are ready. Original gallery/public-copy rules, unrelated collection metadata and previous indexes are preserved. Existing collection counts and wedding/asset/upload-intent/design BSON fingerprints are unchanged; the new designs collection is empty. No application/sample records, provider calls or broader migration runner. Invitation drafts are activated for this code; user acceptance, real-provider/deployed verification and existing cleanup scheduling remain separate. This supersedes the original pending-activation notes below. No commit, push or deployment performed.
+
+## November 4 implementation — invitation draft subset
+
+Operations 81–84 are implemented: GET/POST W/designs and GET/PATCH W/designs/{designId}. Publish/version operations 85–86 remain planned. Create requires trimmed name 1–200, mode=template|uploaded_image, eventIds (unique ObjectId strings, maximum 100), and draft. Existing mode is immutable; PATCH accepts name/eventIds/draft plus required expectedVersion. Omitted fields preserve content; draft is replaced as one validated value. Both writes require Idempotency-Key, optimistic conflicts and immutable retry handling; creation retains internal hash identity after receipt expiry. Safe family DTO contains draft, version/updatedAt, scoped event name/availability/change flags and image availability without provider URLs/identity, secrets or retry fields.
+
+Template draft: templateKey=elegant|modern|soft, assetIds=[], textFields={heading,coupleNames,message,closing}, layout={palette,font}. Heading 1–200, names 1–403, message 1–10,000, optional-content closing up to 1,000; all text trimmed/plain. Palette=burgundy|ivory|sage|rose; font=playfair|classic|modern. Uploaded-image draft contains exactly one verified assetId and no template/layout fields. designer/arbitrary layout, URLs and unknown fields are rejected in this subset. New/general event references must be available and same-wedding. Empty eventIds is wedding-wide wording without event-specific details. Scope validation cannot infer all events mentioned in free text/images; organizers must declare them and later delivery must recheck every represented event.
+
+Existing media intent POST accepts purpose=invitation with optional eventIds (defaults []), filename/contentType/sizeBytes and an immutable key. Family only; same 20 MB JPEG/PNG/WebP limits, provider verification, quotas and completion endpoints. Saving image drafts requires ready family invitation assets with exactly matching event IDs, not gallery assets. Asset content remains authenticated/private/no-store; shared gallery and household sessions grant no invitation-asset access. No upload automatically saves/publishes a design. Existing scheduler reconciles expired uploads and unused invitation images.
+
+Design reads/writes require current verified active ADMIN/MANAGER membership; archive is read-only. Bodies bounded to 64 KiB; mutation origin/CSRF, per-actor limits and private/no-store responses apply. List default12/max24 sorted updatedAt/ID descending; signed cursors bind actor/wedding/page size. Concurrent edits may reorder later pages. Activation requires separately approved 019; until then DESIGNS_NOT_READY fails writes and the library explains activation. No production activation performed in this increment.
+
 ## November 4 activation — task checklists
 
 User explicitly approved only migration 018; applied and verified in shared production November 4. Strict checklist validation, unique embedded item IDs and the exact unique partial tasks_operation index are ready. Unrelated collection validators/options/indexes and collection counts are preserved; task and wedding BSON fingerprints are unchanged. No application/sample records, provider calls or broader migration runner. Checklists are activated for this code; user acceptance and deployed verification remain separate. This supersedes the original pending-activation notes below. No commit, push or deployment performed.

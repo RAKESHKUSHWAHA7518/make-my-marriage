@@ -1,5 +1,33 @@
 # Wedding Management Platform — System Design Architecture
 
+## November 4 activation — invitation publication (020)
+
+User explicitly approved only migration 020. Applied and verified in shared production on November 4, 2026: all three strict/error validators and three exact designVersions indexes are ready. Previous indexes and unrelated collection metadata are preserved. Existing record counts and BSON fingerprints are unchanged across all prior collections; designVersions was created empty (zero records). No application/sample records, publication, household assignment, provider calls or broader migration runner. Database activation is complete for the updated code; browser visual/download, real-provider, deployed verification and deferred cleanup scheduling remain separate gates. This supersedes earlier pending-020 notes below. No commit, push or deployment performed.
+
+## November 4 implementation — invitation publishing and guest card selection
+
+The existing Next.js Node application now owns immutable invitation publishing/review/history in modules/designs, protected organizer pages, explicit household-version selection and current-authority guest artwork delivery. Publication transactions fence wedding/actor/membership, validate the exact reviewed candidate, append a unique revision and update only the latest reference. Draft edits and later publications never mutate snapshots or automatically replace household choices.
+
+Household selection reuses optimistic household versions and receipts without changing RSVP or capability links. Guest pages retain their existing schedule/one-household RSVP; selected artwork is optional and independently authorized. Every represented event must remain currently eligible/invited, and gallery authority is insufficient. Media proxying strips metadata through existing derivatives, bounds transfer and rechecks authorization after fetch; provider URLs never reach guests.
+
+Organizer PNG downloads run in the browser with existing local fonts and bounded line wrapping, retaining long wording. Uploaded image exports use the protected digital derivative. No package, extra deployment, render server or persistent background process added. Immutable references protect images from existing orphan reconciliation. Future delivery still uses separately reviewed email/manual-sharing flows; full designer remains deferred.
+
+Migration 020 is isolated-tested only and requires explicit production approval. Browser visual/real-provider/deployed checks and previously deferred scheduler activation remain separate release gates. See current implementation evidence rather than historical pending notes below.
+
+## November 4 reliability fix — media migration reruns
+
+Baseline media initialization no longer replaces newer collection validation or partial indexes, and publication activation preserves existing asset-purpose branches. The actual full migration CLI is tested twice against an isolated populated database, including pending upload continuation. No new service, ledger, runtime migration or API/UI change. This does not authorize running the broad command against production-connected defaults; existing scoped production approvals remain the boundary.
+
+## November 4 activation — invitation drafts
+
+User explicitly approved only migration 019; applied and verified in shared production November 4. Strict designs/assets/uploadIntents validation and all three exact indexes are ready. Original gallery/public-copy rules, unrelated collection metadata and previous indexes are preserved. Existing collection counts and wedding/asset/upload-intent/design BSON fingerprints are unchanged; the new designs collection is empty. No application/sample records, provider calls or broader migration runner. Invitation drafts are activated for this code; user acceptance, real-provider/deployed verification and existing cleanup scheduling remain separate. This supersedes the original pending-activation notes below. No commit, push or deployment performed.
+
+## November 4 implementation — invitation drafts
+
+The existing Next.js Node deployment now includes modules/designs for bounded private draft contracts, persistence, signed pagination, access/version/audit/retry controls and four documented API operations. Server pages use current organizer sessions; controlled client forms render safe code-owned templates and private previews. Uploaded images reuse Cloudinary authenticated uploads/verified metadata, shared quota accounting, protected media delivery and existing bounded reconciliation, with invitation purpose/family visibility and exact event scope separate from gallery/public authorization. No dependency, extra deployment or permanent background server added.
+
+Draft saves neither publish nor send. Event changes trigger review without rewriting content; immutable versions and dispatch remain later increments. Abandoned invitation images are reconciled only when the existing scheduler runs; scheduler activation remains deferred. Publishing must extend retained asset references to immutable versions before release. Migration 019 is prepared/isolated-tested only; production activation, live Cloudinary and deployed verification require separate follow-up. See implementation evidence for actual browser coverage and design conflicts.
+
 ## November 4 activation — task checklists
 
 User explicitly approved only migration 018; applied and verified in shared production November 4. Strict checklist validation, unique embedded item IDs and the exact unique partial tasks_operation index are ready. Unrelated collection validators/options/indexes and collection counts are preserved; task and wedding BSON fingerprints are unchanged. No application/sample records, provider calls or broader migration runner. Checklists are activated for this code; user acceptance and deployed verification remain separate. This supersedes the original pending-activation notes below. No commit, push or deployment performed.

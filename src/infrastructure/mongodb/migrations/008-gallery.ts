@@ -9,14 +9,20 @@ export async function migrateGallery(db: Db) {
   };
   for (const [name, definition] of Object.entries(definitions)) {
     const validator = { $jsonSchema: { bsonType: "object", required: [...definition.required, "schemaVersion", "createdAt", "updatedAt"], properties: definition.properties } };
-    if (await db.listCollections({ name }).hasNext()) await db.command({ collMod: name, validator, validationLevel: "strict", validationAction: "error" });
-    else await db.createCollection(name, { validator, validationLevel: "strict", validationAction: "error" });
+    const existing = await db.listCollections({ name }, { nameOnly: false }).next();
+    // This is the baseline. Later migrations own extensions to these validators.
+    if (!existing) await db.createCollection(name, { validator, validationLevel: "strict", validationAction: "error" });
+    else if (!existing.options?.validator || !Object.keys(existing.options.validator).length) await db.command({ collMod: name, validator, validationLevel: "strict", validationAction: "error" });
   }
   await db.collection("uploadIntents").createIndex({ "actor.userId": 1, operationKey: 1 }, { unique: true, name: "media_operation" });
   await db.collection("uploadIntents").createIndex({ expectedPublicId: 1 }, { unique: true, name: "media_target" });
   await db.collection("uploadIntents").createIndex({ state: 1, nextCheckAt: 1 }, { name: "media_reconcile" });
-  await db.collection("assets").createIndex({ provider: 1, providerAssetId: 1 }, { unique: true, name: "media_provider" });
-  await db.collection("assets").createIndex({ weddingId: 1, uploadIntentId: 1 }, { unique: true, name: "media_intent" });
+  // Migration 016 upgrades these unique indexes to partial indexes. Retain that scope.
+  const assetIndexes = await db.collection("assets").indexes();
+  for (const [name, key] of [["media_provider", { provider: 1, providerAssetId: 1 }], ["media_intent", { weddingId: 1, uploadIntentId: 1 }]] as const) {
+    const partial = assetIndexes.find(index => index.name === name)?.partialFilterExpression;
+    await db.collection("assets").createIndex(key, { unique: true, name, ...(partial ? { partialFilterExpression: partial } : {}) });
+  }
   await db.collection("assets").createIndex({ weddingId: 1, purpose: 1, state: 1, _id: -1 }, { name: "media_gallery" });
   await db.collection("assets").createIndex({ state: 1, nextCheckAt: 1 }, { name: "media_cleanup" });
   await db.collection("weddings").updateMany({ "storage.limitBytes": Long.ZERO, $expr: { $lte: [{ $add: ["$storage.usedBytes", "$storage.reservedBytes"] }, Long.fromNumber(1_000_000_000)] } }, { $set: { "storage.limitBytes": Long.fromNumber(1_000_000_000) }, $inc: { writeFence: Long.ONE } });

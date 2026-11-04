@@ -93,6 +93,11 @@ async function resolve(raw: string | undefined, session?: ClientSession) {
   const wedding = await db.collection("weddings").findOne({ _id: link.weddingId, state: { $in: ["active", "archived"] } }, { session });
   if (!household || !wedding) throw invitationUnavailable(); return { grantSession, link, household, wedding };
 }
+/** Current household invitation authority, independent of gallery access. */
+export async function householdInvitationGrant(raw: string | undefined) {
+  await guestAccessReady();
+  return resolve(raw);
+}
 export async function guestSite(raw: string | undefined): Promise<GuestSite> {
   await guestAccessReady(); const { household, wedding } = await resolve(raw); return siteView(wedding, household, await eligible(wedding._id, household));
 }

@@ -17,7 +17,8 @@ export async function migrateHouseholds(db: Db) {
     } } },
     { $expr: { $cond: [{ $eq: ["$rsvp.status", "attending"] }, { $and: [{ $gte: ["$rsvp.attendeeCount", 1] }, { $lte: ["$rsvp.attendeeCount", "$maxGuests"] }] }, { $eq: ["$rsvp.attendeeCount", 0] }] } },
   ] };
-  if (await db.listCollections({ name: "households" }).hasNext()) await db.command({ collMod: "households", validator, validationLevel: "strict", validationAction: "error" });
+  const existing = (await db.listCollections({ name: "households" }, { nameOnly: false }).next())?.options?.validator;
+  if (await db.listCollections({ name: "households" }).hasNext()) await db.command({ collMod: "households", validator: existing?.$and?.[0]?.$jsonSchema?.properties?.designVersionId ? existing : validator, validationLevel: "strict", validationAction: "error" });
   else await db.createCollection("households", { validator, validationLevel: "strict", validationAction: "error" });
   await db.collection("households").createIndex({ weddingId: 1, status: 1, displayName: 1, _id: 1 }, { name: "households_list" });
   await db.collection("households").createIndex({ weddingId: 1, status: 1, "rsvp.status": 1 }, { name: "households_rsvp" });

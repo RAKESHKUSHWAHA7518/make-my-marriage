@@ -50,6 +50,6 @@ export async function handleMedia(request: NextRequest, action: "list"|"create"|
     const known = error instanceof AccountError, validation = error instanceof z.ZodError;
     const status = known ? error.status : validation ? 422 : 503;
     const guestStorageError = known && error.code === "STORAGE_FULL" && ["guest", "household"].includes(request.nextUrl.searchParams.get("audience") ?? "");
-    return NextResponse.json({ error: { code: known ? error.code : validation ? "VALIDATION_ERROR" : "MEDIA_SERVICE_UNAVAILABLE", message: guestStorageError ? "This gallery cannot accept more photos right now. Please contact the family." : known ? error.message : validation ? "Check the selected photo and try again." : "The gallery is temporarily unavailable. Please retry." },requestId },{status,headers:{...headers,...(status === 429 ? {"Retry-After":"900"} : {})}});
+    return NextResponse.json({ error: { code: known ? error.code : validation ? "VALIDATION_ERROR" : "MEDIA_SERVICE_UNAVAILABLE", message: guestStorageError ? "This gallery cannot accept more photos right now. Please contact the family." : known ? error.message : validation ? "Check the selected photo and try again." : "Image upload or viewing is temporarily unavailable. Please retry." },requestId },{status,headers:{...headers,...(status === 429 ? {"Retry-After":"900"} : {})}});
   }
 }

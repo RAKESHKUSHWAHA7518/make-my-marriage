@@ -1,5 +1,19 @@
 # Make My Marriage
 
+## Invitation publishing — November 4 increment
+
+Invitation drafts now have explicit publish review, fixed version history, digital PNG downloads and eligible household card selection. /guest shows only that household’s selected authorized card alongside its existing RSVP/events. Publishing never sends, publishes the website or automatically changes household choices. Existing private draft and published image references are retained by cleanup.
+
+After explicit user approval, only migration 020 was applied/verified in shared production November 4. Three strict validators and three indexes are ready; previous indexes, unrelated metadata and existing record counts/BSON fingerprints are unchanged. The new designVersions collection is empty; nothing was published, assigned or sent. Database activation is complete for this code. Do not run broad db:migrate against current production-connected defaults. npm run test:design-publication requires exactly mongodb://127.0.0.1:27197/?replicaSet=designsqa and creates/drops only its disposable test database. Browser visual/download, real-provider, deployed checks and deferred cleanup scheduler remain release gates. See [current evidence](docs/Wedding-Implementation-Status.md#invitation-publication-and-household-cards--november-4-2026).
+
+Migration rerun regression: `npm run test:migrations` uses exactly `MONGODB_URI=mongodb://127.0.0.1:27197/?replicaSet=designsqa` and a disposable random database. It runs the actual CLI twice after invitation uploads and verifies preserved validation/indexes/records plus continued upload finalization. Baseline migrations 008/016 preserve newer media rules. This test does not authorize production migration runs. See [rerun evidence](docs/Wedding-Implementation-Status.md#media-migration-rerun-fix--november-4-2026).
+
+## Invitation drafts — November 4 increment
+
+/wedding/invitations supports a private draft library, three editable templates, wording/palette/font controls, uploaded invitation images, explicit save/reopen and organizer-only previews. ADMIN/MANAGER share editing; archive is read-only. Invitation images are separate from the gallery and bind to the selected event scope. Saving does not publish or send. After explicit user approval, only migration 019 was applied and verified in shared production November 4. Draft/media validators and three indexes are ready; existing records, collection counts and unrelated metadata are unchanged. Invitation drafts are activated for this code; user acceptance and real-provider/deployed checks remain. Publishing/immutable versions, downloads, advanced designer and delivery follow separately. Existing media cleanup scheduling remains a release gate. See [invitation evidence](docs/Wedding-Implementation-Status.md#invitation-draft-creation--november-4-2026).
+
+`npm run test:designs` requires exactly `MONGODB_URI=mongodb://127.0.0.1:27197/?replicaSet=designsqa`; it uses random disposable test databases and a fake provider, without .env fallback. `npm run test:design-ui` runs without network/database access. Never run production-connected test mutations or the broad migration runner.
+
 ## Task checklists — November 4 increment
 
 Tasks now support optional embedded checklists at creation, focused editing, confirmed completion saves and compact list progress. Task status remains an independent decision. Both active family roles can edit; archives are read-only. After explicit user approval, only migration 018 was applied and verified in shared production November 4. Checklist validation and the unique partial operation index are ready; existing task/wedding records, collection counts and unrelated metadata are unchanged. Checklists are activated for this code; user acceptance and deployed verification remain. See [implementation evidence](docs/Wedding-Implementation-Status.md#task-checklists--november-4-2026) and [current project status](docs/Wedding-Project-Status.md).

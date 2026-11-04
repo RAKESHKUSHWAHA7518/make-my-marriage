@@ -17,7 +17,7 @@ export function mediaConfiguration() {
 function signature(fields: Record<string, string>, secret: string) {
   return createHash("sha256").update(Object.keys(fields).sort().map(key => `${key}=${fields[key]}`).join("&") + secret).digest("hex");
 }
-const publicIdSchema = z.string().regex(/^mmm\/[a-f0-9]{24}\/gallery\/[a-f0-9]{32}$/);
+const publicIdSchema = z.string().regex(/^mmm\/[a-f0-9]{24}\/(?:gallery|invitations)\/[a-f0-9]{32}$/);
 const copyIdSchema = z.string().regex(/^mmm\/[a-f0-9]{24}\/website\/[a-f0-9]{32}$/);
 export const galleryMaxBytes = 20_000_000;
 export const galleryFormats = ["jpg", "png", "webp"] as const;

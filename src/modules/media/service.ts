@@ -9,9 +9,11 @@ import { deleteGalleryTarget, galleryMaxBytes, inspectGalleryAsset, InvalidPhoto
 
 const missing = () => new AccountError(404, "MEDIA_UNAVAILABLE", "Photo or upload unavailable.");
 const id = (value: string) => { if (!/^[a-f0-9]{24}$/.test(value)) throw missing(); return new ObjectId(value); };
-const uploadSchema = z.strictObject({ purpose: z.literal("gallery"), filename: z.string().trim().min(1).max(200).regex(/\.(jpe?g|png|webp)$/i), contentType: z.enum(["image/jpeg", "image/png", "image/webp"]), sizeBytes: z.string().regex(/^[1-9]\d{0,7}$/).transform(Number).pipe(z.number().int().max(galleryMaxBytes)) });
+const uploadSchema = z.strictObject({ purpose: z.enum(["gallery", "invitation"]), eventIds: designEvents.optional(), filename: z.string().trim().min(1).max(200).regex(/\.(jpe?g|png|webp)$/i), contentType: z.enum(["image/jpeg", "image/png", "image/webp"]), sizeBytes: z.string().regex(/^[1-9]\d{0,7}$/).transform(Number).pipe(z.number().int().max(galleryMaxBytes)) });
 export const versionSchema = z.strictObject({ expectedVersion: z.number().int().positive() });
 import { galleryFamilyAccess, mediaReady } from "./access";
+import { designsEnabled } from "@/modules/designs/service";
+import { designEvents } from "@/modules/designs/schema";
 import { authorizeGuestUpload, guestUploadsReady, type GuestUploadActor } from "./gallery-access";
 export { galleryFamilyAccess, mediaReady } from "./access";
 type UploadActor = User | GuestUploadActor;
@@ -24,7 +26,7 @@ function active(wedding: Document) { if (wedding.state !== "active") throw new A
 function view(asset: Document) { return { id: asset._id.toString(), filename: asset.filename as string, version: asset.version as number, bytes: asset.bytes.toString() as string, width: asset.width as number, height: asset.height as number }; }
 export type GalleryPhoto = ReturnType<typeof view>;
 async function audit(session: ClientSession, weddingId: ObjectId, actor: Document, entityId: ObjectId, action: string) {
-  const now = new Date(); await (await getDatabase()).collection("activity").insertOne({ weddingId, actor, entityType: "asset", entityId, action, summary: action === "media.ready" ? "Photo added to family gallery" : "Photo removed from gallery", occurredAt: now, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
+  const now = new Date(); await (await getDatabase()).collection("activity").insertOne({ weddingId, actor, entityType: "asset", entityId, action, summary: action === "invitation.image.ready" ? "Private invitation image verified" : action === "media.ready" ? "Photo added to family gallery" : "Photo removed from gallery", occurredAt: now, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
 }
 export async function listGallery(user: User, cursor?: string) {
   await mediaReady(); const wedding = await access(user), db = await getDatabase();
@@ -36,6 +38,9 @@ export type GalleryPageData = Awaited<ReturnType<typeof listGallery>>;
 function intentView(row: Document) { return { id: row._id.toString(), state: row.state as string, expiresAt: row.expiresAt.toISOString() as string, assetId: row.assetId?.toString() as string | undefined }; }
 export async function createUpload(user: UploadActor, payload: unknown, key: string | null) {
   const input = uploadSchema.parse(payload); if (!key || !/^[\w-]{16,128}$/.test(key)) throw new AccountError(400,"SAVE_KEY_REQUIRED","A valid upload key is required.");
+  if (input.purpose === "invitation" && isGuest(user)) throw new AccountError(403,"FORBIDDEN","Only the planning family can upload invitation images.");
+  if (input.purpose === "gallery" && input.eventIds !== undefined) throw new AccountError(422,"INVALID_SCOPE","Gallery uploads do not accept invitation event scope.");
+  if (input.purpose === "invitation" && !await designsEnabled()) throw new AccountError(503,"DESIGNS_NOT_READY","Invitation uploads are awaiting activation.");
   await mediaReady(); if (isGuest(user)) await guestUploadsReady(); const db = await getDatabase(), operationKey = digest(isGuest(user) ? `guest:${user._id}:${key}` : key), requestHash = digest(JSON.stringify(input));
   // Configuration/signing failures happen before reserving storage.
   signedGalleryUpload(`mmm/${new ObjectId()}/gallery/${randomBytes(16).toString("hex")}`);
@@ -43,10 +48,12 @@ export async function createUpload(user: UploadActor, payload: unknown, key: str
     const wedding = await access(user, session, true); active(wedding);
     const previous = await db.collection("uploadIntents").findOne({ ...actorFilter(user), operationKey }, { session });
     if (previous) { if (previous.requestHash !== requestHash) throw new AccountError(409,"IDEMPOTENCY_CONFLICT","This upload key belongs to a different file."); return previous; }
+    const eventIds = (input.eventIds ?? []).map(value => new ObjectId(value));
+    if (input.purpose === "invitation" && await db.collection("events").countDocuments({ weddingId: wedding._id, _id: { $in: eventIds }, status: { $nin: ["removed","cancelled"] } }, { session }) !== eventIds.length) throw new AccountError(422,"EVENT_UNAVAILABLE","Review the selected invitation events.");
     const reserved = Long.fromNumber(input.sizeBytes), now = new Date();
     const changed = await db.collection("weddings").updateOne({ _id: wedding._id, $expr: { $lte: [{ $add: ["$storage.usedBytes", "$storage.reservedBytes", reserved] }, "$storage.limitBytes"] } }, { $inc: { "storage.reservedBytes": reserved } }, { session });
     if (!changed.modifiedCount) throw new AccountError(409,"STORAGE_FULL","Your wedding storage allowance is reached.");
-    const intent = { _id: new ObjectId(), weddingId: wedding._id, actor: isGuest(user) ? { type: user.kind, capabilitySessionId: user._id } : { type: "user", userId: user._id, credentialVersion: user.credentialVersion }, ...(isGuest(user) ? { capabilitySessionId: user._id, ...(user.kind === "gallery" ? { galleryTokenVersion: user.galleryTokenVersion } : { capabilityLinkId: user.capabilityLinkId, capabilityVersion: user.capabilityVersion }) } : {}), purpose: "gallery", filename: input.filename, sizeBytes: input.sizeBytes, reservedBytes: reserved, maxBytes: galleryMaxBytes, operationKey, requestHash, expectedPublicId: `mmm/${wedding._id}/gallery/${randomBytes(16).toString("hex")}`, state: "reserved", expiresAt: new Date(now.getTime()+15*60000), nextCheckAt: new Date(now.getTime()+15*60000), version: 1, schemaVersion: 1, createdAt: now, updatedAt: now };
+    const intent = { _id: new ObjectId(), weddingId: wedding._id, actor: isGuest(user) ? { type: user.kind, capabilitySessionId: user._id } : { type: "user", userId: user._id, credentialVersion: user.credentialVersion }, ...(isGuest(user) ? { capabilitySessionId: user._id, ...(user.kind === "gallery" ? { galleryTokenVersion: user.galleryTokenVersion } : { capabilityLinkId: user.capabilityLinkId, capabilityVersion: user.capabilityVersion }) } : {}), purpose: input.purpose, ...(input.purpose === "invitation" ? { audienceEventIds: eventIds } : {}), filename: input.filename, sizeBytes: input.sizeBytes, reservedBytes: reserved, maxBytes: galleryMaxBytes, operationKey, requestHash, expectedPublicId: `mmm/${wedding._id}/${input.purpose === "invitation" ? "invitations" : "gallery"}/${randomBytes(16).toString("hex")}`, state: "reserved", expiresAt: new Date(now.getTime()+15*60000), nextCheckAt: new Date(now.getTime()+15*60000), version: 1, schemaVersion: 1, createdAt: now, updatedAt: now };
     await db.collection("uploadIntents").insertOne(intent, { session }); return intent;
   }, { writeConcern: { w: "majority" } }));
   if (!row || row.state !== "reserved" || row.expiresAt <= new Date()) throw new AccountError(409,"UPLOAD_EXPIRED","This upload must be reconciled before starting again.");
@@ -62,7 +69,7 @@ export async function completeUpload(user: UploadActor, intentId: string) {
   if (!initial) throw missing();
   if (!isGuest(user) && initial.actor.credentialVersion !== user.credentialVersion) throw new AccountError(403,"UPLOAD_AUTH_CHANGED","Your sign-in changed. This upload will be reconciled.");
   if (initial.state === "finalized") {
-    if (!await db.collection("assets").findOne({ _id: initial.assetId, weddingId: initial.weddingId, state: "ready", purpose: "gallery" })) throw new AccountError(409,"PHOTO_REMOVED","This upload was saved previously, but its photo has since been removed.");
+    if (!await db.collection("assets").findOne({ _id: initial.assetId, weddingId: initial.weddingId, state: "ready", purpose: initial.purpose })) throw new AccountError(409,"PHOTO_REMOVED","This upload was saved previously, but its photo has since been removed.");
     return { ...(await uploadFor(user, intentId)), ready: true };
   }
   if (initial.state !== "reserved" || initial.expiresAt <= new Date()) throw new AccountError(409,"UPLOAD_EXPIRED","This upload expired and will be cleaned up.");
@@ -77,7 +84,7 @@ export async function completeUpload(user: UploadActor, intentId: string) {
     const row = await db.collection("uploadIntents").findOne({ _id: initial._id, weddingId: wedding._id, ...actorFilter(user) }, { session });
     if (!row) throw missing();
     if (row.state === "finalized") {
-      if (!await db.collection("assets").findOne({ _id: row.assetId, weddingId: row.weddingId, state: "ready", purpose: "gallery" }, { session })) throw new AccountError(409,"PHOTO_REMOVED","This photo has since been removed.");
+      if (!await db.collection("assets").findOne({ _id: row.assetId, weddingId: row.weddingId, state: "ready", purpose: row.purpose }, { session })) throw new AccountError(409,"PHOTO_REMOVED","This photo has since been removed.");
       return { ...intentView(row), ready: true };
     }
     if (row.state !== "reserved" || row.expiresAt <= new Date()) throw new AccountError(409,"UPLOAD_EXPIRED","The upload expired before verification finished.");
@@ -85,9 +92,9 @@ export async function completeUpload(user: UploadActor, intentId: string) {
     const changed = await db.collection("weddings").updateOne({ _id: wedding._id, "storage.reservedBytes": { $gte: row.reservedBytes }, $expr: { $lte: [{ $add: ["$storage.usedBytes", "$storage.reservedBytes", difference] }, "$storage.limitBytes"] } }, { $inc: { "storage.reservedBytes": Long.fromValue(row.reservedBytes).negate(), "storage.usedBytes": actual } }, { session });
     if (!changed.modifiedCount) return { ...intentView(row), ready: false, quotaRejected: true };
     const assetId = new ObjectId();
-    await db.collection("assets").insertOne({ _id: assetId, weddingId: wedding._id, uploadIntentId: row._id, purpose: "gallery", provider: "cloudinary", ...metadata, bytes: actual, visibility: "gallery", uploadedBy: row.actor, filename: row.filename, state: "ready", version: 1, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
+    await db.collection("assets").insertOne({ _id: assetId, weddingId: wedding._id, uploadIntentId: row._id, purpose: row.purpose, ...(row.purpose === "invitation" ? { audienceEventIds: row.audienceEventIds, orphanAfter: new Date(now.getTime()+86400000) } : {}), provider: "cloudinary", ...metadata, bytes: actual, visibility: row.purpose === "invitation" ? "family" : "gallery", uploadedBy: row.actor, filename: row.filename, state: "ready", version: 1, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
     await db.collection("uploadIntents").updateOne({ _id: row._id, state: "reserved" }, { $set: { state: "finalized", assetId, finalizedAt: now, reservationReleasedAt: now, updatedAt: now }, $inc: { version: 1 } }, { session });
-    await audit(session, wedding._id, row.actor, assetId, "media.ready");
+    await audit(session, wedding._id, row.actor, assetId, row.purpose === "invitation" ? "invitation.image.ready" : "media.ready");
     return { id: row._id.toString(), state: "finalized", assetId: assetId.toString(), ready: true };
   }, { writeConcern: { w: "majority" } }));
   if (result && "quotaRejected" in result) { await rejectIntent(initial._id); throw new AccountError(409,"STORAGE_FULL","Verified photo exceeds available wedding storage and will be cleaned up."); }
@@ -104,7 +111,7 @@ async function rejectIntent(intentId: ObjectId) {
   }, { writeConcern: { w: "majority" } }));
 }
 export async function assetFor(user: User, assetId: string) {
-  await mediaReady(); const wedding = await access(user), row = await (await getDatabase()).collection("assets").findOne({ _id: id(assetId), weddingId: wedding._id, purpose: "gallery", state: "ready" });
+  await mediaReady(); const wedding = await access(user), row = await (await getDatabase()).collection("assets").findOne({ _id: id(assetId), weddingId: wedding._id, purpose: { $in: ["gallery", "invitation"] }, state: "ready" });
   if (!row) throw missing(); return row;
 }
 export async function removeAsset(user: User, weddingId: string, assetId: string, payload: unknown) {
@@ -132,6 +139,15 @@ export async function reconcileMedia() {
       await deleteGalleryTarget(row.expectedPublicId);
       await db.collection("uploadIntents").updateOne({ _id: row._id, state: { $in: ["rejected", "expired"] } }, { $set: { nextCheckAt: new Date(Date.now()+86400000), updatedAt: new Date() } }); processed++;
     } catch { failed++; await db.collection("uploadIntents").updateOne({ _id: row._id }, { $set: { nextCheckAt: new Date(Date.now()+300000) } }); }
+  }
+  const orphanImages = await db.collection("assets").find({ purpose: "invitation", state: "ready", orphanAfter: { $lte: new Date() } }).limit(3).toArray();
+  for (const asset of orphanImages) {
+    await db.client.withSession(session => session.withTransaction(async () => {
+      await db.collection("weddings").updateOne({ _id: asset.weddingId }, { $inc: { writeFence: Long.ONE } }, { session });
+      const referenced = await db.collection("designs").findOne({ weddingId: asset.weddingId, "draft.assetIds": asset._id.toString() }, { session, projection: { _id: 1 } }) || await db.collection("designVersions").findOne({ weddingId: asset.weddingId, "content.draft.assetIds": asset._id.toString() }, { session, projection: { _id: 1 } });
+      if (!referenced) await db.collection("assets").updateOne({ _id: asset._id, state: "ready" }, { $set: { state: "delete_pending", nextCheckAt: new Date() }, $inc: { version: 1 } }, { session });
+      else await db.collection("assets").updateOne({ _id: asset._id, state: "ready" }, { $set: { orphanAfter: new Date(Date.now()+86400000) } }, { session });
+    }));
   }
   const expiredCovers = await db.collection("assets").find({ purpose: "public_copy", state: "preparing", expiresAt: { $lte: new Date() } }).sort({ nextCheckAt: 1 }).limit(3).toArray();
   for (const row of expiredCovers) {

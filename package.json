@@ -43,7 +43,11 @@
     "test:announcement-ui": "node --import tsx --test tests/announcement-render.test.tsx",
     "test:vendors": "node --conditions=react-server --import tsx --test tests/vendors.test.ts tests/vendor-form.test.mjs",
     "test:discovery": "node --conditions=react-server --import tsx --test tests/places-provider.test.ts tests/vendor-discovery.test.ts tests/vendor-discovery-ui.test.mjs",
-    "test:saved-vendors": "node --conditions=react-server --import tsx --test tests/saved-google-vendors.test.ts tests/vendor-form.test.mjs tests/saved-place-details.test.mjs"
+    "test:saved-vendors": "node --conditions=react-server --import tsx --test tests/saved-google-vendors.test.ts tests/vendor-form.test.mjs tests/saved-place-details.test.mjs",
+    "test:designs": "node --conditions=react-server --import tsx --test tests/designs.test.ts tests/design-editor.test.mjs tests/design-upload.test.mjs",
+    "test:design-ui": "node --import tsx --test tests/design-render.test.tsx",
+    "test:migrations": "node --conditions=react-server --import tsx --test tests/migration-runner.test.ts",
+    "test:design-publication": "node --conditions=react-server --import tsx --test tests/design-publication.test.ts tests/publication-actions.test.mjs tests/design-export.test.mjs"
   },
   "dependencies": {
     "argon2": "0.45.1",
