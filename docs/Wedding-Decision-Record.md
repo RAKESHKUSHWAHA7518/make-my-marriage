@@ -1,5 +1,17 @@
 # Make My Marriage — Approved Decision Record
 
+## November 10 — Private expense receipts
+
+Use the six MMM V1 Expense Receipts Stitch designs on the existing Expense Details page. Reuse the task attachment flow for PDF, JPEG, PNG and WebP, with 4 MB per file and 20 receipts per saved expense. Images use protected previews; PDFs use file details and a download. The prototype's larger limit, inline PDF viewer and payment-related controls fall outside this increment. Soft-removing an expense preserves its receipt references for retention and blocks access to the files.
+
+## November 10 — Private task attachments
+
+Use the six MMM V1 Task Attachments Stitch references in the existing Task Details page between Checklist and Comments. Accept PDF, JPEG, PNG and WebP, up to 4 MB per file and 20 saved files per task. Verify direct authenticated uploads with Cloudinary before linking them. Images use a protected preview; PDFs show file details and download only. Only active family members can change attachments on active weddings. Archived weddings retain family viewing and downloads. Exclude guest sharing, comment attachments and receipt management.
+
+## November 10 — Event attendance summary
+
+Use the five MMM V1 Event Attendance Stitch references on the existing Event Details page. Show household counts separately from projected people. On cancelled or removed events, label the summary as family history based on the assignments and RSVP responses currently on record. The prototype's frozen attendance totals, check-in, household contact information and communications controls are outside this increment.
+
 ## November 9 — Event lifecycle controls
 
 Use the six MMM V1 Event Lifecycle Stitch designs in project 1860855833908619349 for the existing Events and Event Details screens. Active ADMINs and MANAGERs can complete or cancel a scheduled event. Draft, completed and cancelled events can be removed; a scheduled event must be cancelled or completed first. Removal is final within this workflow and retains family history. The prototype's scheduled editing, QR revocation, guest notices, linked-task archival, refund and attendance widgets are outside this increment. Existing tasks, guest assignments and responses retain their records. Public and household reads use current event eligibility.

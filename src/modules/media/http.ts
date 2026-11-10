@@ -5,7 +5,8 @@ import { randomUUID } from "node:crypto";
 import { currentUser, rateLimit } from "@/modules/identity/service";
 import { AccountError, digest } from "@/modules/identity/security";
 import { body, cookieName, trustedMutation } from "@/modules/identity/http";
-import { galleryDeliveryUrl } from "@/infrastructure/cloudinary/provider";
+import { galleryDeliveryUrl, privateAttachmentDownloadUrl } from "@/infrastructure/cloudinary/provider";
+import { isPrivateAttachment, privateAttachmentMaxBytes } from "@/modules/media/attachment-policy";
 import { assetFor, completeUpload, createUpload, listGallery, removeAsset, uploadFor } from "./service";
 import { guestGallery, guestGalleryAsset, guestUploadActor } from "./gallery-access";
 import { galleryCookieName } from "./gallery-http";
@@ -27,15 +28,21 @@ export async function handleMedia(request: NextRequest, action: "list"|"create"|
       if (uploadGuest) await rateLimit(`guest-media-wedding-${action}`, uploadGuest.weddingId.toString(), action === "create" ? 600 : 1800);
     }
     if (action === "content") {
-      const variant = z.enum(["thumbnail","gallery"]).parse(request.nextUrl.searchParams.get("variant") ?? "thumbnail");
+      const variant = z.enum(["thumbnail","gallery","download"]).parse(request.nextUrl.searchParams.get("variant") ?? "thumbnail");
       const asset = guest ? await guestGalleryAsset(resourceId!, galleryToken, householdToken) : await assetFor(user!, resourceId!);
       if (guest) await rateLimit("gallery-content", digest(galleryToken ?? householdToken!), 1200);
-      const upstream = await fetch(galleryDeliveryUrl(asset.publicId, asset.providerVersion, variant), { redirect: "error", cache: "no-store", signal: AbortSignal.timeout(15000) });
-      const max = 4_000_000;
-      if (!upstream.ok || !upstream.body || !upstream.headers.get("content-type")?.startsWith("image/jpeg") || Number(upstream.headers.get("content-length") ?? 0) > max) { await upstream.body?.cancel(); throw Error("Media delivery unavailable"); }
+      const attachment = !guest && isPrivateAttachment(asset.purpose);
+      if ((!attachment && variant === "download") || (attachment && asset.format === "pdf" && variant !== "download")) throw new AccountError(404, "MEDIA_UNAVAILABLE", "File or preview unavailable.");
+      const download = variant === "download";
+      const url = download ? privateAttachmentDownloadUrl(asset.publicId, asset.providerVersion, asset.format) : galleryDeliveryUrl(asset.publicId, asset.providerVersion, variant);
+      const upstream = await fetch(url, { redirect: "error", cache: "no-store", signal: AbortSignal.timeout(15000) });
+      const max = privateAttachmentMaxBytes;
+      const mime = download ? asset.format === "pdf" ? "application/pdf" : asset.format === "jpg" ? "image/jpeg" : `image/${asset.format}` : "image/jpeg";
+      if (!upstream.ok || !upstream.body || upstream.headers.get("content-type")?.split(";")[0].trim() !== mime || Number(upstream.headers.get("content-length") ?? 0) > max) { await upstream.body?.cancel(); throw Error("Media delivery unavailable"); }
       let bytes = 0;
       const bounded = upstream.body.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({ transform(chunk, controller) { bytes += chunk.byteLength; if (bytes > max) throw Error("Photo delivery limit exceeded"); controller.enqueue(chunk); } }));
-      return new NextResponse(bounded, { headers: { ...headers, "Content-Type":"image/jpeg", "Content-Disposition":"inline" } });
+      const filename = download ? encodeURIComponent(asset.filename).replace(/['()*]/g, char => `%${char.charCodeAt(0).toString(16)}`) : "";
+      return new NextResponse(bounded, { headers: { ...headers, "Content-Type": mime, "Content-Disposition": download ? `attachment; filename*=UTF-8''${filename}` : "inline" } });
     }
     let data;
     if (action === "list") data = guest ? await guestGallery(galleryToken, householdToken, request.nextUrl.searchParams.get("cursor") ?? undefined) : await listGallery(user!,request.nextUrl.searchParams.get("cursor") ?? undefined);

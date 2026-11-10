@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getDatabase } from "@/infrastructure/mongodb/client";
 import { AccountError, digest } from "@/modules/identity/security";
 import type { User } from "@/modules/identity/service";
+import { householdsReady, type RsvpTotals } from "@/modules/households/service";
 import { membershipFor } from "@/modules/weddings/service";
 import { createEventSchema, patchEventSchema, eventVersionSchema, eventTypes, eventStatuses, eventTransitionSources, type EventStatus } from "./schema";
 
@@ -55,6 +56,32 @@ export async function eventFor(user: User, weddingId: string, id: string) {
   await eventsReady();
   const row = await (await getDatabase()).collection("events").findOne({ _id: new ObjectId(id), weddingId: member.weddingId });
   return row ? view(row) : null;
+}
+
+export type EventAttendance = {
+  eventId: string;
+  eventStatus: EventStatus;
+  invitedHouseholds: number;
+  counts: RsvpTotals["counts"];
+  projectedPeople: number;
+};
+
+export async function eventAttendance(user: User, weddingId: string, eventId: string): Promise<EventAttendance> {
+  const event = await eventFor(user, weddingId, eventId);
+  if (!event) throw new AccountError(404, "NOT_FOUND", "Event unavailable.");
+  await householdsReady();
+  const db = await getDatabase();
+  const rows = await db.collection("households").aggregate<{ _id: keyof RsvpTotals["counts"]; households: number; people: number }>([
+    { $match: { weddingId: new ObjectId(weddingId), invitedEventIds: new ObjectId(eventId), status: "active" } },
+    { $group: { _id: "$rsvp.status", households: { $sum: 1 }, people: { $sum: "$rsvp.attendeeCount" } } },
+  ]).toArray();
+  const counts = { pending: 0, attending: 0, not_attending: 0, maybe: 0 };
+  for (const row of rows) counts[row._id] = row.households;
+  return {
+    eventId: event.id, eventStatus: event.status, counts,
+    invitedHouseholds: Object.values(counts).reduce((total, count) => total + count, 0),
+    projectedPeople: rows.find(row => row._id === "attending")?.people ?? 0,
+  };
 }
 export async function createEvent(user: User, weddingId: string, payload: unknown, key: string | null, expectedTimezone?: string | null) {
   if (!key || !/^[A-Za-z0-9_-]{16,128}$/.test(key)) throw new AccountError(400, "IDEMPOTENCY_KEY_REQUIRED", "A valid Idempotency-Key is required.");

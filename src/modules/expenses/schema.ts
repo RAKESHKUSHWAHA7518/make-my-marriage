@@ -10,7 +10,7 @@ const fields = z.strictObject({
   amountMinor: z.string().regex(/^[1-9]\d{0,18}$/, "Enter a positive amount.").refine(v => /^[1-9]\d{0,18}$/.test(v) && BigInt(v) <= MAX_MONEY, "Amount is too large."),
   currency: z.enum(currencies), expenseDate: instant, category: z.enum(expenseCategories),
   eventId: objectId.optional(), vendorId: objectId.optional(), notes: z.string().trim().max(10000).optional(),
-  // Receipts are deliberately empty until the family-only receipt workflow exists.
+  // Existing clients may send an empty array. Attachments use the protected receipt workflow.
   receiptAssetIds: z.array(objectId).max(0).default([]),
 });
 export const createExpenseSchema = fields;

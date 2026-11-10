@@ -11,7 +11,7 @@ import { listTasks, taskFor, saveTask } from "@/modules/tasks/service";
 import { listHouseholds, householdFor, saveHousehold } from "@/modules/households/service";
 import { listWeddingAccess } from "./access";
 import { manageMember } from "./members";
-import { createEvent, updateEvent, eventFor, listEvents } from "@/modules/events/service";
+import { createEvent, updateEvent, eventFor, listEvents, eventAttendance } from "@/modules/events/service";
 import {
   inviteFamily,
   revokeFamilyInvitation,
@@ -43,6 +43,7 @@ export async function handleWedding(
     | "list-events"
     | "create-event"
     | "event-detail"
+    | "event-attendance"
     | "update-event"
     | "cancel-event"
     | "remove-event"
@@ -121,6 +122,11 @@ export async function handleWedding(
       const result = await eventFor(user, id!, inviteId!);
       if (!result) throw new AccountError(404, "NOT_FOUND", "Event unavailable.");
       return NextResponse.json({ data: result, requestId }, { headers });
+    }
+    if (action === "event-attendance") {
+      if (request.nextUrl.search) throw new AccountError(400, "INVALID_QUERY", "Unexpected query fields.");
+      const data = await eventAttendance(user, id!, inviteId!);
+      return NextResponse.json({ data, requestId }, { headers });
     }
     if (action === "members" || action === "invitations") {
       const result = await listWeddingAccess(

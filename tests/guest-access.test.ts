@@ -11,7 +11,8 @@ import { migrateEvents } from "../src/infrastructure/mongodb/migrations/004-even
 import { migrateHouseholds } from "../src/infrastructure/mongodb/migrations/006-households";
 import { migrateHouseholdAccess } from "../src/infrastructure/mongodb/migrations/007-household-access";
 import { createWedding } from "../src/modules/weddings/service";
-import { createEvent, updateEvent } from "../src/modules/events/service";
+import { createEvent, updateEvent, eventAttendance } from "../src/modules/events/service";
+import { handleWedding } from "../src/modules/weddings/http";
 import { saveHousehold, rsvpTotals } from "../src/modules/households/service";
 import { invitationLink, exchangeHousehold, guestSite, saveGuestRsvp, logoutHousehold } from "../src/modules/guest-access/service";
 import { handleGuest } from "../src/modules/guest-access/http";
@@ -47,6 +48,41 @@ test("private household access uses only an asserted disposable database", async
       assert.equal(await db.listCollections({ name: "capabilityLinks" }).hasNext(), false);
     });
     await migrateHouseholdAccess(db); await migrateHouseholdAccess(db);
+    await t.test("event attendance counts active invited households and exposes family-only historical totals", async () => {
+      const f = await opened();
+      const otherEvent = await createEvent(f.user, f.wedding.id, { name: "Other event", type: "custom", startsAt: "2027-03-01T04:30:00Z", venue: { name: "Venue", address: "Address" } }, key());
+      await saveGuestRsvp(f.session, await payload(f.session, "attending", 3), key());
+      const pending = await saveHousehold(f.user, f.wedding.id, null, { ...f.input, displayName: "Pending group", invitedEventIds: [f.event.id, otherEvent.id] }, key());
+      assert.ok(pending);
+      assert.deepEqual(await eventAttendance(f.user, f.wedding.id, f.event.id), {
+        eventId: f.event.id, eventStatus: "scheduled", invitedHouseholds: 2,
+        counts: { attending: 1, pending: 1, maybe: 0, not_attending: 0 }, projectedPeople: 3,
+      });
+      assert.equal((await eventAttendance(f.user, f.wedding.id, otherEvent.id)).projectedPeople, 0);
+      const outsider = await fixture();
+      await assert.rejects(eventAttendance(outsider.user, f.wedding.id, f.event.id), { status: 404 });
+      await assert.rejects(eventAttendance(f.user, f.wedding.id, outsider.event.id), { status: 404 });
+      const url = `http://localhost:3001/api/v1/weddings/${f.wedding.id}/events/${f.event.id}/attendance`;
+      assert.equal((await handleWedding(new NextRequest(url), "event-attendance", f.wedding.id, f.event.id)).status, 401);
+      const token = randomBytes(32).toString("base64url"), now = new Date();
+      await db.collection("sessions").insertOne({ userId: f.user._id, tokenHash: digest(token), credentialVersion: 1, expiresAt: new Date(Date.now() + 3600000), lastSeenAt: now, schemaVersion: 1, createdAt: now, updatedAt: now });
+      await db.collection("memberships").updateOne({ userId: f.user._id }, { $set: { role: "MANAGER" } });
+      const read = () => handleWedding(new NextRequest(url, { headers: { Cookie: `mmm_session=${token}` } }), "event-attendance", f.wedding.id, f.event.id);
+      const response = await read();
+      assert.equal(response.status, 200);
+      assert.match(response.headers.get("cache-control")!, /no-store/);
+      assert.equal((await response.json()).data.projectedPeople, 3);
+      await saveHousehold(f.user, f.wedding.id, pending.id, { expectedVersion: pending.version }, key(), true);
+      const cancelled = await updateEvent(f.user, f.wedding.id, f.event.id, { expectedVersion: f.event.version }, key(), null, "cancel");
+      assert.ok(cancelled);
+      await updateEvent(f.user, f.wedding.id, f.event.id, { expectedVersion: cancelled.version }, key(), null, "remove");
+      const history = await eventAttendance(f.user, f.wedding.id, f.event.id);
+      assert.equal(history.eventStatus, "removed");
+      assert.equal(history.projectedPeople, 3);
+      assert.equal(history.invitedHouseholds, 1);
+      await db.collection("memberships").updateOne({ userId: f.user._id }, { $set: { status: "removed" } });
+      assert.equal((await read()).status, 404);
+    });
     await t.test("stable encrypted links are shared by authorised roles, never another wedding", async () => {
       const f = await opened();
       const links = await Promise.all([1, 2].map(() => invitationLink(f.user, f.wedding.id, f.group.id))); assert(links.every(l => l!.url === f.link.url));

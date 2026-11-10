@@ -130,6 +130,8 @@ export async function saveExpense(user: User, weddingId: string, id: string | nu
       saved = (await db.collection("expenses").findOneAndUpdate({ _id: old!._id, version: old!.version }, { $set: { deletedAt: now, updatedAt: now }, $inc: { version: 1 } }, { session, returnDocument: "after" }))!;
     } else {
       const changes: Document = { ...input }; delete changes.expectedVersion;
+      // Legacy PATCH clients may still send an empty array. Only the receipt flow can change saved links.
+      if (old) delete changes.receiptAssetIds;
       const merged = { ...old, ...changes };
       if (merged.vendorId && (!old?.vendorId || old.vendorId.toString() !== merged.vendorId.toString())) {
         // Vendor removal uses the same wedding fence. Validate without changing the vendor record.
