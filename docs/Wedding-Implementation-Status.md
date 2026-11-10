@@ -1,5 +1,39 @@
 # Make My Marriage — Implementation Status
 
+**Chrome QA follow-up — November 10, 2026:** Opened the app in Chrome and verified the signed-out workspace redirect, registration and recovery screens. In a disposable loopback app and database, verified sign-in, dashboard totals and rendering of the guest, vendor, invitation, announcement, website, gallery, family and wedding-details sections. The Settings page remains a planned-feature placeholder. A synthetic task comment and status change persisted; scheduling a synthetic event sent no invitations, and adding one assigned household changed attendance from zero households to one awaiting response and zero projected attendees. The task attachments and expense receipts panels loaded their empty states and file limits. Attendance, task details and expense details showed no horizontal overflow at 390px. Chrome extension file URL access blocked file selection; upload, preview, download and removal were not verified end-to-end in Chrome. Real delivery, publication and external provider flows were not exercised. No production records changed. The disposable QA copy and database were removed.
+
+**Independent regression QA — November 10, 2026:** Verified the current private expense receipt, private task attachment and event attendance changes using disposable loopback MongoDB instances and mocked providers. All 172 reported checks passed: expenses 29, media 17, migrations 7, events 20, RSVP 14, tasks 16, checklists 13, gallery access 12, guest uploads 15, gallery UI 8, design publication 16 and invitation email 5. TypeScript, zero-warning lint and diff whitespace checks passed. Initial runs exposed missing synthetic key configuration and mismatched replica-set names; corrected isolated reruns passed. No production records or application code changed. Desktop/mobile browser acceptance and live Cloudinary delivery were not exercised.
+
+## Private expense receipts — November 10, 2026
+
+Reviewed all six Stitch HTML exports and desktop/mobile screenshots. Added the Receipts panel below the saved expense details, with selection, progress, retry, preview/download, removal, loading, error and archived states. Reuses the Task Attachments component. Supports PDF, JPEG, PNG and WebP, up to 4 MB each and 20 per expense. PDFs show file details and download only.
+
+Migration 024 adds family-only receipt assets and intents scoped to one saved expense. Authorized upload finalization verifies the provider object and transactionally links the receipt and settles storage. Removal unlinks it and queues the existing media cleanup. Both operations preserve spending totals. Legacy expense edits sending an empty receipt list preserve links. Soft-removed expenses retain references and deny new finalization and file access. Live Cloudinary delivery, cleanup scheduling and desktop/mobile browser acceptance remain open.
+
+The isolated media and migration run passed 22 checks, including receipt ownership, archived reads, repeatable removal, unchanged expense totals, legacy expense edits and deletion during an outstanding upload. The full migration runner was repeated twice with populated task, receipt, gallery, invitation and public-copy data. Lint, TypeScript, diff whitespace checks and the production webpack build passed.
+
+Applied only migration 024 to the shared production database with explicit approval. Verified both strict/error media validators, the expense binding and family-only rules. Existing media counts, BSON fingerprints, indexes, prior validation branches and other collection options matched before and after. No collections or test records were added.
+
+Post-activation automated QA ran only against disposable localhost databases. The expanded migration and receipt suite passed seven checks, and the expense suite passed 29. Receipt HTTP coverage verifies private no-store listing, anonymous denial, authenticated PDF download with attachment disposition, cross-origin removal denial, archive rejection, repeatable authorized removal and unchanged budget totals. Cloudinary was mocked. Live delivery and browser acceptance remain open.
+
+## Private task attachments — November 10, 2026
+
+Reviewed six Stitch HTML exports and the desktop/mobile screenshots. Added the responsive Attachments section between Checklist and Comments. It supports PDF/JPEG/PNG/WebP up to 4 MB, with at most 20 saved files per task. Images have a protected preview. PDFs use a metadata view and original download. The screen has selection validation, per-file progress, immutable retry, removal confirmation, and independent loading and error states.
+
+Existing direct authenticated Cloudinary uploads independently verify the target and file format. Finalization links the file, updates the task version and accounts for storage in one transaction. Removal unlinks the file and queues existing cleanup without changing task status or checklist progress. Downloads recheck family access and current linkage. Migration 023 extends the existing validators; earlier migration runs preserve the task attachment branch.
+
+The isolated attachment, migration and invitation regression run passed 21 checks with mocked Cloudinary. It included concurrent finalization, populated migration reruns, cross-task denial, family-only PDF delivery, archived reads and repeatable removal. Lint, TypeScript, diff whitespace checks and the production webpack build passed. Desktop/mobile browser acceptance, live Cloudinary PDF delivery and cleanup scheduling remain open. Cloudinary Free environments may require enabling PDF delivery in their security settings. [Cloudinary delivery documentation](https://cloudinary.com/documentation/image_delivery_options)
+
+Applied only migration 023 to the shared production database with explicit user approval. Verified strict/error validation for both assets and uploadIntents, the task scope and family-only rules, and preservation of the previous media rules. Existing record counts, BSON fingerprints, indexes, other collection options and the collection list matched before and after. No test files or other application records were created.
+
+## Event attendance summary — November 10, 2026
+
+Reviewed all five Stitch HTML exports and the desktop and mobile screenshots. The existing Event Details page now contains a private, responsive summary with separate household and people metrics, a four-status breakdown, no-invitations and awaiting-response states, and independent loading and retry. Cancelled and removed events show totals based on the retained records currently available.
+
+The same-wedding family endpoint groups active assigned households using the existing household index. Only attending headcounts contribute to projected people. The response includes aggregates without household identities, and it is private/no-store. No migration or production test records were needed.
+
+The isolated event and guest-access run passed 25 checks, including per-event scope, removed household exclusion, cross-wedding denial, revoked membership, both family roles, no-store responses and retained event history. Lint, TypeScript and diff whitespace checks passed. The temporary database instance was removed. Browser acceptance and deployment verification remain open.
+
 ## Event lifecycle controls — November 9, 2026
 
 Reviewed the six MMM V1 Event Lifecycle Stitch HTML exports and the desktop, mobile and history screenshots. Completion is the primary action on scheduled events. Cancellation and removal use a separate status-management section. Confirmations display the saved event and explain the effect. The existing family Events list includes Completed, Cancelled and Removed filters. Archived events remain readable with actions hidden. Prototypes were adapted to the existing workspace and the current API boundaries.

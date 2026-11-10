@@ -133,3 +133,27 @@
 .task-comment-skeleton { display: grid; gap: 8px; margin: 12px 0 4px; }
 .task-comment-skeleton span { display: block; width: 85%; height: 12px; border-radius: 6px; background: #ecd8dd; }
 .task-comment-skeleton span + span { width: 55%; }
+
+.private-attachments { margin: 24px 0; padding: clamp(16px, 3vw, 32px); }
+.private-attachments-header, .private-attachment-actions {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px;
+}
+.private-attachments-header { justify-content: space-between; margin-bottom: 16px; }
+.private-attachments-header h2 { margin: 0; color: #802b3a; }
+.private-attachments-header span { color: #69565a; font-size: .875rem; }
+.private-attachments-header .private-attachment-count { display: inline-block; padding: 2px 8px; border-radius: 16px; background: #f8dce1; color: #802b3a; }
+.private-attachment-state, .private-attachment-list li { padding: 14px; border: 1px solid #ead8dd; border-radius: 9px; background: #fff5f6; }
+.private-attachment-state + .private-attachment-state { margin-top: 12px; }
+.private-attachment-state p, .private-attachment-list p { margin: 6px 0; }
+.private-attachment-state input { max-width: 100%; min-height: 44px; }
+.private-attachment-state input::file-selector-button { min-height: 44px; padding-inline: 10px; }
+.private-attachment-list { display: grid; gap: 10px; list-style: none; margin: 14px 0; padding: 0; }
+.private-attachment-saved { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
+.private-attachment-saved > div:first-child { flex: 1 1 230px; min-width: 0; }
+.private-attachment-filename { overflow-wrap: anywhere; }
+.private-attachment-actions { margin-top: 8px; }
+.private-attachments .button { min-height: 44px; margin: 0; padding: 8px 14px; }
+.private-attachments :focus-visible { outline: 2px solid #802b3a; outline-offset: 2px; }
+.private-attachments [role="alert"] { color: #802b3a; }
+.private-attachments progress { width: min(100%, 280px); accent-color: #802b3a; }
+.private-attachment-dialog img { display: block; max-width: 100%; height: auto; max-height: 55vh; object-fit: contain; }

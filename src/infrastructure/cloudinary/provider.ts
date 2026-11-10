@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { privateAttachmentMaxBytes, type AttachmentFormat } from "@/modules/media/attachment-policy";
 
 const configurationSchema = z.object({
   cloudName: z.string().regex(/^[A-Za-z0-9_-]+$/),
@@ -19,6 +20,7 @@ function signature(fields: Record<string, string>, secret: string) {
 }
 const publicIdSchema = z.string().regex(/^mmm\/[a-f0-9]{24}\/(?:gallery|invitations)\/[a-f0-9]{32}$/);
 const copyIdSchema = z.string().regex(/^mmm\/[a-f0-9]{24}\/website\/[a-f0-9]{32}$/);
+const attachmentIdSchema = z.string().regex(/^mmm\/[a-f0-9]{24}\/(?:task-attachments|receipts)\/[a-f0-9]{32}$/);
 export const galleryMaxBytes = 20_000_000;
 export const galleryFormats = ["jpg", "png", "webp"] as const;
 export class InvalidPhotoError extends Error {}
@@ -26,8 +28,17 @@ export class InvalidPhotoError extends Error {}
 /** Only server-generated IDs belong here; authorization/quota reservation precede this call. */
 export function signedGalleryUpload(publicId: string, now = new Date()) {
   publicIdSchema.parse(publicId);
+  return signedImageUpload(publicId, galleryFormats.join(","), now);
+}
+
+export function signedPrivateAttachmentUpload(publicId: string, format: AttachmentFormat, now = new Date()) {
+  attachmentIdSchema.parse(publicId);
+  return signedImageUpload(publicId, format, now);
+}
+
+function signedImageUpload(publicId: string, allowedFormats: string, now: Date) {
   const config = mediaConfiguration();
-  const fields = { public_id: publicId, timestamp: String(Math.floor(now.getTime() / 1000)), type: "authenticated", overwrite: "false", allowed_formats: galleryFormats.join(",") };
+  const fields = { public_id: publicId, timestamp: String(Math.floor(now.getTime() / 1000)), type: "authenticated", overwrite: "false", allowed_formats: allowedFormats };
   return { method: "POST" as const, url: `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`, fields: { ...fields, api_key: config.apiKey, signature: signature(fields, config.apiSecret) } };
 }
 
@@ -61,7 +72,7 @@ export function verifiedGalleryMetadata(raw: unknown, expectedPublicId: string) 
 
 /** Destroy only an application-owned target, across resource types to clean endpoint misuse too. */
 export async function deleteGalleryTarget(publicId: string) {
-  z.union([publicIdSchema, copyIdSchema]).parse(publicId);
+  z.union([publicIdSchema, copyIdSchema, attachmentIdSchema]).parse(publicId);
   const config = mediaConfiguration();
   for (const resourceType of ["image", "video", "raw"]) {
     const fields = { public_id: publicId, type: "authenticated", invalidate: "true", timestamp: String(Math.floor(Date.now() / 1000)) };
@@ -81,9 +92,41 @@ export async function inspectGalleryAsset(expectedPublicId: string) {
   return verifiedGalleryMetadata(data, expectedPublicId);
 }
 
+export async function inspectPrivateAttachment(expectedPublicId: string, format: AttachmentFormat) {
+  attachmentIdSchema.parse(expectedPublicId);
+  const response = await adminRequest(`resources/image/authenticated/${encodeURIComponent(expectedPublicId)}`);
+  if (response.status === 404) return null;
+  if (!response.ok) throw Error("Cloudinary verification unavailable");
+  const raw: unknown = await response.json();
+  const parsed = providerAssetSchema.extend({
+    public_id: attachmentIdSchema, format: z.enum(["jpg", "png", "webp", "pdf"]),
+    bytes: z.number().int().positive().max(privateAttachmentMaxBytes),
+    width: providerAssetSchema.shape.width.optional(), height: providerAssetSchema.shape.height.optional(),
+  }).safeParse(raw);
+  if (!parsed.success || parsed.data.public_id !== expectedPublicId || parsed.data.format !== format ||
+      (format !== "pdf" && (!parsed.data.width || !parsed.data.height || (parsed.data.pages ?? 1) !== 1))) {
+    throw new InvalidPhotoError("Attachment verification failed");
+  }
+  const value = parsed.data;
+  return {
+    providerAssetId: value.asset_id, publicId: value.public_id, resourceType: value.resource_type,
+    format: value.format, bytes: value.bytes, providerVersion: value.version,
+    ...(value.width && value.height ? { width: value.width, height: value.height } : {}),
+  };
+}
+
+export function privateAttachmentDownloadUrl(publicId: string, version: number, format: AttachmentFormat) {
+  attachmentIdSchema.parse(publicId);
+  z.number().int().positive().parse(version);
+  z.enum(["jpg", "png", "webp", "pdf"]).parse(format);
+  const config = mediaConfiguration(), path = `v${version}/${publicId}.${format}`;
+  const signed = createHash("sha256").update(path + config.apiSecret).digest("base64url").slice(0, 8);
+  return `https://res.cloudinary.com/${config.cloudName}/image/authenticated/s--${signed}--/${path}`;
+}
+
 /** Server-only upstream URL; never return it in API JSON or redirect the browser to it. */
 export function galleryDeliveryUrl(publicId: string, version: number, variant: "thumbnail" | "gallery") {
-  z.union([publicIdSchema, copyIdSchema]).parse(publicId); z.number().int().positive().parse(version);
+  z.union([publicIdSchema, copyIdSchema, attachmentIdSchema]).parse(publicId); z.number().int().positive().parse(version);
   if (variant !== "thumbnail" && variant !== "gallery") throw new Error("Unsupported media variant");
   const config = mediaConfiguration();
   const transform = variant === "thumbnail" ? "c_limit,w_480,h_480,f_jpg,q_80,fl_strip_profile" : "c_limit,w_1920,h_1920,f_jpg,q_85,fl_strip_profile";

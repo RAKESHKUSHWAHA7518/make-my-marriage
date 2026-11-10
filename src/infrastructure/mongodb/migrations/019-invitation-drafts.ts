@@ -10,10 +10,14 @@ export async function migrateInvitationDrafts(db: Db) {
   assetBranch.$jsonSchema.properties.uploadedBy = { bsonType: "object", required: ["type", "userId", "credentialVersion"], properties: { type: { enum: ["user"] }, userId: oid, credentialVersion: integer } };
   assetBranch.$jsonSchema.required = [...assetBranch.$jsonSchema.required, "audienceEventIds", "orphanAfter"];
   const assets = { ...existingAssets, $or: [...existingAssets.$or.filter((branch: { $jsonSchema?: { properties?: { purpose?: { enum?: string[] } } } }) => !branch.$jsonSchema?.properties?.purpose?.enum?.includes("invitation")), assetBranch] };
-  const schema = intents.$jsonSchema; schema.properties.purpose = { enum: ["gallery", "invitation"] }; schema.properties.audienceEventIds = ids;
-  const condition = { oneOf: [{ properties: { purpose: { enum: ["gallery"] } } }, { required: ["audienceEventIds"], properties: { purpose: { enum: ["invitation"] }, actor: { required: ["userId", "credentialVersion"], properties: { type: { enum: ["user"] } } } } }] };
-  if (schema.allOf && JSON.stringify(schema.allOf) !== JSON.stringify([condition])) throw Error("Existing upload rules require review before activation.");
-  schema.allOf = [condition];
+  const schema = intents.$jsonSchema;
+  const hasTaskAttachments = schema.properties.purpose.enum.includes("task_attachment") && schema.properties.taskId && schema.properties.attachmentFormat;
+  if (!hasTaskAttachments) {
+    schema.properties.purpose = { enum: ["gallery", "invitation"] }; schema.properties.audienceEventIds = ids;
+    const condition = { oneOf: [{ properties: { purpose: { enum: ["gallery"] } } }, { required: ["audienceEventIds"], properties: { purpose: { enum: ["invitation"] }, actor: { required: ["userId", "credentialVersion"], properties: { type: { enum: ["user"] } } } } }] };
+    if (schema.allOf && JSON.stringify(schema.allOf) !== JSON.stringify([condition])) throw Error("Existing upload rules require review before activation.");
+    schema.allOf = [condition];
+  }
   const draft = { bsonType: "object", oneOf: [
     { additionalProperties: false, required: ["templateKey", "textFields", "assetIds", "layout"], properties: { templateKey: { enum: ["elegant", "modern", "soft"] }, assetIds: { bsonType: "array", maxItems: 0 }, textFields: { bsonType: "object", additionalProperties: false, required: ["heading", "coupleNames", "message", "closing"], properties: { heading: text(200, 1), coupleNames: text(403, 1), message: text(10000, 1), closing: text(1000) } }, layout: { bsonType: "object", additionalProperties: false, required: ["palette", "font"], properties: { palette: { enum: ["burgundy", "ivory", "sage", "rose"] }, font: { enum: ["playfair", "classic", "modern"] } } } } },
     { additionalProperties: false, required: ["assetIds"], properties: { assetIds: { bsonType: "array", minItems: 1, maxItems: 1, items: { bsonType: "string", pattern: "^[a-f0-9]{24}$" } } } },

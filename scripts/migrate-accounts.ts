@@ -31,6 +31,8 @@ import { migrateInvitationPublication } from "../src/infrastructure/mongodb/migr
 
 import { migrateGuestInvitationEmail } from "../src/infrastructure/mongodb/migrations/021-guest-invitation-email";
 import { migrateTaskComments } from "../src/infrastructure/mongodb/migrations/022-task-comments";
+import { migrateTaskAttachments } from "../src/infrastructure/mongodb/migrations/023-task-attachments";
+import { migrateExpenseReceipts } from "../src/infrastructure/mongodb/migrations/024-expense-receipts";
 
 async function main() {
   try {
@@ -56,8 +58,10 @@ async function main() {
     await migrateInvitationPublication(await getDatabase());
     await migrateGuestInvitationEmail(await getDatabase());
     await migrateTaskComments(await getDatabase());
+    await migrateTaskAttachments(await getDatabase());
+    await migrateExpenseReceipts(await getDatabase());
     console.log(
-      "Migrations 001–022 applied. Application validators and indexes are ready.",
+      "Migrations 001–024 applied. Application validators and indexes are ready.",
     );
   } catch {
     console.error(

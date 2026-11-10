@@ -440,6 +440,8 @@ Tasks remain in `tasks`. End times must follow start times. Guests can see only 
 
 Event lifecycle uses the existing migration 004 status values and indexes. Status changes, activity and idempotency receipts commit under the wedding write fence. Cancellation and removal retain event records and related references. If a published website snapshot includes an affected event, set its source-change flag in the same transaction. Public and household reads suppress ineligible event statuses.
 
+Event attendance reads the existing household assignment index `households_events` and groups each matching active household by its saved RSVP status. There is no per-event RSVP or attendance snapshot collection.
+
 ### `households`
 
 One record represents one representative and their family/group. Its RSVP applies to every currently invited event; the application does not collect separate event answers.
@@ -553,6 +555,8 @@ October 25 first increment: explicit migration 005 defines task validation plus 
 
 An omitted event means wedding-wide. Haldi is an event containing many tasks, not a single mandatory task. An assignee must be an active member of the same wedding; removal leaves historical assignment visible but marks it inactive in the UI. Reassignment remains possible. Enforce bounded attachment lists and reference permissions.
 
+Migration 023 extends the existing media validators with the family-only `task_attachment` purpose. Intents retain the task ID and declared format. Verified assets retain the same task ID; finalization and removal update the task's bounded `attachmentAssetIds` atomically with media state and activity. Removal uses existing deferred provider cleanup and storage reconciliation. Earlier media migrations preserve this purpose on rerun.
+
 ### `comments`
 
 | Field | Type | Required? | Meaning |
@@ -633,6 +637,8 @@ One row records one actual expense amount. Multiple rows may reference the same 
 Total spent = sum amountMinor for non-deleted wedding expenses. Optional budget remaining = wedding budget minus total spent. A shared charge is recorded once without eventId, not duplicated for every event. Recording a later actual expenditure adds another simple expense row; it does not create a payment schedule. Existing activity and receipts remain supported.
 
 Vendor removal preserves expense references. All referenced events, vendors and receipt assets must belong to the same wedding.
+
+Migration 024 extends existing media validators with family-only `receipt` assets and upload intents scoped by `expenseId`. Finalization and explicit receipt removal update the existing bounded expense reference array and media state transactionally. Expense removal retains the historical links and blocks subsequent receipt access and finalization. Explicit receipt removal queues existing provider cleanup and storage reconciliation. Receipt operations do not change recorded amounts or budget totals.
 
 ## 10. Invitation designs
 

@@ -6,6 +6,7 @@ import { eventDate, eventTime, eventTypeLabels, eventStatusLabels, eventTransiti
 import { WorkspaceShell } from "@/components/weddings/workspace-shell";
 import { ScheduleEvent } from "@/components/weddings/schedule-event";
 import { WeddingIcon } from "@/components/weddings/wedding-icon";
+import { EventAttendancePanel } from "@/components/weddings/event-attendance";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Event details | Make My Marriage" };
@@ -46,6 +47,7 @@ export default async function EventPage({ params, searchParams }: { params: Prom
           <section className="workspace-panel"><h2><WeddingIcon name="calendar" />Date &amp; time</h2><div className="event-time-grid"><div><small>Starts</small><strong>{eventDate(event.startsAt, wedding.timezone)}</strong><em>{eventTime(event.startsAt, wedding.timezone)}</em></div><div><small>Concludes</small>{event.endsAt ? <><strong>{eventDate(event.endsAt, wedding.timezone)}</strong><em>{eventTime(event.endsAt, wedding.timezone)}</em></> : <strong>End time not decided</strong>}</div></div><p className="event-timezone"><WeddingIcon name="globe" />Timezone: {wedding.timezone}</p></section>
           <section className="workspace-panel"><h2><WeddingIcon name="bookmark" />Notes &amp; dress code</h2><dl className="event-notes"><div><dt>Dress code</dt><dd>{event.dressCode || "Not provided"}</dd></div><div><dt>Description</dt><dd>{event.description || "Not provided"}</dd></div></dl></section>
         </div><div><section className="workspace-panel"><h2><WeddingIcon name="pin" />Celebration venue</h2><h3>{event.venue.name}</h3><p>{event.venue.address}</p>{event.venue.mapUrl && <a className="button button-secondary event-map-link" href={event.venue.mapUrl} target="_blank" rel="noopener noreferrer">Open venue map ↗</a>}</section><aside className="event-privacy"><WeddingIcon name="lock" /><p>{event.status === "draft" ? "This draft is visible to your planning family. It has not been shared with guests or published publicly." : "Guest visibility depends on explicit event invitations. Public wedding information is published separately."}</p></aside></div></div>
+        <EventAttendancePanel key={`${wedding.id}:${event.id}:${event.version}`} weddingId={wedding.id} eventId={event.id} />
         {secondaryAction && <section className="workspace-panel event-lifecycle-panel">
           <h2>Event status management</h2>
           <p>{event.status === "scheduled" ? "Cancellation hides this event from guest invitations and the public wedding page while keeping its family history." : "Removal takes this event out of the celebrations list and keeps it in family history."}</p>

@@ -1,5 +1,21 @@
 # Make My Marriage — Project Status
 
+**Chrome QA follow-up — November 10, 2026:** Verified workspace navigation, selected task/event/guest saves, the attendance update, and desktop/mobile rendering of the three new panels with disposable data. File selection was blocked by Chrome extension permissions; live upload and delivery remain unverified. See [implementation evidence](Wedding-Implementation-Status.md).
+
+**Independent QA — November 10, 2026:** The current expense receipt, task attachment and event attendance changes passed 172 isolated automated checks across 12 suites, plus type checking and lint. Desktop/mobile browser acceptance and live Cloudinary delivery remain open. See [verification details](Wedding-Implementation-Status.md).
+
+## Private expense receipts — November 10, 2026
+
+Implemented family-only receipts on saved Expense Details, with per-file progress and retry, image preview, PDF download, and confirmed removal. Receipt changes preserve the recorded expense and budget totals. Production migration 024 was applied and verified. The production build and all 36 post-activation automated checks passed. The automated checks used disposable databases and mocked Cloudinary. Live Cloudinary delivery and desktop/mobile browser acceptance remain pending. [Implementation evidence](Wedding-Implementation-Status.md#private-expense-receipts--november-10-2026)
+
+## Private task attachments — November 10, 2026
+
+Implemented family-only attachments between Checklist and Comments on Task Details. Supports staged uploads, per-file progress and retry, image preview, downloads and confirmed removal. Archived weddings retain read access. The isolated attachment, migration and invitation regression run passed 21 checks. Production migration 023 was applied and verified with explicit approval. Live Cloudinary delivery and desktop/mobile browser acceptance remain pending. [Implementation evidence](Wedding-Implementation-Status.md#private-task-attachments--november-10-2026)
+
+## Event attendance summary — November 10, 2026
+
+Implemented a private Attendance panel on Event Details using the five Stitch references. It shows assigned households, RSVP counts and projected people, with a family-history label for cancelled or removed events. The isolated event and guest-access run passed 25 checks. Desktop/mobile browser acceptance and deployment verification remain open. [Implementation evidence](Wedding-Implementation-Status.md#event-attendance-summary--november-10-2026)
+
 ## Event lifecycle controls — November 9, 2026
 
 Implemented completion, cancellation and retained removal in Event Details, plus family history filters. Guest invitations and public pages use the current status. The isolated event, guest access and publication run passed 46 checks. Browser acceptance and deployed verification remain pending. The existing event schema supports this increment. [Implementation evidence](Wedding-Implementation-Status.md#event-lifecycle-controls--november-9-2026)
