@@ -11,7 +11,7 @@ import { migrateEvents } from "../src/infrastructure/mongodb/migrations/004-even
 import { migrateHouseholds } from "../src/infrastructure/mongodb/migrations/006-households";
 import { migrateHouseholdAccess } from "../src/infrastructure/mongodb/migrations/007-household-access";
 import { createWedding } from "../src/modules/weddings/service";
-import { createEvent } from "../src/modules/events/service";
+import { createEvent, updateEvent } from "../src/modules/events/service";
 import { saveHousehold, rsvpTotals } from "../src/modules/households/service";
 import { invitationLink, exchangeHousehold, guestSite, saveGuestRsvp, logoutHousehold } from "../src/modules/guest-access/service";
 import { handleGuest } from "../src/modules/guest-access/http";
@@ -77,8 +77,10 @@ test("private household access uses only an asserted disposable database", async
       const f = await opened(), input = await payload(f.session);
       await db.collection("events").updateOne({ _id: new ObjectId(f.event.id) }, { $inc: { version: 1 } });
       await assert.rejects(saveGuestRsvp(f.session, input, key()), { code: "VERSION_CONFLICT" });
-      await db.collection("events").updateOne({ _id: new ObjectId(f.event.id) }, { $set: { status: "cancelled" } });
+      await updateEvent(f.user, f.wedding.id, f.event.id, { expectedVersion: f.event.version + 1 }, key(), null, "cancel");
       assert.equal((await guestSite(f.session)).events.length, 0); await assert.rejects(saveGuestRsvp(f.session, await payload(f.session), key()), { code: "NO_ELIGIBLE_EVENTS" });
+      const saved = await saveHousehold(f.user, f.wedding.id, f.group.id, { expectedVersion: f.group.version, notes: "Retain historical invitation" }, key());
+      assert.deepEqual(saved?.invitedEventIds, [f.event.id]);
     });
     await t.test("rotation is idempotent and immediately invalidates prior links and sessions", async () => {
       const f = await opened(), rotation = { payload: { expectedLinkVersion: 1 }, key: key() };

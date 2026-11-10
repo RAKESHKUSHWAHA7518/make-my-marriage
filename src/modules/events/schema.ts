@@ -1,6 +1,12 @@
 import { z } from "zod";
 
 export const eventTypes = ["haldi", "mehendi", "sangeet", "wedding", "reception", "pre_wedding", "post_wedding", "custom"] as const;
+export const eventStatuses = ["draft", "scheduled", "completed", "cancelled", "removed"] as const;
+export type EventStatus = (typeof eventStatuses)[number];
+export const eventStatusLabels = { draft: "Draft", scheduled: "Scheduled", completed: "Completed", cancelled: "Cancelled", removed: "Removed" } satisfies Record<EventStatus, string>;
+export const eventTransitionSources = {
+  scheduled: ["draft"], completed: ["scheduled"], cancelled: ["scheduled"], removed: ["draft", "completed", "cancelled"],
+} satisfies Record<Exclude<EventStatus, "draft">, EventStatus[]>;
 export const eventTypeLabels: Record<(typeof eventTypes)[number], string> = {
   haldi: "Haldi", mehendi: "Mehendi", sangeet: "Sangeet", wedding: "Wedding",
   reception: "Reception", pre_wedding: "Pre-wedding", post_wedding: "Post-wedding", custom: "Custom",
@@ -29,14 +35,15 @@ export const createEventSchema = eventFields.superRefine((value, context) => {
 });
 export type CreateEvent = z.infer<typeof createEventSchema>;
 
+export const eventVersionSchema = z.strictObject({ expectedVersion: z.number().int().positive() });
 export const patchEventSchema = eventFields.omit({ status: true }).partial().extend({
-  expectedVersion: z.number().int().positive(),
-  status: z.literal("scheduled").optional(),
+  ...eventVersionSchema.shape,
+  status: z.enum(["scheduled", "completed"]).optional(),
   endsAt: instant.nullable().optional(),
   description: z.string().trim().max(10000).nullable().optional(),
   dressCode: text.nullable().optional(),
 }).refine((value) => Object.keys(value).some((key) => key !== "expectedVersion"), "Supply at least one editable field.")
-  .refine((value) => !value.status || Object.keys(value).every((key) => key === "status" || key === "expectedVersion"), "Schedule the saved event separately from editing its details.");
+  .refine((value) => !value.status || Object.keys(value).every((key) => key === "status" || key === "expectedVersion"), "Change the saved event status separately from editing its details.");
 
 /** Form values in the wedding timezone, independent of browser locale. */
 export function eventLocalFields(value: string, timezone: string) {

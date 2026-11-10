@@ -1,5 +1,23 @@
 # Make My Marriage — Approved Decision Record
 
+## November 9 — Event lifecycle controls
+
+Use the six MMM V1 Event Lifecycle Stitch designs in project 1860855833908619349 for the existing Events and Event Details screens. Active ADMINs and MANAGERs can complete or cancel a scheduled event. Draft, completed and cancelled events can be removed; a scheduled event must be cancelled or completed first. Removal is final within this workflow and retains family history. The prototype's scheduled editing, QR revocation, guest notices, linked-task archival, refund and attendance widgets are outside this increment. Existing tasks, guest assignments and responses retain their records. Public and household reads use current event eligibility.
+
+## November 9 — Private task comments
+
+Adapted all seven MMM V1 Task Comments references from Stitch project 1860855833908619349. The desktop, mobile, empty, posting/retry, edit/remove, archive and loading/error designs share one panel below the checklist in the existing Task Details layout. The prototype's author-only/ADMIN moderation copy, guest viewing, role badges, mentions, replies, attachments, live sync and export controls are outside the agreed scope. Per the API contract, active ADMINs and MANAGERs can edit and soft-remove shared comments. Original authorship is preserved. Use the documented 10,000-character limit, signed cursor pagination and explicit refresh. Display only the existence of another page because the API does not compute a remaining count.
+
+## November 9 — Manual WhatsApp invitations
+
+Use one household’s existing link and selected published card. Revalidate the review before sharing actions. Use WhatsApp click-to-chat with a prefilled message and organizer-selected recipient. Persist only the explicit organizer mark through existing activity storage. The preview and return states share one responsive page.
+
+## November 6 — Single-household invitation email
+
+Implement the eight reviewed email screens as a single-household increment. Use the existing selected published card and private invitation link. Queue one reviewed household atomically with its delivery and job. Preserve an encrypted historical snapshot without the link secret, and recheck the review before provider handoff. The existing Resend worker and signed callback path process the request. Bulk campaigns and reminders remain separate increments.
+
+On November 6, the user approved applying only migration 021 to production. Verification confirmed the schema and indexes, an empty campaign collection and matching fingerprints for existing records. Live sending requires a separate deployment configuration step.
+
 ## November 4 activation — invitation publication (020)
 
 User explicitly approved only migration 020. Applied and verified in shared production on November 4, 2026: all three strict/error validators and three exact designVersions indexes are ready. Previous indexes and unrelated collection metadata are preserved. Existing record counts and BSON fingerprints are unchanged across all prior collections; designVersions was created empty (zero records). No application/sample records, publication, household assignment, provider calls or broader migration runner. Database activation is complete for the updated code; browser visual/download, real-provider, deployed verification and deferred cleanup scheduling remain separate gates. This supersedes earlier pending-020 notes below. No commit, push or deployment performed.

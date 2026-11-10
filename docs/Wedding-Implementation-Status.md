@@ -1,5 +1,43 @@
 # Make My Marriage — Implementation Status
 
+## Event lifecycle controls — November 9, 2026
+
+Reviewed the six MMM V1 Event Lifecycle Stitch HTML exports and the desktop, mobile and history screenshots. Completion is the primary action on scheduled events. Cancellation and removal use a separate status-management section. Confirmations display the saved event and explain the effect. The existing family Events list includes Completed, Cancelled and Removed filters. Archived events remain readable with actions hidden. Prototypes were adapted to the existing workspace and the current API boundaries.
+
+Scheduled events can become Completed or Cancelled. Draft, Completed and Cancelled events can be removed from active planning while remaining available to the family. Version checks, the wedding write fence, activity records and immutable retries use the existing event infrastructure. Current eligibility hides cancelled and removed events from guest and public reads. Related tasks, household records and RSVP history are retained. The lifecycle actions send no messages. Migration 004 already supports these statuses.
+
+The isolated event, guest access and publication run passed 46 checks. It covered competing lifecycle actions, repeat removal, stale writes, archive, retained links, guest suppression, published snapshot review and retries after a lost response and HTTP 429. Lint, diff whitespace checks and the production webpack build with TypeScript passed. The build required normal Windows file access after the restricted runs hit file creation errors. Desktop/mobile browser acceptance and deployed verification remain open.
+
+## Private task comments — November 9, 2026
+
+Reviewed all seven Stitch screenshots and HTML exports in project 1860855833908619349. Implemented the responsive thread below the checklist, with a composer, author names and original timestamps, an Edited indicator, inline edit/removal confirmation, loading, empty and archived states, and independent pagination retry. Failed saves preserve text. An uncertain save or rate limit retains its exact submission for retry. A stale edit retains its draft and asks the organizer to review the latest version.
+
+Four private task-scoped API operations use verified family access, origin and session checks, write rate limits, signed cursors and version checks. The wedding write fence protects against archive and membership races. Comments, activity and save receipts commit together. Removed records stay retained and hidden. Comments do not affect task status, checklist progress or dashboard totals.
+
+The isolated task suite passed 16 checks on a disposable loopback replica. Coverage includes activation and repeatability, both roles, cross-wedding access, cursor scope, concurrent creation and replay after receipt deletion, original authorship, stale edit rejection, removal, archive reads, revoked membership and private HTTP handling. The full migration runner passed five checks, including two reruns on populated invitation/media data. Type checking, lint and the production webpack build passed. Temporary databases and instances were removed.
+
+With explicit user approval, applied only migration 022 to the shared production database. Verified strict/error validation and both exact index keys, including uniqueness for the operation index. The comments collection was empty before and after, and the collection list changed only by adding comments. Desktop/mobile browser acceptance and deployment verification remain open.
+
+## Manual WhatsApp invitations — November 9, 2026
+
+Reviewed the five Stitch screens in project 1860855833908619349. The responsive household page includes event and card details, the prepared message, copy controls, the WhatsApp handoff and optional PNG download. It keeps the handoff status in the page and persists the separate organizer mark. Phone targeting, recipient counters and delivery claims were left out of the adapted design.
+
+The authenticated, no-store preview uses the existing active household link and includes only eligible events. It displays the full eligible list and includes up to five event summaries in the prepared message. Before handoff, copy, download or marking, the app checks the current review. The organizer mark uses the existing activity collection and a stable ID per review. Activity metadata omits the message and capability token. Expired links can be renewed through the existing Load invitation link action on an active wedding.
+
+The isolated invitation publication, guest access, export and action suites passed 26 checks. Coverage includes private response headers, cross-wedding rejection, stale preview rejection, expired link renewal and concurrent mark deduplication. Type checking, lint and the production build passed. The temporary loopback database and files were removed.
+
+The WhatsApp link opens a prefilled message so the organizer can choose the recipient. Device handoff and browser visual acceptance remain pending. [WhatsApp click-to-chat documentation](https://faq.whatsapp.com/5913398998672934)
+
+## Guest invitation email — November 6, 2026
+
+Reviewed Stitch screens 01–08 in project 1860855833908619349. The household entry opens a responsive review and recent history, followed by one responsive route for progress and historical details. The review shows a read-only email preview and explicit consent. It uses the saved representative address, current eligible events and the already selected published version. PDF attachments, provider telemetry, roster-per-person controls and inbox placement claims were excluded from the prototype adaptation.
+
+The queue atomically persists one reviewed audience, an encrypted historical message snapshot, a delivery and a job. The existing invitation link is a prerequisite. The link secret stays in the encrypted, expiring provider payload and is omitted from the organizer preview and history. The browser retains its exact submission and key after uncertainty. A second request for the same review is blocked. The scheduler rechecks the wedding, requester, household, contact, event scope, link and card before handoff. Cancellation and handoff use transactional state guards. Resend callbacks distinguish confirmed delivery from acceptance.
+
+Isolated verification passed 24 checks across the account, invitation email and shared action suites, plus five migration runner checks covering two full reruns with existing invitation media. The new flow tests same-key concurrency, stale review and queued-event suppression, pre-handoff cancellation, cancellation racing provider handoff, immutable retries and signed delivery callbacks. Test suites used the disposable loopback replica and mocked provider. Type checking, lint and the webpack production build passed. The temporary database process and files were removed. Live delivery remains pending.
+
+On November 6, the user approved migration 021 and it was applied in production. The scoped operator verified three strict validators, three exact indexes, all previous indexes, unchanged unrelated collection metadata and matching record counts and fingerprints across existing collections. The new campaign collection is empty. Live sending requires a verified sender, configured signed webhooks and a functioning scheduler that processes jobs within their one-hour payload lifetime. Keep open and click tracking disabled on the sender domain because the email contains a private household link. Enable GUEST_INVITATION_EMAIL_ENABLED only after the configuration and worker are verified. Browser visual acceptance remains pending. [Resend tracking settings](https://resend.com/blog/introducing-custom-tracking-domain)
+
 ## Local invitation checkpoint — November 4, 2026
 
 User requested a local commit of the current invitation work on dev. This checkpoint includes private template/image drafts, immutable publication/history, PNG export, household card selection and guest display, migration-rerun corrections, tests and activation records for approved migrations 019/020. Preserve the earlier implementation/activation evidence and remaining browser, provider, deployed and scheduler gates. Latest code verification: 47 targeted checks, type checking, zero-warning lint and webpack production build passed; no state-changing tests were run against production. Commit preparation confirmed a clean whitespace diff and no common credential-pattern matches in 64 pending files; environment files remain ignored. No source changes or repeated test/migration runs for this documentation/checkpoint step. No push or deployment is included. Resolve the checkpoint hash from git log rather than embedding a self-reference here.

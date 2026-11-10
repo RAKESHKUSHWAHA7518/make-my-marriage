@@ -581,6 +581,8 @@ Event filters: status, type, from, to, pagination. Sort by startsAt and ID. Crea
 
 PatchEvent accepts editable fields plus expectedVersion; validate state transitions. Cancellation/removal use dedicated Version actions, preserving related records while suppressing active guest/public display. A draft event does not become visible solely because its ID is in a household's list. Guest-visible eligible statuses are scheduled and completed. Attendance returns eventId, invitedHouseholds, counts by RSVP and projectedPeople from each invited household’s one answer; it is not another RSVP table.
 
+November 9 lifecycle increment: PATCH also accepts status-only `{expectedVersion,status:"completed"}` for Scheduled → Completed. POST cancel and remove accept only `{expectedVersion}`. Cancellation requires Scheduled. Removal accepts Draft, Completed or Cancelled; other transitions return EVENT_TRANSITION_UNAVAILABLE. All use the event idempotency and version checks. Authorized family detail includes removed records, and removed events can be listed explicitly with `status=removed`. The ordinary list omits them. Cancellation and removal preserve linked records, suppress guest/public output and mark any affected published snapshot for review. They send no messages. The attendance endpoint remains separate.
+
 ## 10. Household and import contracts
 
 ### CreateHousehold and PatchHousehold
@@ -645,6 +647,8 @@ Task filters: status, priority, eventId, assigneeUserId, dueBefore, dueAfter and
 Checklist items: `{id,text,done}` with IDs unique inside task. PatchTask takes editable fields and expectedVersion; backend derives completedAt. Use cancelled to retire a task while retaining history; there is no extra delete-task API in this baseline.
 
 CreateComment is `{body}`. PatchComment is `{body,expectedVersion}`. Removal uses Version and soft-removes the comment. Comments are paginated and belong to the task/wedding in the path. All active family roles can edit shared planning content under the agreed model; preserve original author and record editor/remover in activity.
+
+Task comments list newest first (createdAt then ID), with limit 25 by default and 50 maximum. The signed cursor binds viewer, wedding, task and page size. The private response includes pagination and readOnly. Comment responses include body, display name, original timestamp, optional editedAt and version. Removed responses include ID, version and removed status. Mutations require Idempotency-Key and a verified active ADMIN or MANAGER; new mutations are denied after archive. Migration 022 activates the collection.
 
 CreateAnnouncement is `{title,body,pinned:false}` with pinned optional. PatchAnnouncement accepts these fields plus expectedVersion. Removal uses Version. Announcements are family-only and never automatically appear on guest/public pages.
 
@@ -764,11 +768,17 @@ A household must be authorized for every event represented in a design/version. 
 
 ## 18. Invitation preview and manual WhatsApp
 
+The implemented WhatsApp subset accepts householdId, optional designVersionId matching the household selection, and optional expectedReview for revalidation. A stale expectedReview returns 409 REVIEW_CHANGED. The same private POST route with ?action=mark-shared accepts householdId and expectedReview. It records one organizer mark per reviewed household invitation and returns markedAt. Both modes require current organizer authority, trusted Origin and CSRF protection. An expired link can be renewed by the existing invitation-link action for an active wedding.
+
 InvitationPreview requires kind=invitation|reminder|event_update, householdIds, eventIds and optional designVersionId. Return per-household eligibility, address availability, safe message preview and actionable validation errors. Recheck permission again before send; preview is not a capability.
 
 WhatsAppPreview requires householdId and optional designVersionId. Return only this household’s authorized message, sharing URL and optional image reference. Response is secret-bearing and no-store. The organizer sends inside WhatsApp. Opening WhatsApp is not evidence of sending, delivery or reading; no automatic WhatsApp job is created.
 
 ## 19. Email campaign contracts
+
+**November 6 implementation subset.** The authenticated household review page builds the preview server-side. POST W/email-campaigns accepts kind invitation, exactly one household ID, the ordered eligible event IDs, the selected design version when present and expectedReviewHash. Idempotency-Key is required. The request atomically queues one delivery and returns 202 with campaignId. Same-key replay returns the original campaign. A second request for an unchanged review returns EMAIL_ALREADY_REQUESTED. A stale recipient, event scope, link or card returns REVIEW_CHANGED.
+
+GET W/email-campaigns/{campaignId} returns an organizer-only reviewed snapshot and delivery status. POST W/email-campaigns/{campaignId}/cancel accepts expectedVersion. Cancellation closes once provider handoff begins. The private household page provides recent request history. Broader campaign listing, preparation and delivery-list contracts below describe later increments.
 
 CreateCampaign requires kind, householdIds and eventIds; designVersionId is optional where message type does not require it. Technical proposal: at most 2,000 unique household IDs per campaign. This is a processing limit, not maxGuests. Idempotency-Key is required.
 

@@ -44,6 +44,8 @@ export async function handleWedding(
     | "create-event"
     | "event-detail"
     | "update-event"
+    | "cancel-event"
+    | "remove-event"
     | "list-tasks"
     | "task-detail"
     | "create-task"
@@ -70,6 +72,8 @@ export async function handleWedding(
       "remove-member",
       "create-event",
       "update-event",
+      "cancel-event",
+      "remove-event",
       "create-task",
       "update-task",
       "household-link",
@@ -132,8 +136,8 @@ export async function handleWedding(
         ? await invitationLink(user,id!,inviteId!,action === "rotate-household-link" ? { payload: await body(request), key: request.headers.get("idempotency-key") } : undefined)
         : action === "create-task" || action === "update-task"
         ? await saveTask(user, id!, action === "update-task" ? inviteId! : null, await body(request, 393216), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
-        : action === "update-event"
-        ? await updateEvent(user, id!, inviteId!, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
+        : action === "update-event" || action === "cancel-event" || action === "remove-event"
+        ? await updateEvent(user, id!, inviteId!, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"), action === "cancel-event" ? "cancel" : action === "remove-event" ? "remove" : "update")
         : action === "create-event"
         ? await createEvent(user, id!, await body(request), request.headers.get("idempotency-key"), request.headers.get("x-mmm-wedding-timezone"))
         : action === "change-role" || action === "remove-member"

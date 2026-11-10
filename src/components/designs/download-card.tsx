@@ -3,12 +3,13 @@ import { useRef, useState } from "react";
 import { palettes, templateDraft, type DesignInput } from "@/modules/designs/schema";
 import { wrapCardText } from "@/modules/designs/image-layout";
 
-export function DownloadCard({ content, available }: { content: DesignInput; available: boolean }) {
+export function DownloadCard({ content, available, beforeDownload, label = "Download image (PNG)" }: { content: DesignInput; available: boolean; beforeDownload?: () => Promise<boolean>; label?: string }) {
   const lock = useRef(false), [busy, setBusy] = useState(false), [failed, setFailed] = useState(false);
   async function download() {
     if (lock.current || !available) return; lock.current = true; setBusy(true); setFailed(false);
     let bitmap: ImageBitmap | undefined;
     try {
+      if (beforeDownload && !await beforeDownload()) return;
       const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d"); if (!ctx) throw Error();
       if (content.mode === "uploaded_image") {
         const response = await fetch(`/api/v1/media/${content.draft.assetIds[0]}/content?variant=gallery`, { cache: "no-store", signal: AbortSignal.timeout(20000) });
@@ -33,5 +34,5 @@ export function DownloadCard({ content, available }: { content: DesignInput; ava
       const url = URL.createObjectURL(png), a = document.createElement("a"); a.href = url; a.download = `${content.name.replace(/[^\p{L}\p{N} _-]/gu, "").slice(0, 80) || "invitation"}.png`; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch { setFailed(true); } finally { bitmap?.close(); lock.current = false; setBusy(false); }
   }
-  return <div><button className="button button-primary" type="button" onClick={download} disabled={busy || !available}>{busy ? "Preparing image…" : failed ? "Retry download" : "Download image (PNG)"}</button>{failed && <p role="alert">The image could not be prepared. Please retry.</p>}<p className="task-helper">A digital image copy. Downloaded files cannot be recalled.</p></div>;
+  return <div><button className="button button-primary" type="button" onClick={download} disabled={busy || !available}>{busy ? "Preparing image…" : failed ? "Retry download" : label}</button>{failed && <p role="alert">The image could not be prepared. Please retry.</p>}<p className="task-helper">A digital image copy. Downloaded files cannot be recalled.</p></div>;
 }

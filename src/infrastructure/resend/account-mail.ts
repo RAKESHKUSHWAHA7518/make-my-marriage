@@ -10,6 +10,9 @@ import {
 
 /** Bounded account and family-invitation mail worker. Provider calls occur outside transactions. */
 import { reconcileReceipts } from "./receipts";
+import { claimInvitationHandoff, guestEmailProcessingEnabled } from "@/modules/invitation-email/service";
+
+const accountKinds = ["verify_email", "reset_password", "membership_invite"];
 
 export async function sendAccountEmails() {
   const config = mailConfiguration();
@@ -21,7 +24,7 @@ export async function sendAccountEmails() {
     .collection("deliveries")
     .find(
       {
-        kind: { $in: ["verify_email", "reset_password", "membership_invite"] },
+        kind: { $in: [...accountKinds, "guest_invitation"] },
         payloadExpiresAt: { $lte: new Date() },
         payloadEncrypted: { $exists: true },
       },
@@ -39,7 +42,7 @@ export async function sendAccountEmails() {
     const now = new Date();
     const job = await db.collection("jobs").findOneAndUpdate(
       {
-        kind: "email_send",
+        kind: { $in: guestEmailProcessingEnabled() ? ["email_send", "guest_invitation_send"] : ["email_send"] },
         runAt: { $lte: now },
         $or: [
           { state: { $in: ["queued", "retry"] } },
@@ -60,10 +63,11 @@ export async function sendAccountEmails() {
     if (!job) break;
     const delivery = await db.collection("deliveries").findOne({
       _id: job.payloadRef.deliveryId,
-      kind: { $in: ["verify_email", "reset_password", "membership_invite"] },
+      kind: { $in: job.kind === "guest_invitation_send" ? ["guest_invitation"] : accountKinds },
     });
     // A prior request may have reached Resend even when its response was lost.
-    let acceptanceUncertain = delivery?.submissionState === "submitting";
+    const previouslyUncertain = delivery?.submissionState === "submitting";
+    let acceptanceUncertain = previouslyUncertain;
     let state = acceptanceUncertain ? "dead" : "done",
       submissionState = acceptanceUncertain ? "unknown" : "suppressed",
       errorCode: string | undefined,
@@ -89,57 +93,64 @@ export async function sendAccountEmails() {
         delivery?.payloadEncrypted &&
         delivery.payloadExpiresAt > now
       ) {
-        const active = await db
-          .collection("users")
-          .findOne({ _id: delivery.userId, status: "active" });
-        const token =
-          delivery.kind === "membership_invite"
-            ? await db
-                .collection("membershipInvites")
-                .findOne({
-                  _id: delivery.membershipInviteId,
-                  weddingId: delivery.weddingId,
-                  state: "pending",
+        const guest = delivery.kind === "guest_invitation";
+        let authorized = false;
+        if (guest) {
+          authorized = await claimInvitationHandoff(delivery, job._id, owner);
+        } else {
+          const active = await db
+            .collection("users")
+            .findOne({ _id: delivery.userId, status: "active" });
+          const token =
+            delivery.kind === "membership_invite"
+              ? await db
+                  .collection("membershipInvites")
+                  .findOne({
+                    _id: delivery.membershipInviteId,
+                    weddingId: delivery.weddingId,
+                    state: "pending",
+                    expiresAt: { $gt: now },
+                  })
+              : await db.collection("authTokens").findOne({
+                  _id: delivery.authTokenId,
+                  consumedAt: { $exists: false },
                   expiresAt: { $gt: now },
-                })
-            : await db.collection("authTokens").findOne({
-                _id: delivery.authTokenId,
-                consumedAt: { $exists: false },
-                expiresAt: { $gt: now },
-              });
-        const wedding =
-          delivery.kind === "membership_invite"
-            ? await db
-                .collection("weddings")
-                .findOne({ _id: delivery.weddingId, state: "active" })
-            : true;
-        const issuer =
-          delivery.kind === "membership_invite"
-            ? await db
-                .collection("memberships")
-                .findOne({
-                  userId: delivery.userId,
-                  weddingId: delivery.weddingId,
-                  role: "ADMIN",
-                  status: "active",
-                })
-            : true;
-        const suppressed = await db.collection("deliveries").findOne({
-          recipientKey: delivery.recipientKey,
-          $or: [
-            { bouncedAt: { $exists: true } },
-            { complainedAt: { $exists: true } },
-          ],
-        });
-        if (
-          active &&
-          token &&
-          wedding &&
-          issuer &&
-          (delivery.kind !== "membership_invite" || active.emailVerifiedAt) &&
-          !suppressed &&
-          !(delivery.kind === "verify_email" && active.emailVerifiedAt)
-        ) {
+                });
+          const wedding =
+            delivery.kind === "membership_invite"
+              ? await db
+                  .collection("weddings")
+                  .findOne({ _id: delivery.weddingId, state: "active" })
+              : true;
+          const issuer =
+            delivery.kind === "membership_invite"
+              ? await db
+                  .collection("memberships")
+                  .findOne({
+                    userId: delivery.userId,
+                    weddingId: delivery.weddingId,
+                    role: "ADMIN",
+                    status: "active",
+                  })
+              : true;
+          const suppressed = await db.collection("deliveries").findOne({
+            recipientKey: delivery.recipientKey,
+            $or: [
+              { bouncedAt: { $exists: true } },
+              { complainedAt: { $exists: true } },
+            ],
+          });
+          authorized = !!(
+            active &&
+            token &&
+            wedding &&
+            issuer &&
+            (delivery.kind !== "membership_invite" || active.emailVerifiedAt) &&
+            !suppressed &&
+            !(delivery.kind === "verify_email" && active.emailVerifiedAt)
+          );
+        }
+        if (authorized) {
           const payload = decrypt(delivery.payloadEncrypted as Encrypted);
           if (digest(payload) !== delivery.payloadHash)
             throw new Error("INVALID_PAYLOAD");
@@ -148,7 +159,7 @@ export async function sendAccountEmails() {
             submissionState = "unknown";
             state = "dead";
           } else {
-            await db
+            if (!guest) await db
               .collection("deliveries")
               .updateOne(
                 { _id: delivery._id },
@@ -179,7 +190,7 @@ export async function sendAccountEmails() {
             ) {
               throw new Error("PROVIDER_RETRY");
             } else {
-              submissionState = "failed";
+              submissionState = guest && previouslyUncertain ? "unknown" : "failed";
               state = "dead";
               errorCode = "PROVIDER_REJECTED";
             }

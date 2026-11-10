@@ -54,18 +54,20 @@ export async function invitationLink(user: User, weddingId: string, householdId:
     const household = await db.collection("households").findOne({ _id: new ObjectId(householdId), weddingId: wedding._id, status: "active" }, { session });
     if (!household) throw invitationUnavailable();
     let link = await db.collection("capabilityLinks").findOne({ weddingId: wedding._id, kind: "household", subjectId: household._id, active: true }, { session });
+    const expired = !!link?.expiresAt && link.expiresAt <= now;
     const previous = rotation && await db.collection("idempotencyKeys").findOne({ scopeKey, keyHash }, { session });
     if (previous) {
       if (previous.requestHash !== requestHash) throw new AccountError(409, "IDEMPOTENCY_CONFLICT", "This save key was used for different changes.");
       if (!link || link.version !== previous.afterVersion) throw new AccountError(409, "LINK_VERSION_CONFLICT", "This invitation link changed again. Reload before sharing.");
-    } else if (rotation || !link) {
+    } else if (rotation || !link || expired) {
       if (wedding.state !== "active") throw new AccountError(409, "WEDDING_ARCHIVED", "This wedding is archived. Only an existing invitation link may be copied.");
       if (rotation && (!link || link.version !== input!.expectedLinkVersion)) throw new AccountError(409, "LINK_VERSION_CONFLICT", "This invitation link changed. Reload before replacing it.");
       const raw = randomToken(), values = { tokenHash: digest(raw), encryptedSecret: encrypt(raw, "CAPABILITY_ENCRYPTION_KEY"), updatedAt: now };
-      if (link) link = await db.collection("capabilityLinks").findOneAndUpdate({ _id: link._id, version: link.version }, { $set: values, $inc: { version: 1 } }, { session, returnDocument: "after" });
+      const replacing = !!link;
+      if (link) link = await db.collection("capabilityLinks").findOneAndUpdate({ _id: link._id, version: link.version }, { $set: values, ...(expired ? { $unset: { expiresAt: "" } } : {}), $inc: { version: 1 } }, { session, returnDocument: "after" });
       else { link = { _id: new ObjectId(), weddingId: wedding._id, kind: "household", subjectId: household._id, ...values, active: true, version: 1, createdBy: user._id, schemaVersion: 1, createdAt: now }; await db.collection("capabilityLinks").insertOne(link, { session }); }
       if (!link) throw new AccountError(409, "LINK_VERSION_CONFLICT", "Reload the invitation link.");
-      await db.collection("activity").insertOne({ weddingId: wedding._id, actor: { type: "user", userId: user._id }, action: rotation ? "household.link_rotated" : "household.link_created", entityType: "household", entityId: household._id, summary: rotation ? "Household invitation link replaced" : "Household invitation link created", occurredAt: now, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
+      await db.collection("activity").insertOne({ weddingId: wedding._id, actor: { type: "user", userId: user._id }, action: replacing ? "household.link_rotated" : "household.link_created", entityType: "household", entityId: household._id, summary: replacing ? "Household invitation link replaced" : "Household invitation link created", occurredAt: now, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
       if (rotation) await db.collection("idempotencyKeys").insertOne({ scopeKey, keyHash, requestHash, state: "completed", resourceType: "capabilityLink", resourceId: link._id, afterVersion: link.version, responseCode: 200, expiresAt: new Date(now.getTime() + 7 * 86400000), schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
     }
     if (!link || (link.expiresAt && link.expiresAt <= now)) throw invitationUnavailable();

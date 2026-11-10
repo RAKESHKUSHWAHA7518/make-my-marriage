@@ -21,6 +21,8 @@ import { exchangeHousehold, invitationLink, guestSite } from "../src/modules/gue
 import { saveDesign, designFor } from "../src/modules/designs/service";
 import { publicationEnabled, publicationReview, publishDesign, listVersions, publishedVersion, householdCardChoices, selectHouseholdCard } from "../src/modules/designs/publication";
 import { guestCard, guestCardAsset } from "../src/modules/designs/guest";
+import { POST as whatsappRoute } from "../src/app/api/v1/weddings/[id]/invitations/whatsapp-preview/route";
+import { markWhatsappShared, whatsappPreview } from "../src/modules/guest-access/whatsapp";
 import { handlePublication, handleGuestCard } from "../src/modules/designs/publication-http";
 import { createUpload, completeUpload, reconcileMedia, assetFor } from "../src/modules/media/service";
 import { digest } from "../src/modules/identity/security";
@@ -41,7 +43,7 @@ test("invitation publication uses an isolated replica and fake provider only", a
     const eid = new ObjectId(); await db.collection("events").insertOne({ _id: eid, weddingId: new ObjectId(wedding.id), name: "Ceremony", type: "wedding", startsAt: now, venue: { name: "Venue", address: "Address" }, schedule: [], status: "scheduled", version: 1, createdBy: user._id, createdAt: now, updatedAt: now, schemaVersion: 1 });
     const household = await saveHousehold(user, wedding.id, null, { displayName: "QA household", representative: { name: "QA" }, maxGuests: 4, invitedEventIds: [eid.toString()] }, key());
     const link = await invitationLink(user, wedding.id, household.id), token = await exchangeHousehold(new URL(link!.url).hash.replace("#token=", ""));
-    return { user, wedding, eid, household, token };
+    return { user, wedding, eid, household, token, link };
   }
   async function publish(f: Awaited<ReturnType<typeof fixture>>, eventIds: string[] = []) { const draft = await saveDesign(f.user, f.wedding.id, null, { ...input, eventIds }, key()); const r = await publicationReview(f.user, f.wedding.id, draft.id); const published = await publishDesign(f.user, f.wedding.id, draft.id, { expectedVersion: r.expectedVersion, expectedPublishedVersionId: r.expectedPublishedVersionId, expectedReviewHash: r.expectedReviewHash }, key()); return { draft, published: published! }; }
   try {
@@ -136,6 +138,52 @@ test("invitation publication uses an isolated replica and fake provider only", a
       await db.collection("households").updateOne({ _id: new ObjectId(f.household.id) }, { $inc: { version: 1 } }); await assert.rejects(householdCardChoices(f.user, f.wedding.id, f.household.id, choices.nextCursor!), { code: "INVALID_CURSOR" });
       const before = await db.collection("designVersions").find().sort({ _id: 1 }).toArray(); await migrateInvitationPublication(db); assert.deepEqual(await db.collection("designVersions").find().sort({ _id: 1 }).toArray(), before);
       await assert.rejects(db.collection("designVersions").insertOne({ ...before[0], _id: new ObjectId(), operationKey: key() + key(), revision: 999, content: { ...before[0].content, eventIds: [new ObjectId().toString()] } }), { code: 121 });
+    });
+    await t.test("WhatsApp preview is scoped, private and invalidated by link replacement", async () => {
+      const f = await fixture(), outsider = await fixture();
+      const { published } = await publish(f, [String(f.eid)]);
+      await selectHouseholdCard(f.user, f.wedding.id, f.household.id, { designVersionId: published.designVersionId, expectedVersion: f.household.version }, key());
+      const input = { householdId: f.household.id };
+      const first = await whatsappPreview(f.user, f.wedding.id, input);
+      assert(first.message.includes(f.link!.url));
+      assert.equal(first.card?.id, published.designVersionId);
+      assert.equal(first.events.length, 1);
+      assert(!first.markedAt);
+      await assert.rejects(whatsappPreview(outsider.user, outsider.wedding.id, input), { status: 404 });
+      const raw = randomBytes(32).toString("base64url"), now = new Date();
+      await db.collection("sessions").insertOne({ userId: f.user._id, tokenHash: digest(raw), credentialVersion: 1, expiresAt: new Date(Date.now() + 3600000), lastSeenAt: now, schemaVersion: 1, createdAt: now, updatedAt: now });
+      const url = `http://localhost:3011/api/v1/weddings/${f.wedding.id}/invitations/whatsapp-preview`;
+      const call = (origin: string) => whatsappRoute(new NextRequest(url, { method: "POST", body: JSON.stringify(input), headers: {
+        Origin: origin, Cookie: `mmm_session=${raw}`, "X-MMM-CSRF": "1", "Content-Type": "application/json",
+      } }), { params: Promise.resolve({ id: f.wedding.id }) });
+      assert.equal((await call("https://foreign.example")).status, 403);
+      const response = await call("http://localhost:3011");
+      assert.equal(response.status, 200);
+      assert.match(response.headers.get("cache-control")!, /no-store/);
+      const replacement = await invitationLink(f.user, f.wedding.id, f.household.id, { payload: { expectedLinkVersion: f.link!.linkVersion }, key: key() });
+      await assert.rejects(whatsappPreview(f.user, f.wedding.id, { ...input, expectedReview: first.review }), { code: "REVIEW_CHANGED" });
+      assert.equal((await whatsappPreview(f.user, f.wedding.id, input)).url, replacement!.url);
+      await db.collection("capabilityLinks").updateOne({ subjectId: new ObjectId(f.household.id) }, { $set: { expiresAt: new Date(0) } });
+      await assert.rejects(whatsappPreview(f.user, f.wedding.id, input), { code: "LINK_UNAVAILABLE" });
+      const renewed = await invitationLink(f.user, f.wedding.id, f.household.id);
+      assert.notEqual(renewed!.url, replacement!.url);
+      assert.equal((await whatsappPreview(f.user, f.wedding.id, input)).url, renewed!.url);
+      await db.collection("events").updateOne({ _id: f.eid }, { $set: { status: "cancelled" } });
+      await assert.rejects(whatsappPreview(f.user, f.wedding.id, input), { code: "NO_ELIGIBLE_EVENTS" });
+    });
+    await t.test("marking WhatsApp shared records one organizer action without storing the invitation secret", async () => {
+      const f = await fixture();
+      const preview = await whatsappPreview(f.user, f.wedding.id, { householdId: f.household.id });
+      const input = { householdId: f.household.id, expectedReview: preview.review };
+      const marks = await Promise.all([markWhatsappShared(f.user, f.wedding.id, input), markWhatsappShared(f.user, f.wedding.id, input)]);
+      assert.deepEqual(marks[0], marks[1]);
+      assert.equal((await whatsappPreview(f.user, f.wedding.id, { householdId: f.household.id })).markedAt, marks[0]!.markedAt);
+      const rows = await db.collection("activity").find({ weddingId: new ObjectId(f.wedding.id), action: "household.whatsapp_marked_shared" }).toArray();
+      assert.equal(rows.length, 1);
+      assert(!JSON.stringify(rows).includes("#token="));
+      assert(!JSON.stringify(rows).includes(preview.review));
+      await db.collection("weddings").updateOne({ _id: new ObjectId(f.wedding.id) }, { $set: { state: "archived" } });
+      await assert.rejects(markWhatsappShared(f.user, f.wedding.id, input), { code: "WEDDING_ARCHIVED" });
     });
     assert.equal(await db.collection("emailDeliveries").countDocuments(), 0);
   } finally { globalThis.fetch = originalFetch; await db.dropDatabase(); await closeDatabase(); }

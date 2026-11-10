@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { EventView } from "@/modules/events/service";
-import { eventDate, eventTime, eventTypeLabels } from "@/modules/events/schema";
+import { eventDate, eventTime, eventTypeLabels, eventStatusLabels } from "@/modules/events/schema";
 import { WeddingIcon } from "./wedding-icon";
 
 export function EventCard({ event, timezone }: { event: EventView; timezone: string }) {
@@ -9,7 +9,7 @@ export function EventCard({ event, timezone }: { event: EventView; timezone: str
   return <article className="event-card">
     <div className="event-calendar" aria-hidden="true"><span>{part("month")}</span><strong>{part("day")}</strong><small>{part("year")}</small></div>
     <div className="event-card-copy">
-      <div className="event-badges"><span>{eventTypeLabels[event.type]}</span><span className="event-status">{event.status}</span></div>
+      <div className="event-badges"><span>{eventTypeLabels[event.type]}</span><span className="event-status">{eventStatusLabels[event.status]}</span></div>
       <h2>{event.name}</h2>
       <p><WeddingIcon name="calendar" /><span>{eventDate(event.startsAt, timezone)}, {eventTime(event.startsAt, timezone)}{event.endsAt ? ` – ${eventDate(event.endsAt, timezone)}, ${eventTime(event.endsAt, timezone)}` : " · End time not decided"}</span></p>
       <p><WeddingIcon name="pin" /><span>{event.venue.name} · {event.venue.address}</span></p>

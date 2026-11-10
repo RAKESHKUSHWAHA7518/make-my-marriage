@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useRef, useState } from "react";
 export function InvitationSharing({ weddingId, householdId, archived, eligibleCount }: { weddingId: string; householdId: string; archived: boolean; eligibleCount: number }) {
   const dialog = useRef<HTMLDialogElement>(null), locked = useRef(false), submission = useRef<{ key: string; body: string } | null>(null);
@@ -31,6 +32,7 @@ export function InvitationSharing({ weddingId, householdId, archived, eligibleCo
     {link && !uncertain && <label>Invitation link<input className="invitation-link-field" readOnly value={link.url} onFocus={(event) => event.currentTarget.select()} /></label>}
     <div className="event-form-actions">
       {!link || uncertain ? <button className="button button-secondary" type="button" disabled={pending} onClick={() => load()}>{pending ? "Loading…" : uncertain ? "Reload invitation link" : "Load invitation link"}</button> : <button type="button" className="button button-primary" disabled={pending} onClick={copy}>Copy invitation link</button>}
+      {!archived && <Link className="button button-secondary" href={`/wedding/guests/${householdId}/whatsapp`}>Share via WhatsApp</Link>}
       {link && !archived && <button type="button" className="button button-secondary" disabled={pending} onClick={() => dialog.current?.showModal()}>Replace invitation link</button>}
     </div>{copied && <p role="status">Invitation link copied.</p>}<small>Copying or replacing a link does not send an email or WhatsApp message.</small>
     <dialog ref={dialog} className="wedding-dialog event-discard-dialog" aria-labelledby="replace-household-link" onCancel={(e) => { if (locked.current) e.preventDefault(); }}><h2 id="replace-household-link">Replace this invitation link?</h2><p>The old link will stop working. Share the new link with this household after replacing it.</p>{error && <p role="alert">{error}</p>}<div className="event-form-actions"><button type="button" className="button button-secondary" autoFocus disabled={pending} onClick={() => dialog.current?.close()}>{uncertain ? "Close" : "Keep current link"}</button>{blocked ? <button className="button button-primary" type="button" onClick={() => { dialog.current?.close(); void load(); }}>Reload details</button> : <button type="button" className="button button-primary" disabled={pending} onClick={() => load(true)}>{pending ? "Replacing…" : uncertain ? "Retry replacement" : "Replace link"}</button>}</div></dialog>

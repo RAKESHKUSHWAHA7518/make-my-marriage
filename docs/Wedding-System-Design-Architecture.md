@@ -1,5 +1,13 @@
 # Wedding Management Platform — System Design Architecture
 
+## November 9 implementation — Manual WhatsApp invitations
+
+The authenticated household workspace requests a private, uncached preview from the Node application. The client revalidates the reviewed snapshot immediately before handing the prepared text to WhatsApp, copying, downloading or marking it shared. The explicit mark runs under the existing wedding fence and uses the activity collection. The handoff starts in the organizer’s browser, and the organizer completes sending in WhatsApp.
+
+## November 6 implementation — Guest invitation email
+
+The existing Node application renders the organizer review and stores one campaign, delivery and job in a transaction. The scheduler uses a distinct guest job kind so older account workers cannot claim it during rollout. The updated worker uses the existing Resend submission and callback paths. It rechecks current authority and scope under the wedding fence before setting the delivery to submitting. Cancellation is serialized against that transition. Provider work stays outside the transaction and uses the same encrypted body and deduplication key on retries. Organizer history reads a separate encrypted snapshot with no capability token. Migration 021 was applied and verified in production on November 6. Deployment activation is pending.
+
 ## November 4 activation — invitation publication (020)
 
 User explicitly approved only migration 020. Applied and verified in shared production on November 4, 2026: all three strict/error validators and three exact designVersions indexes are ready. Previous indexes and unrelated collection metadata are preserved. Existing record counts and BSON fingerprints are unchanged across all prior collections; designVersions was created empty (zero records). No application/sample records, publication, household assignment, provider calls or broader migration runner. Database activation is complete for the updated code; browser visual/download, real-provider, deployed verification and deferred cleanup scheduling remain separate gates. This supersedes earlier pending-020 notes below. No commit, push or deployment performed.

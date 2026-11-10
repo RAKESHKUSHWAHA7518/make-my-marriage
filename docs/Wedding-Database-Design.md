@@ -438,6 +438,8 @@ October 25 edit increment: existing migration 004 supports version-checked draft
 
 Tasks remain in `tasks`. End times must follow start times. Guests can see only their household’s invited events with eligible status. No event implies access to another event.
 
+Event lifecycle uses the existing migration 004 status values and indexes. Status changes, activity and idempotency receipts commit under the wedding write fence. Cancellation and removal retain event records and related references. If a published website snapshot includes an affected event, set its source-change flag in the same transaction. Public and household reads suppress ineligible event statuses.
+
 ### `households`
 
 One record represents one representative and their family/group. Its RSVP applies to every currently invited event; the application does not collect separate event answers.
@@ -564,6 +566,8 @@ An omitted event means wedding-wide. Haldi is an event containing many tasks, no
 | `version` | Integer | Required | Edit number used to detect simultaneous changes. |
 
 Comments are separate for pagination. Activity records who edited/deleted a comment; do not put growing comments in a task array. Typing indicators exist only in Ably with short expiry and never contain draft text.
+
+Migration 022 adds strict validation, the thread index and a unique `{weddingId:1,taskId:1,operationKey:1}` index. The server stores a hashed actor-scoped operation key and normalized creation request hash on the comment so a retried create cannot duplicate it after its short-lived receipt expires, including after soft removal.
 
 ### `announcements`
 
@@ -757,6 +761,8 @@ Deletion first blocks application access with `delete_pending`, then a job delet
 ## 12. Email, reminders and durable jobs
 
 ### `emailCampaigns`
+
+**November 6 implementation subset.** Migration 021 creates a strict invitation-only campaign schema and adds guest invitation branches to deliveries and jobs. Each campaign contains one immutable household ID in its audience, eligible event IDs, optional selected design version, requester credential version, review and operation hashes, delivery reference and encrypted review snapshot. The review index prevents a repeated send for an unchanged review. The operation index preserves request idempotency. The household history index supports recent request history. The provider payload, including the link, is stored separately in the delivery and expires after one hour. Existing account validators retain the guest extension on migration reruns. Migration 021 was applied and verified in production on November 6. The campaign collection was empty at verification and existing records matched their pre-migration fingerprints.
 
 | Field | Type | Required? | Meaning |
 |---|---|---|---|

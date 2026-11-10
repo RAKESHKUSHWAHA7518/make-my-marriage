@@ -346,6 +346,15 @@
   min-height: 48px;
   font-size: 13px;
 }
+.event-lifecycle-actions { margin-block: 16px; }
+.event-lifecycle-actions [aria-current="page"] {
+  color: #802b3a;
+  border-color: #802b3a;
+  background: #fff0f4;
+}
+.event-detail-hero, .event-card-copy { overflow-wrap: anywhere; }
+.event-lifecycle-panel { margin-top: 20px; padding: clamp(16px, 3vw, 28px); }
+.event-lifecycle-panel .event-form-actions { margin-top: 12px; }
 .event-form-actions > a[aria-disabled="true"] {
   opacity: .6;
 }

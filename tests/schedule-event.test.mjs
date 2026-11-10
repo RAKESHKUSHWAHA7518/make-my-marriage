@@ -8,7 +8,7 @@ import ts from "typescript";
 const require = createRequire(import.meta.url);
 const schema = require("../src/modules/events/schema.ts");
 
-function harness(responses) {
+function harness(responses, target) {
   const refs = [], states = [], requests = [], destinations = [];
   let refIndex = 0, stateIndex = 0, refreshes = 0, closes = 0, opens = 0;
   const React = {
@@ -23,7 +23,7 @@ function harness(responses) {
   runInNewContext(ts.transpileModule(readFileSync("src/components/weddings/schedule-event.tsx", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React } }).outputText, context);
   function render() {
     stateIndex = 0; refIndex = 0;
-    return context.exports.ScheduleEvent({ weddingId: "b".repeat(24), eventId: "a".repeat(24), version: 4, name: "Haldi", startsAt: "2027-02-12T04:30:00Z", venue: "Courtyard", timezone: "Asia/Kolkata" });
+    return context.exports.ScheduleEvent({ weddingId: "b".repeat(24), eventId: "a".repeat(24), version: 4, name: "Haldi", startsAt: "2027-02-12T04:30:00Z", venue: "Courtyard", timezone: "Asia/Kolkata", target });
   }
   function find(label, node = render()) {
     if (!node || typeof node !== "object") return null;
@@ -46,6 +46,20 @@ test("scheduling requires confirmation and retains its key through lost response
   assert(h.requests.every((r) => r.method === "PATCH" && r.body === h.requests[0].body && r.headers["Idempotency-Key"] === h.requests[0].headers["Idempotency-Key"]));
   assert.deepEqual(JSON.parse(h.requests[0].body), { expectedVersion: 4, status: "scheduled" });
   assert.deepEqual(h.destinations, [`/wedding/events/${"a".repeat(24)}?scheduled=1`]);
+});
+
+test("removal confirmation retries the same version and key through a rate limit", async () => {
+  const h = harness([new Error("Lost response"), { status: 429, body: {} }, { status: 200, body: { data: { id: "a".repeat(24), status: "removed" } } }], "removed");
+  h.find("Remove event").props.onClick();
+  assert.equal(h.requests.length, 0);
+  const modal = h.render().props.children.find(child => child?.type === "dialog");
+  await h.find("Remove event", modal).props.onClick();
+  await h.find("Retry removal").props.onClick();
+  await h.find("Retry removal").props.onClick();
+  assert.equal(h.requests.length, 3);
+  assert(h.requests.every(request => request.url.endsWith("/remove") && request.method === "POST" && request.body === h.requests[0].body && request.headers["Idempotency-Key"] === h.requests[0].headers["Idempotency-Key"]));
+  assert.deepEqual(JSON.parse(h.requests[0].body), { expectedVersion: 4 });
+  assert.deepEqual(h.destinations, [`/wedding/events/${"a".repeat(24)}?removed=1`]);
 });
 
 test("scheduling conflict blocks repeated mutation and offers a read-only reload", async () => {

@@ -81,7 +81,13 @@ test("publication uses an explicitly isolated replica; never configured Atlas", 
       const f = await fixture(), body = await payload(f);
       await db.collection("events").updateOne({ _id: new ObjectId(f.event.id) }, { $set: { name: "Changed after review" } }); await assert.rejects(publishWebsite(f.user, f.wedding.id, body, key()), { code: "VERSION_CONFLICT" });
       const next = await payload(f); await publishWebsite(f.user, f.wedding.id, next, key()); await assert.rejects(publishWebsite(f.user, f.wedding.id, next, key()), { code: "VERSION_CONFLICT" });
-      await db.collection("events").updateOne({ _id: new ObjectId(f.event.id) }, { $set: { status: "removed" } }); assert.equal((await publicWebsite((await publicationReview(f.user, f.wedding.id)).slug)).events.length, 0); assert(!(await publicationReview(f.user, f.wedding.id)).valid);
+      const completed = await updateEvent(f.user, f.wedding.id, f.event.id, { expectedVersion: 2, status: "completed" }, key());
+      assert.equal((await publicWebsite((await publicationReview(f.user, f.wedding.id)).slug)).events.length, 1);
+      await updateEvent(f.user, f.wedding.id, f.event.id, { expectedVersion: completed!.version }, key(), null, "remove");
+      const stale = await publicationReview(f.user, f.wedding.id);
+      assert.equal((await publicWebsite(stale.slug)).events.length, 0);
+      assert.equal(stale.sourceChanged, true);
+      assert.equal(stale.valid, false);
     });
     await t.test("concurrent same-key publication reconciles once; expired receipts never republish", async () => {
       const f = await fixture(), body = await payload(f), k = key();

@@ -5,9 +5,9 @@ import { getDatabase } from "@/infrastructure/mongodb/client";
 import { AccountError, digest } from "@/modules/identity/security";
 import type { User } from "@/modules/identity/service";
 import { membershipFor } from "@/modules/weddings/service";
-import { createEventSchema, patchEventSchema, eventTypes } from "./schema";
+import { createEventSchema, patchEventSchema, eventVersionSchema, eventTypes, eventStatuses, eventTransitionSources, type EventStatus } from "./schema";
 
-export type EventView = { id: string; name: string; type: (typeof eventTypes)[number]; startsAt: string; endsAt?: string; venue: { name: string; address: string; mapUrl?: string }; description?: string; dressCode?: string; status: string; version: number };
+export type EventView = { id: string; name: string; type: (typeof eventTypes)[number]; startsAt: string; endsAt?: string; venue: { name: string; address: string; mapUrl?: string }; description?: string; dressCode?: string; status: EventStatus; version: number };
 function view(row: Document): EventView {
   return { id: row._id.toString(), name: row.name, type: row.type, startsAt: row.startsAt.toISOString(), ...(row.endsAt ? { endsAt: row.endsAt.toISOString() } : {}), venue: { name: row.venue.name, address: row.venue.address, ...(row.venue.mapUrl ? { mapUrl: row.venue.mapUrl } : {}) }, description: row.description, dressCode: row.dressCode, status: row.status, version: row.version };
 }
@@ -27,7 +27,7 @@ export async function eventsReady() {
 }
 const querySchema = z.strictObject({
   limit: z.coerce.number().int().min(1).max(50).default(25), cursor: z.string().max(2000).optional(),
-  status: z.enum(["draft", "scheduled", "completed", "cancelled", "removed"]).optional(), type: z.enum(eventTypes).optional(),
+  status: z.enum(eventStatuses).optional(), type: z.enum(eventTypes).optional(),
   from: z.iso.datetime({ offset: true }).optional(), to: z.iso.datetime({ offset: true }).optional(),
 }).refine((q) => !q.from || !q.to || Date.parse(q.from) <= Date.parse(q.to), { message: "The end of the date filter must follow its start.", path: ["to"] });
 export async function listEvents(user: User, weddingId: string, query: unknown = {}) {
@@ -53,7 +53,7 @@ export async function eventFor(user: User, weddingId: string, id: string) {
   const member = await access(user, weddingId);
   if (!/^[a-f0-9]{24}$/.test(id)) return null;
   await eventsReady();
-  const row = await (await getDatabase()).collection("events").findOne({ _id: new ObjectId(id), weddingId: member.weddingId, status: { $ne: "removed" } });
+  const row = await (await getDatabase()).collection("events").findOne({ _id: new ObjectId(id), weddingId: member.weddingId });
   return row ? view(row) : null;
 }
 export async function createEvent(user: User, weddingId: string, payload: unknown, key: string | null, expectedTimezone?: string | null) {
@@ -91,16 +91,18 @@ export async function createEvent(user: User, weddingId: string, payload: unknow
 }
 
 /** Version checked draft edits with durable reconciliation of uncertain saves. */
-export async function updateEvent(user: User, weddingId: string, id: string, payload: unknown, key: string | null, expectedTimezone?: string | null) {
+export async function updateEvent(user: User, weddingId: string, id: string, payload: unknown, key: string | null, expectedTimezone?: string | null, action: "update" | "cancel" | "remove" = "update") {
   if (!key || !/^[A-Za-z0-9_-]{16,128}$/.test(key)) throw new AccountError(400, "IDEMPOTENCY_KEY_REQUIRED", "A valid Idempotency-Key is required.");
-  const input = patchEventSchema.parse(payload);
+  const patchInput = action === "update" ? patchEventSchema.parse(payload) : undefined;
+  const input = patchInput ?? eventVersionSchema.parse(payload);
+  const status = action === "cancel" ? "cancelled" : action === "remove" ? "removed" : patchInput?.status;
   const member = await access(user, weddingId);
   if (!/^[a-f0-9]{24}$/.test(id)) throw new AccountError(404, "NOT_FOUND", "Event unavailable.");
   await eventsReady();
   const db = await getDatabase();
   const indexes = await db.collection("idempotencyKeys").indexes();
   if (!indexes.some((i) => i.unique && Object.keys(i.key).join() === "scopeKey,keyHash")) throw Error("Idempotency migration required");
-  const scopeKey = `user:${user._id}:wedding:${weddingId}:event:${id}:update`, keyHash = digest(key), requestHash = digest(JSON.stringify(input));
+  const scopeKey = `user:${user._id}:wedding:${weddingId}:event:${id}:${action}`, keyHash = digest(key), requestHash = digest(JSON.stringify(input));
   return db.client.withSession((session) => session.withTransaction(async () => {
     const now = new Date();
     const wedding = await db.collection("weddings").findOneAndUpdate({ _id: member.weddingId }, { $inc: { writeFence: Long.ONE } }, { session, returnDocument: "after" });
@@ -109,7 +111,7 @@ export async function updateEvent(user: User, weddingId: string, id: string, pay
     if (!actor) throw new AccountError(401, "UNAUTHENTICATED", "Please sign in again.");
     const current = await db.collection("memberships").findOneAndUpdate({ _id: member._id, userId: user._id, weddingId: wedding._id, role: { $in: ["ADMIN", "MANAGER"] }, status: "active" }, { $set: { updatedAt: now } }, { session, returnDocument: "after" });
     if (!current) throw new AccountError(404, "NOT_FOUND", "Event unavailable.");
-    const row = await db.collection("events").findOne({ _id: new ObjectId(id), weddingId: wedding._id, status: { $ne: "removed" } }, { session });
+    const row = await db.collection("events").findOne({ _id: new ObjectId(id), weddingId: wedding._id }, { session });
     if (!row) throw new AccountError(404, "NOT_FOUND", "Event unavailable.");
     const previous = await db.collection("idempotencyKeys").findOne({ scopeKey, keyHash }, { session });
     if (previous) {
@@ -117,24 +119,34 @@ export async function updateEvent(user: User, weddingId: string, id: string, pay
       return view(row);
     }
     if (wedding.state !== "active") throw new AccountError(409, "WEDDING_ARCHIVED", "This wedding is archived. Event details are read-only.");
-    if (row.status !== "draft") throw new AccountError(409, "EVENT_NOT_DRAFT", "Only draft events can be edited or scheduled in this phase.");
+    if ((!status || status === "scheduled") && row.status !== "draft") throw new AccountError(409, "EVENT_NOT_DRAFT", "Only draft events can be edited or scheduled.");
     if (expectedTimezone && expectedTimezone !== wedding.timezone) throw new AccountError(409, "WEDDING_TIMEZONE_CHANGED", "Your wedding’s time zone has changed. Reload the event and review its dates and times before saving.");
     if (row.version !== input.expectedVersion) throw Object.assign(new AccountError(409, "VERSION_CONFLICT", "This event changed while you were editing. Reload the latest details before saving."), { currentVersion: row.version });
-    const { expectedVersion, status, ...patch } = input;
-    const merged = { name: row.name, type: row.type, startsAt: row.startsAt.toISOString(), ...(row.endsAt ? { endsAt: row.endsAt.toISOString() } : {}), venue: row.venue, description: row.description, dressCode: row.dressCode, status: "draft", ...patch };
-    for (const field of ["endsAt", "description", "dressCode"] as const) if (merged[field] === null) delete merged[field];
-    const validated = createEventSchema.parse(merged);
-    const changes: Document = { name: validated.name, type: validated.type, startsAt: new Date(validated.startsAt), venue: { ...row.venue, ...validated.venue }, ...(status ? { status } : {}), updatedAt: now };
-    // Venue is replaced for this editor's supported fields, while preserving future coordinates.
-    if (!validated.venue.mapUrl) delete changes.venue.mapUrl;
+    const { expectedVersion, ...patch } = input;
+    const changes: Document = { updatedAt: now };
     const unset: Document = {};
-    for (const field of ["endsAt", "description", "dressCode"] as const) {
-      if (validated[field] === undefined) unset[field] = "";
-      else changes[field] = field === "endsAt" ? new Date(validated[field]!) : validated[field];
+    if (status && status !== "scheduled") {
+      const allowed: readonly EventStatus[] = eventTransitionSources[status];
+      if (!allowed.includes(row.status)) throw new AccountError(409, "EVENT_TRANSITION_UNAVAILABLE", "This action is unavailable for the current event status.");
+      changes.status = status;
+    } else {
+      const merged = { name: row.name, type: row.type, startsAt: row.startsAt.toISOString(), ...(row.endsAt ? { endsAt: row.endsAt.toISOString() } : {}), venue: row.venue, description: row.description, dressCode: row.dressCode, ...patch, status: "draft" };
+      for (const field of ["endsAt", "description", "dressCode"] as const) if (merged[field] === null) delete merged[field];
+      const validated = createEventSchema.parse(merged);
+      Object.assign(changes, { name: validated.name, type: validated.type, startsAt: new Date(validated.startsAt), venue: { ...row.venue, ...validated.venue }, ...(status ? { status } : {}) });
+      // Venue is replaced for this editor's supported fields, while preserving future coordinates.
+      if (!validated.venue.mapUrl) delete changes.venue.mapUrl;
+      for (const field of ["endsAt", "description", "dressCode"] as const) {
+        if (validated[field] === undefined) unset[field] = "";
+        else changes[field] = field === "endsAt" ? new Date(validated[field]!) : validated[field];
+      }
     }
-    const updated = await db.collection("events").findOneAndUpdate({ _id: row._id, weddingId: wedding._id, version: expectedVersion, status: "draft" }, { $set: changes, $inc: { version: 1 }, ...(Object.keys(unset).length ? { $unset: unset } : {}) }, { session, returnDocument: "after" });
+    const updated = await db.collection("events").findOneAndUpdate({ _id: row._id, weddingId: wedding._id, version: expectedVersion, status: row.status }, { $set: changes, $inc: { version: 1 }, ...(Object.keys(unset).length ? { $unset: unset } : {}) }, { session, returnDocument: "after" });
     if (!updated) throw new AccountError(409, "VERSION_CONFLICT", "This event changed while you were editing. Reload the latest details before saving.");
-    await db.collection("activity").insertOne({ weddingId: wedding._id, actor: { type: "user", userId: user._id }, action: status ? "event.scheduled" : "event.updated", entityType: "event", entityId: row._id, summary: status ? "Event marked scheduled" : "Private event draft updated", beforeVersion: row.version, afterVersion: updated.version, occurredAt: now, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
+    if ((status === "cancelled" || status === "removed") && wedding.publicPage?.snapshot?.events?.some((event: Document) => event.eventId.equals(row._id))) {
+      await db.collection("weddings").updateOne({ _id: wedding._id }, { $set: { "publicPage.sourceChanged": true } }, { session });
+    }
+    await db.collection("activity").insertOne({ weddingId: wedding._id, actor: { type: "user", userId: user._id }, action: `event.${status ?? "updated"}`, entityType: "event", entityId: row._id, summary: status ? `Event marked ${status}` : "Private event draft updated", beforeVersion: row.version, afterVersion: updated.version, occurredAt: now, schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
     await db.collection("idempotencyKeys").insertOne({ scopeKey, keyHash, requestHash, state: "completed", resourceType: "event", resourceId: row._id, responseCode: 200, expiresAt: new Date(now.getTime() + 7 * 86400000), schemaVersion: 1, createdAt: now, updatedAt: now }, { session });
     return view(updated);
   }, { writeConcern: { w: "majority" } }));

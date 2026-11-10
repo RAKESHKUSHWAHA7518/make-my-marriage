@@ -8,6 +8,8 @@ import { getDatabase, closeDatabase } from "../src/infrastructure/mongodb/client
 import { migrateAccounts } from "../src/infrastructure/mongodb/migrations/001-accounts";
 import { migrateWeddings } from "../src/infrastructure/mongodb/migrations/002-weddings";
 import { migrateEvents } from "../src/infrastructure/mongodb/migrations/004-events";
+import { migrateTasks } from "../src/infrastructure/mongodb/migrations/005-tasks";
+import { saveTask } from "../src/modules/tasks/service";
 import { createEvent, updateEvent, eventFor, listEvents } from "../src/modules/events/service";
 import { createEventSchema, patchEventSchema, eventLocalFields, localEventInstant } from "../src/modules/events/schema";
 import { createWedding } from "../src/modules/weddings/service";
@@ -132,7 +134,8 @@ test("event persistence and authorization in an explicitly isolated database", a
     await t.test("draft edits reject cross-wedding access, stale credentials, invalid merged times and lifecycle changes", async () => {
       const a=await fixture(),b=await fixture();const event=await createEvent(a.user,a.wedding.id,base,"edit-boundary-key-001");
       assert.equal(patchEventSchema.safeParse({expectedVersion:1}).success,false);
-      assert.equal(patchEventSchema.safeParse({expectedVersion:1,status:"completed"}).success,false);
+      assert.equal(patchEventSchema.safeParse({expectedVersion:1,status:"completed",name:"Mixed"}).success,false);
+      await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:1,status:"completed"},"edit-complete-draft-01"),{code:"EVENT_TRANSITION_UNAVAILABLE"});
       await assert.rejects(updateEvent(b.user,b.wedding.id,event.id,{expectedVersion:1,name:"Wrong"},"edit-tenant-key-0001"),{status:404});
       await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:1,name:"Timezone"},"edit-timezone-key-001","UTC"),{code:"WEDDING_TIMEZONE_CHANGED"});
       await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:1,endsAt:base.startsAt},"edit-invalid-key-0001"),{name:"ZodError"});
@@ -175,6 +178,42 @@ test("event persistence and authorization in an explicitly isolated database", a
       await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:1,status:"scheduled"},"schedule-stale-0001"),{code:"VERSION_CONFLICT"});
       await db.collection("weddings").updateOne({_id:new ObjectId(a.wedding.id)},{$set:{state:"archived"}});
       await assert.rejects(updateEvent(a.user,a.wedding.id,event.id,{expectedVersion:2,status:"scheduled"},"schedule-archived-01"),{code:"WEDDING_ARCHIVED"});
+    });
+    await t.test("family lifecycle changes retain event history and serialize competing actions", async () => {
+      const { user, wedding } = await fixture();
+      const key = () => randomBytes(16).toString("hex");
+      const scheduled = async () => {
+        const event = await createEvent(user, wedding.id, base, key());
+        return updateEvent(user, wedding.id, event.id, { expectedVersion: 1, status: "scheduled" }, key());
+      };
+      const event = await scheduled();
+      assert.ok(event);
+      await migrateTasks(db);
+      const task = await saveTask(user, wedding.id, null, { title: "Linked task", eventId: event.id }, key());
+      await assert.rejects(updateEvent(user, wedding.id, event.id, { expectedVersion: 2 }, key(), null, "remove"), { code: "EVENT_TRANSITION_UNAVAILABLE" });
+      const [completion, cancellation] = await Promise.allSettled([
+        updateEvent(user, wedding.id, event.id, { expectedVersion: 2, status: "completed" }, key()),
+        updateEvent(user, wedding.id, event.id, { expectedVersion: 2 }, key(), null, "cancel"),
+      ]);
+      const winner = completion.status === "fulfilled" ? completion.value : cancellation.status === "fulfilled" ? cancellation.value : null;
+      assert.ok(winner);
+      assert.equal([completion, cancellation].filter(result => result.status === "rejected" && result.reason.code === "VERSION_CONFLICT").length, 1);
+      const removeKey = key();
+      const remove = () => updateEvent(user, wedding.id, event.id, { expectedVersion: winner.version }, removeKey, null, "remove");
+      assert.equal((await remove())?.status, "removed");
+      assert.equal((await remove())?.version, 4);
+      assert.equal((await eventFor(user, wedding.id, event.id))?.status, "removed");
+      assert.equal((await listEvents(user, wedding.id)).data.length, 0);
+      assert.equal((await listEvents(user, wedding.id, { status: "removed" })).data[0]?.id, event.id);
+      const updatedTask = await saveTask(user, wedding.id, task.id, { expectedVersion: task.version, status: "done" }, key());
+      assert.equal(updatedTask.eventId, event.id);
+      assert.equal(updatedTask.event?.available, false);
+      assert.equal(await db.collection("activity").countDocuments({ entityId: new ObjectId(event.id), action: "event.removed" }), 1);
+      assert.equal(await db.collection("deliveries").countDocuments({ weddingId: new ObjectId(wedding.id) }), 0);
+      const archivedEvent = await scheduled();
+      assert.ok(archivedEvent);
+      await db.collection("weddings").updateOne({ _id: new ObjectId(wedding.id) }, { $set: { state: "archived" } });
+      await assert.rejects(updateEvent(user, wedding.id, archivedEvent.id, { expectedVersion: 2 }, key(), null, "cancel"), { code: "WEDDING_ARCHIVED" });
     });
     await t.test("HTTP checks origin/session, POST validation, successful save and read", async () => {
       const { user, wedding } = await fixture();

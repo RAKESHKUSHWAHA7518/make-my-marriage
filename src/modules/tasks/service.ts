@@ -123,7 +123,7 @@ export async function saveTask(user: User, weddingId: string, id: string | null,
     for (const field of ["description", "eventId", "assigneeUserId", "dueAt"]) if (source[field] === null) delete source[field];
     const value = createTaskSchema.parse(source);
     const checklistOnly = !!old && input.checklist !== undefined && Object.keys(input).every(k => ["checklist", "expectedVersion"].includes(k));
-    if (value.eventId && !checklistOnly && !await db.collection("events").findOne({ _id: new ObjectId(value.eventId), weddingId: wedding._id, status: { $ne: "removed" } }, { session })) throw new AccountError(422, "EVENT_UNAVAILABLE", "The related event is unavailable. Select another event or choose Whole wedding.");
+    if (value.eventId && value.eventId !== old?.eventId?.toString() && !await db.collection("events").findOne({ _id: new ObjectId(value.eventId), weddingId: wedding._id, status: { $ne: "removed" } }, { session })) throw new AccountError(422, "EVENT_UNAVAILABLE", "The related event is unavailable. Select another event or choose Whole wedding.");
     if (value.assigneeUserId && !checklistOnly) {
       const target = await db.collection("memberships").findOne({ userId: new ObjectId(value.assigneeUserId), weddingId: wedding._id, status: "active", role: { $in: ["ADMIN", "MANAGER"] } }, { session });
       const person = target && await db.collection("users").findOne({ _id: target.userId, status: "active" }, { session });

@@ -188,14 +188,17 @@ export async function migrateAccounts(db: Db) {
     const exists = await db
       .listCollections({ name }, { nameOnly: true })
       .hasNext();
-    if (exists)
+    if (exists) {
+      const current = (await db.listCollections({ name }, { nameOnly: false }).next())?.options?.validator;
+      const extension = name === "deliveries" ? "guest_invitation" : name === "jobs" ? "guest_invitation_send" : null;
+      if (extension && current?.$jsonSchema?.properties?.kind?.enum?.includes(extension)) continue;
       await db.command({
         collMod: name,
         validator,
         validationLevel: "strict",
         validationAction: "error",
       });
-    else await db.createCollection(name, { validator });
+    } else await db.createCollection(name, { validator });
   }
   await db
     .collection("webhookReceipts")

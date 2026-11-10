@@ -3,6 +3,7 @@ import { eventWorkspace } from "@/modules/events/page-session";
 import { WorkspaceShell } from "@/components/weddings/workspace-shell";
 import { taskFor, taskChecklistsEnabled } from "@/modules/tasks/service";
 import { TaskChecklist } from "@/components/tasks/task-checklist";
+import { TaskComments } from "@/components/tasks/task-comments";
 import { taskStatusLabels, taskPriorityLabels } from "@/modules/tasks/schema";
 import { TaskForm } from "@/components/tasks/task-form";
 import { TaskDue } from "@/components/tasks/task-display";
@@ -15,6 +16,7 @@ return <WorkspaceShell name={user.displayName} role={wedding.role} weddingTitle=
 <section className="workspace-panel task-hero"><div className="task-badges"><span className="task-badge">{taskPriorityLabels[task.priority]} priority</span><span className="task-badge">{taskStatusLabels[task.status]}</span></div><h1>{task.title}</h1>{wedding.state==="active" && <Link href={`/wedding/tasks/${task.id}/edit`} className="button button-secondary">Edit task</Link>}</section>
 {wedding.state==="active" && <TaskForm key={task.id+":"+task.version+":"+wedding.timezone} weddingId={wedding.id} timezone={wedding.timezone} initial={task} choices={{members:[],events:[]}} statusOnly/>}
 <TaskChecklist key={task.id+":"+task.version} task={task} weddingId={wedding.id} enabled={checklistsEnabled} readOnly={wedding.state!=="active"}/>
+<TaskComments key={wedding.id+":"+task.id} weddingId={wedding.id} taskId={task.id} readOnly={wedding.state!=="active"} timezone={wedding.timezone} name={user.displayName}/>
 <section className="workspace-panel task-details"><dl><div><dt>Assignee</dt><dd>{task.assignee?.name ?? "Unassigned"}{task.assignee && !task.assignee.active ? " · Inactive" : ""}</dd></div><div><dt>Due date &amp; time</dt><dd><TaskDue task={task} timezone={wedding.timezone} now={new Date()}/><small>{wedding.timezone}</small></dd></div><div><dt>Related event</dt><dd>{task.event?.available ? <Link href={`/wedding/events/${task.eventId}`}>{task.event.name} →</Link> : task.event ? task.event.name+" · Unavailable" : "Whole wedding"}</dd></div><div><dt>Description</dt><dd>{task.description || "No description"}</dd></div></dl><p className="event-privacy">Only your wedding’s planning family can view this task.</p></section>
 </>}</main></WorkspaceShell>;
 }

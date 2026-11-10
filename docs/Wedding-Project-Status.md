@@ -1,5 +1,25 @@
 # Make My Marriage — Project Status
 
+## Event lifecycle controls — November 9, 2026
+
+Implemented completion, cancellation and retained removal in Event Details, plus family history filters. Guest invitations and public pages use the current status. The isolated event, guest access and publication run passed 46 checks. Browser acceptance and deployed verification remain pending. The existing event schema supports this increment. [Implementation evidence](Wedding-Implementation-Status.md#event-lifecycle-controls--november-9-2026)
+
+## Private task comments — November 9, 2026
+
+Implemented the private thread beneath the Task Details checklist from seven Stitch references. Active ADMINs and MANAGERs can post, edit and remove comments, with original authorship and timestamps preserved. Archived threads stay readable and paginated. The isolated task suite passed 16 checks. Production migration 022 was applied and verified with explicit approval. Desktop/mobile browser acceptance and deployment verification remain pending. [Implementation evidence](Wedding-Implementation-Status.md#private-task-comments--november-9-2026)
+
+## Manual WhatsApp invitations — November 9, 2026
+
+Verified organizers can prepare one household’s invitation, open WhatsApp with the text, copy the message or private link, and download the selected published card. An organizer can explicitly mark the reviewed invitation as shared. The implementation uses the existing invitation and activity collections. Device handoff and browser visual acceptance remain pending. [Implementation evidence](Wedding-Implementation-Status.md#manual-whatsapp-invitations--november-9-2026)
+
+## Guest invitation email — November 6, 2026
+
+**Status:** Implemented and verified against isolated MongoDB and mocked Resend. Production database migration 021 is verified. Live sending and browser visual acceptance are pending.
+
+A verified organizer can review one household’s recipient, eligible events and selected published card, then queue an invitation email and check its progress. The household’s existing invitation link opens the card and RSVP. Pending requests can be cancelled before provider handoff. Provider acceptance and confirmed delivery appear as separate states.
+
+Migration 021 created an empty campaign collection. Three validators and three indexes were verified, and existing records matched their pre-migration fingerprints. The sending switch is disabled in the configured local environment. See [implementation evidence](Wedding-Implementation-Status.md#guest-invitation-email--november-6-2026).
+
 **Local checkpoint — November 4:** User requested committing the current invitation draft/publication work and migration fixes on dev. Existing 47-check/build evidence and remaining visual/provider/deployment gates are preserved; no push/deployment included. See [checkpoint evidence](Wedding-Implementation-Status.md#local-invitation-checkpoint--november-4-2026).
 
 ## Invitation publishing and household cards — November 4, 2026

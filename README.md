@@ -1,5 +1,9 @@
 # Make My Marriage
 
+## Guest invitation email
+
+Open a household under Guests & RSVP to review a single invitation email, inspect previous requests or cancel a pending request. Create the household invitation link first. Migration 021 was applied and verified in production on November 6. Live sending requires verified Resend and scheduler configuration and the deployment switch. See [implementation evidence](docs/Wedding-Implementation-Status.md#guest-invitation-email--november-6-2026). The integration suite, npm run test:invitation-email, requires the disposable loopback replica at mongodb://127.0.0.1:27197/?replicaSet=designsqa and mocks Resend.
+
 ## Invitation publishing — November 4 increment
 
 Invitation drafts now have explicit publish review, fixed version history, digital PNG downloads and eligible household card selection. /guest shows only that household’s selected authorized card alongside its existing RSVP/events. Publishing never sends, publishes the website or automatically changes household choices. Existing private draft and published image references are retained by cleanup.
